@@ -3,7 +3,6 @@ package com.nexcode.app.ui.screens.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,8 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -26,9 +25,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,8 +39,8 @@ import com.nexcode.app.ui.components.NexcodeButtonSize
 import com.nexcode.app.ui.components.NexcodeButtonVariant
 import com.nexcode.app.ui.components.NexcodeChip
 import com.nexcode.app.ui.components.NexcodeChipVariant
-import com.nexcode.app.ui.components.NexcodeTextField
 import com.nexcode.app.ui.components.NexcodeTopBar
+import com.nexcode.app.ui.theme.InterFontFamily
 import com.nexcode.app.ui.theme.NexcodeTheme
 import com.nexcode.app.ui.theme.ShapeRadius12
 
@@ -59,7 +60,7 @@ fun ScreenS16History(
             .fillMaxSize()
             .background(colors.bg)
     ) {
-        // TopBar S16 : Historique / 18 conversations
+        // En-tete : TopBar Historique / 18 conversations
         NexcodeTopBar(
             title = stringResource(id = R.string.s16_title),
             subtitle = stringResource(id = R.string.s16_conversations_count_format, uiState.totalConversationsCount),
@@ -67,34 +68,71 @@ fun ScreenS16History(
             onNavigationClick = onNavigateBack
         )
 
-        // Contenu défilable
+        // Contenu defilable (.pad avec padding-top: 2px, padding horizontal 16px)
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 2.dp)
+                .padding(horizontal = 16.dp)
         ) {
             item {
-                // Champ de recherche dans les conversations
-                NexcodeTextField(
-                    value = uiState.searchQuery,
-                    onValueChange = { viewModel.updateSearchQuery(it) },
-                    placeholder = stringResource(id = R.string.s16_search_placeholder),
-                    leadingContent = {
+                Spacer(modifier = Modifier.height(2.dp))
+
+                // Champ de recherche (.inwrap avec input height 44px, padding-left 42px)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .clip(ShapeRadius12)
+                        .background(colors.surface2)
+                        .border(1.dp, colors.border, ShapeRadius12)
+                        .padding(horizontal = 14.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_search),
                             contentDescription = null,
                             modifier = Modifier.size(19.dp),
                             tint = colors.txt2
                         )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    testTag = "s16_input_search"
-                )
+
+                        Spacer(modifier = Modifier.width(9.dp))
+
+                        Box(modifier = Modifier.weight(1f)) {
+                            if (uiState.searchQuery.isEmpty()) {
+                                Text(
+                                    text = stringResource(id = R.string.s16_search_placeholder),
+                                    fontFamily = InterFontFamily,
+                                    fontSize = 13.5.sp,
+                                    color = colors.txt2
+                                )
+                            }
+
+                            BasicTextField(
+                                value = uiState.searchQuery,
+                                onValueChange = { viewModel.updateSearchQuery(it) },
+                                textStyle = TextStyle(
+                                    fontFamily = InterFontFamily,
+                                    fontSize = 13.5.sp,
+                                    color = colors.txt
+                                ),
+                                cursorBrush = SolidColor(colors.accent),
+                                singleLine = true,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("s16_input_search")
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Carte contenant la liste des conversations
+                // Carte contenant la liste des conversations (.card margin-bottom: 10px)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -102,23 +140,37 @@ fun ScreenS16History(
                         .background(colors.surface)
                         .border(1.dp, colors.border, ShapeRadius12)
                 ) {
-                    uiState.conversations.forEachIndexed { index, convo ->
+                    val filteredConversations = if (uiState.searchQuery.isBlank()) {
+                        uiState.conversations
+                    } else {
+                        uiState.conversations.filter {
+                            it.title.contains(uiState.searchQuery, ignoreCase = true) ||
+                            it.subtitle.contains(uiState.searchQuery, ignoreCase = true)
+                        }
+                    }
+
+                    filteredConversations.forEachIndexed { index, convo ->
                         if (index > 0) {
                             HorizontalDivider(thickness = 0.5.dp, color = colors.border)
                         }
 
+                        val isFirstItem = convo.id == "c1"
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onNavigateChat() }
+                                .clickable {
+                                    if (isFirstItem) {
+                                        onNavigateChat()
+                                    }
+                                }
                                 .padding(horizontal = 14.dp, vertical = 13.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Icône spark
+                            // Icone li-ic (acc si conversation active)
                             val isAccent = convo.chipVariant == ConversationChipVariant.ACCENT
                             Box(
                                 modifier = Modifier
-                                    .size(34.dp)
+                                    .size(36.dp)
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(if (isAccent) colors.accent.copy(alpha = 0.15f) else colors.surface2),
                                 contentAlignment = Alignment.Center
@@ -137,12 +189,14 @@ fun ScreenS16History(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = convo.title,
+                                    fontFamily = InterFontFamily,
                                     fontSize = 13.5.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = colors.txt
                                 )
                                 Text(
                                     text = convo.subtitle,
+                                    fontFamily = InterFontFamily,
                                     fontSize = 11.5.sp,
                                     color = colors.txt2,
                                     modifier = Modifier.padding(top = 2.dp)
@@ -167,9 +221,9 @@ fun ScreenS16History(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                // Bouton Nouvelle conversation
+                // Bouton Nouvelle conversation (btn btn-p btn-block)
                 NexcodeButton(
                     text = stringResource(id = R.string.s16_new_conversation),
                     icon = painterResource(id = R.drawable.ic_plus),

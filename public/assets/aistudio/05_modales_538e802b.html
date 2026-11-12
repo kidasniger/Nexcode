@@ -1,0 +1,57 @@
+<div class="modal" id="m-del" onclick="mclose(event,'m-del')">
+          <div class="dialog">
+            <div class="dic" style="background:rgba(255,92,122,.12);color:var(--err)"><svg><use href="#i-trash"/></svg></div>
+            <h3>Supprimer le projet ?</h3>
+            <p><b>Nimbus Météo</b> sera supprimé de cet appareil avec ses builds et son historique de conversation. Le dépôt GitHub <span class="monochip">nimbus-dev/meteo-android</span> n'est pas affecté.</p>
+            <div class="acts">
+              <button class="btn btn-s btn-sm" onclick="mclose(null,'m-del')">Annuler</button>
+              <button class="btn btn-d btn-sm" onclick="mclose(null,'m-del')">Supprimer</button>
+            </div>
+          </div>
+        </div>
+
+<div class="modal" id="m-signout" onclick="mclose(event,'m-signout')">
+          <div class="dialog">
+            <div class="dic" style="background:rgba(255,184,77,.12);color:var(--warn)"><svg><use href="#i-logout"/></svg></div>
+            <h3>Se déconnecter de GitHub ?</h3>
+            <p>Vous ne pourrez plus pousser, tirer ni importer de dépôt avant de vous reconnecter. Vos projets locaux restent accessibles.</p>
+            <div class="acts">
+              <button class="btn btn-s btn-sm" onclick="mclose(null,'m-signout')">Annuler</button>
+              <button class="btn btn-d btn-sm" onclick="mclose(null,'m-signout')">Se déconnecter</button>
+            </div>
+          </div>
+        </div>
+
+<div class="modal" id="m-builderr" onclick="mclose(event,'m-builderr')">
+          <div class="dialog">
+            <div class="dic" style="background:rgba(255,92,122,.12);color:var(--err)"><svg><use href="#i-alert"/></svg></div>
+            <h3>La compilation a échoué</h3>
+            <p>2 erreurs dans <span class="monochip">MainActivity.kt</span> — référence introuvable : <span class="monochip">R.string.title_detail</span>. La ressource a été renommée en <span class="monochip">title_details</span>.</p>
+            <div class="acts">
+              <button class="btn btn-s btn-sm" onclick="mclose(null,'m-builderr');go('s23')">Voir les logs</button>
+              <button class="btn btn-p btn-sm" onclick="mclose(null,'m-builderr');go('s15')"><svg><use href="#i-spark"/></svg> Corriger avec l'IA</button>
+            </div>
+          </div>
+        </div>
+
+<div class="modal bottom" id="m-model" onclick="mclose(event,'m-model')">
+          <div class="sheet">
+            <div class="grab"></div>
+            <h3>Choisir un modèle</h3>
+            <div class="ssub">Les requêtes sont facturées sur votre propre clé API. Le modèle peut être changé à tout moment.</div>
+            <button class="rowbtn" onclick="pickModel(this)"><div class="li-ic acc"><svg><use href="#i-spark"/></svg></div><div class="tx" style="flex:1"><div class="t mono" style="font-family:'JetBrains Mono',monospace;font-size:12.5px">claude-sonnet-4.5</div><div class="s">Recommandé · équilibré, rapide</div></div><svg class="ic" style="width:20px;height:20px;color:var(--accent)"><use href="#i-check-c"/></svg></button>
+            <button class="rowbtn" onclick="pickModel(this)"><div class="li-ic"><svg><use href="#i-spark"/></svg></div><div class="tx" style="flex:1"><div class="t mono" style="font-family:'JetBrains Mono',monospace;font-size:12.5px">claude-opus-4.1</div><div class="s">Le plus capable · refactorisations lourdes</div></div><svg class="ic" style="width:20px;height:20px;opacity:.25"><use href="#i-check-c"/></svg></button>
+            <button class="rowbtn" onclick="pickModel(this)"><div class="li-ic"><svg><use href="#i-spark"/></svg></div><div class="tx" style="flex:1"><div class="t mono" style="font-family:'JetBrains Mono',monospace;font-size:12.5px">claude-haiku-4.5</div><div class="s">Rapide · économique, petites retouches</div></div><svg class="ic" style="width:20px;height:20px;opacity:.25"><use href="#i-check-c"/></svg></button>
+            <button class="rowbtn" onclick="pickModel(this)"><div class="li-ic"><svg><use href="#i-spark"/></svg></div><div class="tx" style="flex:1"><div class="t mono" style="font-family:'JetBrains Mono',monospace;font-size:12.5px">gpt-4o-mini</div><div class="s">OpenAI · via clé personnelle</div></div><svg class="ic" style="width:20px;height:20px;opacity:.25"><use href="#i-check-c"/></svg></button>
+          </div>
+        </div>
+
+<div class="modal" id="m-filemenu" onclick="mclose(event,'m-filemenu')">
+          <div class="popmenu" style="margin-top:210px">
+            <button class="mi" onclick="mclose(null,'m-filemenu')"><svg><use href="#i-plus"/></svg> Nouveau fichier</button>
+            <button class="mi" onclick="mclose(null,'m-filemenu')"><svg><use href="#i-edit"/></svg> Renommer</button>
+            <button class="mi" onclick="mclose(null,'m-filemenu')"><svg><use href="#i-copy"/></svg> Dupliquer</button>
+            <div class="divider" style="margin:5px 6px"></div>
+            <button class="mi danger" onclick="mclose(null,'m-filemenu')"><svg><use href="#i-trash"/></svg> Supprimer</button>
+          </div>
+        </div>

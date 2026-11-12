@@ -191,57 +191,15 @@ fun ScreenS10FileExplorer(
         }
     }
 
-    // Modal / BottomSheet Menu Fichier (m-filemenu)
+    // Modal Menu Fichier (m-filemenu)
     if (uiState.showFileContextMenu) {
-        NexcodeBottomSheet(
-            title = uiState.selectedFileForMenu?.name ?: "Fichier",
-            onDismissRequest = { viewModel.hideContextMenu() }
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            viewModel.hideContextMenu()
-                            onNavigateEditor()
-                        }
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(painterResource(id = R.drawable.ic_code), contentDescription = null, tint = colors.txt, modifier = Modifier.size(18.dp))
-                    Text(stringResource(id = R.string.s10_menu_open), color = colors.txt, fontSize = 14.sp)
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.hideContextMenu() }
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(painterResource(id = R.drawable.ic_edit), contentDescription = null, tint = colors.txt, modifier = Modifier.size(18.dp))
-                    Text(stringResource(id = R.string.s10_menu_rename), color = colors.txt, fontSize = 14.sp)
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.hideContextMenu() }
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(painterResource(id = R.drawable.ic_trash), contentDescription = null, tint = colors.err, modifier = Modifier.size(18.dp))
-                    Text(stringResource(id = R.string.s10_menu_delete), color = colors.err, fontSize = 14.sp)
-                }
-            }
-        }
+        com.nexcode.app.ui.components.modals.ModalFileMenu(
+            onDismiss = { viewModel.hideContextMenu() },
+            onNewFile = { viewModel.hideContextMenu() },
+            onRename = { viewModel.hideContextMenu() },
+            onDuplicate = { viewModel.hideContextMenu() },
+            onDelete = { viewModel.hideContextMenu() }
+        )
     }
 }
 

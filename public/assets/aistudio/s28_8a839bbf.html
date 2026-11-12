@@ -1,0 +1,68 @@
+<section class="screen hasnav" id="s28" data-num="28" data-grp="H. Réglages" data-nav="build">
+  <div class="topbar">
+    <button class="icb" onclick="back()"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Réglages</div></div>
+  </div>
+  <div class="pad" style="padding-top:2px">
+    <div class="sect-t" style="margin-top:8px">Compte</div>
+    <div class="card" style="margin-bottom:10px">
+      <div class="li">
+        <div class="tile sm" style="font-size:13px">ND</div>
+        <div class="tx"><div class="t">nimbus-dev</div><div class="s">github.com/nimbus-dev · Plan gratuit</div></div>
+        <button class="btn btn-s btn-sm" style="height:30px">Gérer</button>
+      </div>
+      <div class="divider"></div>
+      <button class="rowbtn" style="padding:12px 14px" onclick="mopen('m-signout')">
+        <div class="li-ic err"><svg><use href="#i-logout"/></svg></div>
+        <div class="tx" style="flex:1"><div class="t" style="color:var(--err);font-size:13.5px">Se déconnecter de GitHub</div></div>
+      </button>
+    </div>
+
+    <div class="sect-t">Préférences</div>
+    <div class="card" style="margin-bottom:10px">
+      <button class="rowbtn" style="padding:12px 14px" onclick="go('s29',true)">
+        <div class="li-ic"><svg><use href="#i-palette"/></svg></div>
+        <div class="tx" style="flex:1"><div class="t">Apparence et éditeur</div><div class="s">Thème sombre · police 14 sp · Nex Dark</div></div>
+        <svg style="width:16px;height:16px;color:var(--txt2)"><use href="#i-fwd"/></svg>
+      </button>
+      <div class="divider"></div>
+      <div class="kv"><div style="display:flex;align-items:center;gap:12px"><div class="li-ic"><svg><use href="#i-globe"/></svg></div><span class="k" style="color:var(--txt);font-weight:600;font-size:13.5px">Langue</span></div><span class="v">Français (France)</span></div>
+      <div class="divider"></div>
+      <button class="rowbtn" style="padding:12px 14px" onclick="go('s04')">
+        <div class="li-ic"><svg><use href="#i-spark"/></svg></div>
+        <div class="tx" style="flex:1"><div class="t">IA · clé et modèle</div><div class="s">claude-sonnet-4.5 · Anthropic</div></div>
+        <svg style="width:16px;height:16px;color:var(--txt2)"><use href="#i-fwd"/></svg>
+      </button>
+    </div>
+
+    <div class="sect-t">Stockage</div>
+    <div class="card card-p" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:8px"><span style="font-weight:600">1,8 Go utilisés</span><span style="color:var(--txt2)">sur 4 Go</span></div>
+      <div class="bar" style="height:10px;margin-bottom:12px"><div class="bar-fill" style="width:45%"></div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span class="chip chip-out">Projets · 1,2 Go</span>
+        <span class="chip chip-out">Caches Gradle · 480 Mo</span>
+        <span class="chip chip-out">APK · 120 Mo</span>
+      </div>
+      <button class="btn btn-s btn-sm" style="margin-top:12px"><svg><use href="#i-trash"/></svg> Vider les caches (480 Mo)</button>
+    </div>
+
+    <div class="sect-t">Notifications</div>
+    <div class="card" style="margin-bottom:10px">
+      <div class="kv"><div><div class="k" style="color:var(--txt);font-weight:600">Compilation terminée</div><div style="font-size:11px;color:var(--txt2);margin-top:2px">Succès comme échec</div></div><div class="switch on"></div></div>
+      <div class="divider"></div>
+      <div class="kv"><div><div class="k" style="color:var(--txt);font-weight:600">Erreurs de build</div><div style="font-size:11px;color:var(--txt2);margin-top:2px">Avec suggestion IA automatique</div></div><div class="switch on"></div></div>
+      <div class="divider"></div>
+      <div class="kv"><div><div class="k" style="color:var(--txt);font-weight:600">Mises à jour de dépendances</div><div style="font-size:11px;color:var(--txt2);margin-top:2px">Une fois par semaine</div></div><div class="switch"></div></div>
+    </div>
+
+    <div class="sect-t">Application</div>
+    <div class="card" style="margin-bottom:4px">
+      <button class="rowbtn" style="padding:12px 14px" onclick="go('s30',true)">
+        <div class="li-ic"><svg><use href="#i-db"/></svg></div>
+        <div class="tx" style="flex:1"><div class="t">Sauvegarde et à propos</div><div class="s">Export, version 1.4.2, licences</div></div>
+        <svg style="width:16px;height:16px;color:var(--txt2)"><use href="#i-fwd"/></svg>
+      </button>
+    </div>
+  </div>
+</section>

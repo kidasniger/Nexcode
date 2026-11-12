@@ -71,36 +71,11 @@ fun ScreenS05Projects(
     // Dialogue modal de suppression (m-del)
     if (uiState.showDeleteDialog && uiState.projectToDelete != null) {
         val target = uiState.projectToDelete!!
-        NexcodeDialog(
-            onDismissRequest = { viewModel.dismissDeleteDialog() },
-            title = stringResource(id = R.string.s05_delete_dialog_title),
-            message = stringResource(id = R.string.s05_delete_dialog_msg, target.name),
-            confirmButton = {
-                NexcodeButton(
-                    text = stringResource(id = R.string.s03_confirm),
-                    onClick = { viewModel.confirmDeleteProject() },
-                    variant = NexcodeButtonVariant.DANGER,
-                    size = NexcodeButtonSize.SMALL,
-                    testTag = "s05_confirm_delete_btn"
-                )
-            },
-            dismissButton = {
-                NexcodeButton(
-                    text = stringResource(id = R.string.s03_cancel),
-                    onClick = { viewModel.dismissDeleteDialog() },
-                    variant = NexcodeButtonVariant.SECONDARY,
-                    size = NexcodeButtonSize.SMALL,
-                    testTag = "s05_cancel_delete_btn"
-                )
-            },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_trash),
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp),
-                    tint = colors.err
-                )
-            }
+        com.nexcode.app.ui.components.modals.ModalDeleteProject(
+            projectName = target.name,
+            githubRepo = "nimbus-dev/meteo-android",
+            onDismiss = { viewModel.dismissDeleteDialog() },
+            onConfirm = { viewModel.confirmDeleteProject() }
         )
     }
 

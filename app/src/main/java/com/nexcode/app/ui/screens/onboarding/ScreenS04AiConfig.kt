@@ -77,48 +77,11 @@ fun ScreenS04AiConfig(
 
     // Feuille modale basse pour le choix du modèle (.sheet m-model)
     if (uiState.showModelSheet) {
-        NexcodeBottomSheet(
-            onDismissRequest = { viewModel.showModelBottomSheet(false) },
-            title = stringResource(id = R.string.s04_choose_model_title),
-            subtitle = stringResource(id = R.string.s04_choose_model_sub),
-            testTag = "s04_model_bottom_sheet"
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 6.dp)
-            ) {
-                availableModels.forEach { model ->
-                    val isSelected = model == uiState.selectedModel
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(ShapeRadius12)
-                            .background(if (isSelected) colors.surface2 else androidx.compose.ui.graphics.Color.Transparent)
-                            .clickable { viewModel.selectModel(model) }
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = model,
-                            fontFamily = JetBrainsMonoFontFamily,
-                            fontSize = 13.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) colors.accent else colors.txt
-                        )
-                        if (isSelected) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_check),
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = colors.accent
-                            )
-                        }
-                    }
-                }
-            }
-        }
+        com.nexcode.app.ui.components.modals.ModalModelSelection(
+            selectedModel = uiState.selectedModel,
+            onModelSelected = { viewModel.selectModel(it) },
+            onDismiss = { viewModel.showModelBottomSheet(false) }
+        )
     }
 
     Box(

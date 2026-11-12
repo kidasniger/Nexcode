@@ -1,0 +1,64 @@
+<section class="screen hasnav" id="s27" data-num="27" data-grp="G. GitHub" data-nav="build">
+  <div class="topbar">
+    <button class="icb" onclick="back()"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Résolution de conflits</div><div class="sub">Pull depuis origin/main</div></div>
+  </div>
+  <div class="pad">
+    <div class="banner banner-warn" style="margin-bottom:12px"><svg><use href="#i-merge"/></svg><div><b>2 conflits</b> après le pull de origin/main. Choisissez une version pour chaque fichier, ou combinez-les manuellement.</div></div>
+
+    <div class="card" style="margin-bottom:10px;overflow:hidden">
+      <div class="kv" style="border-bottom:1px solid var(--border)"><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt);font-weight:700">MainActivity.kt · ligne 14</span></div>
+      <div class="col2" style="gap:0">
+        <div style="border-right:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:rgba(61,220,255,.07)"><span style="width:8px;height:8px;border-radius:99px;background:var(--accent)"></span><span style="font-size:10.5px;font-weight:700;color:var(--accent)">VÔTRE VERSION</span></div>
+          <div style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.7;color:var(--txt)">
+            <div>CityScreen(city =</div>
+            <div>  prefs.defaultCity)</div>
+          </div>
+          <div style="padding:0 10px 10px"><button class="btn btn-p btn-sm" style="width:100%;height:32px;font-size:11px">Utiliser</button></div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:rgba(124,92,255,.08)"><span style="width:8px;height:8px;border-radius:99px;background:var(--accent2)"></span><span style="font-size:10.5px;font-weight:700;color:var(--accent2)">DISTANT</span></div>
+          <div style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.7;color:var(--txt2)">
+            <div>CityScreen(city =</div>
+            <div>  repo.firstCity())</div>
+          </div>
+          <div style="padding:0 10px 10px"><button class="btn btn-s btn-sm" style="width:100%;height:32px;font-size:11px">Utiliser</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:10px;overflow:hidden">
+      <div class="kv" style="border-bottom:1px solid var(--border)"><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt);font-weight:700">strings.xml · ligne 3</span></div>
+      <div class="col2" style="gap:0">
+        <div style="border-right:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:rgba(61,220,255,.07)"><span style="width:8px;height:8px;border-radius:99px;background:var(--accent)"></span><span style="font-size:10.5px;font-weight:700;color:var(--accent)">VÔTRE VERSION</span></div>
+          <div style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.7;color:var(--txt)">
+            <div>&lt;string name=</div>
+            <div>"title_details"&gt;</div>
+          </div>
+          <div style="padding:0 10px 10px"><button class="btn btn-s btn-sm" style="width:100%;height:32px;font-size:11px">Utiliser</button></div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:rgba(124,92,255,.08)"><span style="width:8px;height:8px;border-radius:99px;background:var(--accent2)"></span><span style="font-size:10.5px;font-weight:700;color:var(--accent2)">DISTANT</span></div>
+          <div style="padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.7;color:var(--txt2)">
+            <div>&lt;string name=</div>
+            <div>"title_detail"&gt;</div>
+          </div>
+          <div style="padding:0 10px 10px"><button class="btn btn-p btn-sm" style="width:100%;height:32px;font-size:11px">Utiliser</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-p" style="margin-bottom:12px;display:flex;align-items:center;gap:10px">
+      <div class="li-ic"><svg><use href="#i-spark"/></svg></div>
+      <div style="flex:1"><div class="card-t" style="font-size:12.5px">Fusion intelligente</div><div class="card-s">L'IA propose de combiner les deux versions sans perte.</div></div>
+      <button class="btn btn-s btn-sm">Aperçu</button>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-s" style="flex:1">Annuler le merge</button>
+      <button class="btn btn-p" style="flex:1.3"><svg><use href="#i-check"/></svg> Appliquer les choix</button>
+    </div>
+  </div>
+</section>

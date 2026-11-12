@@ -66,36 +66,11 @@ fun ScreenS03GitHub(
     val colors = NexcodeTheme.colors
     val scrollState = rememberScrollState()
 
-    // Dialogue modal de déconnexion
+    // Dialogue modal de déconnexion (m-signout)
     if (uiState.showDisconnectDialog) {
-        NexcodeDialog(
-            onDismissRequest = { viewModel.showDisconnectModal(false) },
-            title = stringResource(id = R.string.s03_disconnect_confirm_title),
-            message = stringResource(id = R.string.s03_disconnect_confirm_msg),
-            confirmButton = {
-                NexcodeButton(
-                    text = stringResource(id = R.string.s03_confirm),
-                    onClick = { viewModel.disconnectGitHub() },
-                    variant = NexcodeButtonVariant.DANGER,
-                    size = NexcodeButtonSize.SMALL
-                )
-            },
-            dismissButton = {
-                NexcodeButton(
-                    text = stringResource(id = R.string.s03_cancel),
-                    onClick = { viewModel.showDisconnectModal(false) },
-                    variant = NexcodeButtonVariant.SECONDARY,
-                    size = NexcodeButtonSize.SMALL
-                )
-            },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_logout),
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp),
-                    tint = colors.err
-                )
-            }
+        com.nexcode.app.ui.components.modals.ModalSignOut(
+            onDismiss = { viewModel.showDisconnectModal(false) },
+            onConfirm = { viewModel.disconnectGitHub() }
         )
     }
 

@@ -1,0 +1,98 @@
+# NEXCODE - Progression du développement
+
+## Étapes terminées
+- Étape 1 : Fondations architecturales, Thème Material 3 exact, Composants atomiques (NexcodeButton, NexcodeTextField, NexcodeTopBar, NexcodeBottomBar, NexcodeCard, NexcodeChip, NexcodeBottomSheet).
+- Étape 2 : Écrans 1 à 4 (Onboarding, Présentation, Connexion GitHub, Configuration IA).
+- Étape 3 : Écran 5 (Gestionnaire de projets).
+- Étape 4 : Écrans 6 et 7 (Nouveau projet & Assistant de création).
+- Étape 5 : Écran 8 (Détails du projet).
+- Étape 6 : Écran 9 (Importer un projet).
+- Étape 7 : Écran 10 (Explorateur de fichiers).
+- Étape 8 : Écrans 11 à 14 (Éditeur de code, Rechercher/Remplacer, Ressources, Dépendances Gradle).
+- Étape 9 : Écrans 15 à 17 (Chat IA, Historique, Revue des modifications).
+- Étape 10 : Écrans 18 à 20 (Concepteur visuel, Propriétés, Aperçu de l'application).
+- Étape 11 : Écrans 21 à 24 (Configuration du build, Compilation en cours & succès, Logs et erreurs défaut & succès, APK générés).
+- Étape 12 : Écrans 25 à 27 (Dépôt GitHub, Historique des commits, Résolution de conflits).
+- Étape 13 : Écrans 28 à 30 (Réglages : Compte, Préférences, Stockage, Notifications, Apparence et éditeur, Sauvegarde et à propos).
+- Étape 14 : Modales (Suppression de projet `m-del`, Déconnexion GitHub `m-signout`, Erreur de compilation `m-builderr`, Choix du modèle IA en feuille du bas `m-model`, Menu contextuel de fichier `m-filemenu`) avec fermeture au toucher d'arrière-plan.
+
+## Fichiers existants
+- app/src/main/java/com/nexcode/app/MainActivity.kt
+- app/src/main/java/com/nexcode/app/data/local/NexcodeDatabase.kt
+- app/src/main/java/com/nexcode/app/data/preferences/NexcodePreferences.kt
+- app/src/main/java/com/nexcode/app/data/preferences/NexcodeSecureVault.kt
+- app/src/main/java/com/nexcode/app/ui/components/NexcodeBottomBar.kt
+- app/src/main/java/com/nexcode/app/ui/components/NexcodeBottomSheet.kt
+- app/src/main/java/com/nexcode/app/ui/components/NexcodeButton.kt
+- app/src/main/java/com/nexcode/app/ui/components/NexcodeCard.kt
+- app/src/main/java/com/nexcode/app/ui/components/NexcodeChip.kt
+- app/src/main/java/com/nexcode/app/ui/components/NexcodeLogo.kt
+- app/src/main/java/com/nexcode/app/ui/components/NexcodeTextField.kt
+- app/src/main/java/com/nexcode/app/ui/components/NexcodeTopBar.kt
+- app/src/main/java/com/nexcode/app/ui/components/modals/ModalDeleteProject.kt
+- app/src/main/java/com/nexcode/app/ui/components/modals/ModalSignOut.kt
+- app/src/main/java/com/nexcode/app/ui/components/modals/ModalBuildError.kt
+- app/src/main/java/com/nexcode/app/ui/components/modals/ModalModelSelection.kt
+- app/src/main/java/com/nexcode/app/ui/components/modals/ModalFileMenu.kt
+- app/src/main/java/com/nexcode/app/ui/navigation/NexcodeNavHost.kt
+- app/src/main/java/com/nexcode/app/ui/navigation/NexcodeScreen.kt
+- app/src/main/java/com/nexcode/app/ui/screens/onboarding/OnboardingViewModel.kt
+- app/src/main/java/com/nexcode/app/ui/screens/onboarding/ScreenS01Launch.kt
+- app/src/main/java/com/nexcode/app/ui/screens/onboarding/ScreenS02Presentation.kt
+- app/src/main/java/com/nexcode/app/ui/screens/onboarding/ScreenS03GitHub.kt
+- app/src/main/java/com/nexcode/app/ui/screens/onboarding/ScreenS04AiConfig.kt
+- app/src/main/java/com/nexcode/app/ui/screens/projects/ProjectsUiState.kt
+- app/src/main/java/com/nexcode/app/ui/screens/projects/ProjectsViewModel.kt
+- app/src/main/java/com/nexcode/app/ui/screens/projects/ScreenS05Projects.kt
+- app/src/main/java/com/nexcode/app/ui/screens/projects/ScreenS06NewProject.kt
+- app/src/main/java/com/nexcode/app/ui/screens/projects/ScreenS07CreateWizard.kt
+- app/src/main/java/com/nexcode/app/ui/screens/projects/ScreenS08ProjectDetails.kt
+- app/src/main/java/com/nexcode/app/ui/screens/projects/ScreenS09ImportProject.kt
+- app/src/main/java/com/nexcode/app/ui/screens/editor/EditorUiState.kt
+- app/src/main/java/com/nexcode/app/ui/screens/editor/EditorViewModel.kt
+- app/src/main/java/com/nexcode/app/ui/screens/editor/ScreenS10FileExplorer.kt
+- app/src/main/java/com/nexcode/app/ui/screens/editor/ScreenS11CodeEditor.kt
+- app/src/main/java/com/nexcode/app/ui/screens/editor/ScreenS12SearchReplace.kt
+- app/src/main/java/com/nexcode/app/ui/screens/editor/ScreenS13Resources.kt
+- app/src/main/java/com/nexcode/app/ui/screens/editor/ScreenS14GradleDependencies.kt
+- app/src/main/java/com/nexcode/app/ui/screens/chat/ChatUiState.kt
+- app/src/main/java/com/nexcode/app/ui/screens/chat/ChatViewModel.kt
+- app/src/main/java/com/nexcode/app/ui/screens/chat/ScreenS15AiChat.kt
+- app/src/main/java/com/nexcode/app/ui/screens/chat/ScreenS16History.kt
+- app/src/main/java/com/nexcode/app/ui/screens/chat/ScreenS17ModificationReview.kt
+- app/src/main/java/com/nexcode/app/ui/screens/designer/DesignerUiState.kt
+- app/src/main/java/com/nexcode/app/ui/screens/designer/DesignerViewModel.kt
+- app/src/main/java/com/nexcode/app/ui/screens/designer/ScreenS18VisualDesigner.kt
+- app/src/main/java/com/nexcode/app/ui/screens/designer/ScreenS19Properties.kt
+- app/src/main/java/com/nexcode/app/ui/screens/designer/ScreenS20Preview.kt
+- app/src/main/java/com/nexcode/app/ui/screens/build/BuildUiState.kt
+- app/src/main/java/com/nexcode/app/ui/screens/build/BuildViewModel.kt
+- app/src/main/java/com/nexcode/app/ui/screens/build/ScreenS21BuildConfig.kt
+- app/src/main/java/com/nexcode/app/ui/screens/build/ScreenS22Compilation.kt
+- app/src/main/java/com/nexcode/app/ui/screens/build/ScreenS23BuildLogs.kt
+- app/src/main/java/com/nexcode/app/ui/screens/build/ScreenS24ApkList.kt
+- app/src/main/java/com/nexcode/app/ui/screens/git/GitUiState.kt
+- app/src/main/java/com/nexcode/app/ui/screens/git/GitViewModel.kt
+- app/src/main/java/com/nexcode/app/ui/screens/git/ScreenS25GitRepository.kt
+- app/src/main/java/com/nexcode/app/ui/screens/git/ScreenS26CommitHistory.kt
+- app/src/main/java/com/nexcode/app/ui/screens/git/ScreenS27ConflictResolution.kt
+- app/src/main/java/com/nexcode/app/ui/screens/settings/SettingsUiState.kt
+- app/src/main/java/com/nexcode/app/ui/screens/settings/SettingsViewModel.kt
+- app/src/main/java/com/nexcode/app/ui/screens/settings/ScreenS28Settings.kt
+- app/src/main/java/com/nexcode/app/ui/screens/settings/ScreenS29AppearanceEditor.kt
+- app/src/main/java/com/nexcode/app/ui/screens/settings/ScreenS30BackupAbout.kt
+- app/src/main/java/com/nexcode/app/ui/theme/Color.kt
+- app/src/main/java/com/nexcode/app/ui/theme/Shape.kt
+- app/src/main/java/com/nexcode/app/ui/theme/Spacing.kt
+- app/src/main/java/com/nexcode/app/ui/theme/Theme.kt
+- app/src/main/java/com/nexcode/app/ui/theme/Type.kt
+- app/src/main/res/values/strings.xml
+- app/src/test/java/com/example/ChatTest.kt
+- app/src/test/java/com/nexcode/app/DesignerTest.kt
+- app/src/test/java/com/nexcode/app/BuildScreensTest.kt
+- app/src/test/java/com/nexcode/app/GitScreensTest.kt
+- app/src/test/java/com/nexcode/app/SettingsScreensTest.kt
+- app/src/test/java/com/nexcode/app/ModalScreensTest.kt
+
+## Écarts connus avec la maquette
+- Aucun écart connu.

@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">NEXCODE</string>
+    <string name="back">Retour</string>
 
     <!-- Écran 1 : Lancement -->
     <string name="s01_tagline">Codez vraiment,\ndepuis votre poche.</string>
@@ -228,4 +229,296 @@
     <string name="s17_chip_pending">En attente</string>
     <string name="s17_btn_accept">Accepter</string>
     <string name="s17_btn_reject">Refuser</string>
+
+    <!-- Écran 18 : Concepteur visuel -->
+    <string name="s18_title">Concepteur visuel</string>
+    <string name="s18_sub">Écran d\'accueil · Nimbus Météo</string>
+    <string name="s18_pal_text">Texte</string>
+    <string name="s18_pal_image">Image</string>
+    <string name="s18_pal_button">Bouton</string>
+    <string name="s18_pal_field">Champ</string>
+    <string name="s18_pal_card">Carte</string>
+    <string name="s18_pal_list">Liste</string>
+    <string name="s18_pal_column">Colonne</string>
+    <string name="s18_pal_row">Ligne</string>
+    <string name="s18_pal_toggle">Commut.</string>
+    <string name="s18_pal_grid">Grille</string>
+    <string name="s18_canvas_cities">Mes villes</string>
+    <string name="s18_canvas_greeting">Bonjour Alex</string>
+    <string name="s18_canvas_refresh">Actualiser</string>
+    <string name="s18_canvas_card3_tag">CARTE #3</string>
+    <string name="s18_canvas_lyon">Lyon</string>
+    <string name="s18_canvas_lyon_sub">Nuageux · 14 °C</string>
+    <string name="s18_canvas_lyon_temp">14°</string>
+    <string name="s18_canvas_paris">Paris</string>
+    <string name="s18_canvas_paris_sub">Éclaircies · 12 °C</string>
+    <string name="s18_canvas_paris_temp">12°</string>
+    <string name="s18_canvas_brest">Brest</string>
+    <string name="s18_canvas_brest_sub">Pluie · 11 °C</string>
+    <string name="s18_canvas_brest_temp">11°</string>
+    <string name="s18_footer_hint">Glissez un composant sur le canvas · appui long pour sélectionner</string>
+    <string name="s18_btn_properties">Propriétés</string>
+
+    <!-- Écran 19 : Propriétés -->
+    <string name="s19_title">Propriétés</string>
+    <string name="s19_sub">Carte #3 · Liste des villes</string>
+    <string name="s19_card_title">Carte #3</string>
+    <string name="s19_card_sub">Contient 2 textes · parent : Colonne racine</string>
+    <string name="s19_section_pos_size">Position et taille</string>
+    <string name="s19_lab_x">X</string>
+    <string name="s19_lab_y">Y</string>
+    <string name="s19_lab_width">Largeur</string>
+    <string name="s19_lab_height">Hauteur</string>
+    <string name="s19_btn_fill">Remplir</string>
+    <string name="s19_section_appearance">Apparence</string>
+    <string name="s19_corner_radius">Rayon des coins</string>
+    <string name="s19_bg_color">Couleur de fond</string>
+    <string name="s19_border">Bordure</string>
+    <string name="s19_border_none">Aucune</string>
+    <string name="s19_elevation">Élévation</string>
+    <string name="s19_section_spacing">Espacements</string>
+    <string name="s19_padding_dp">Padding dp</string>
+    <string name="s19_margin_dp">Marge dp</string>
+    <string name="s19_internal_dp">Interne dp</string>
+    <string name="s19_section_alignment">Alignement</string>
+    <string name="s19_btn_duplicate">Dupliquer</string>
+    <string name="s19_btn_delete">Supprimer</string>
+    <string name="s19_btn_generate_compose">Générer le code Compose</string>
+
+    <!-- Écran 20 : Aperçu -->
+    <string name="s20_title">Aperçu de l\'application</string>
+    <string name="s20_hero_temp">14°</string>
+    <string name="s20_hero_desc">Lyon · Nuageux</string>
+    <string name="s20_btn_rotate">Pivoter</string>
+    <string name="s20_btn_device">Pixel 8</string>
+    <string name="s20_banner_ok">Aperçu statique généré il y a 1 min · Compose compilé sans erreur</string>
+    <string name="s20_btn_open_designer">Ouvrir dans le concepteur</string>
+
+    <!-- Écran 21 : Configuration du build -->
+    <string name="s21_title">Configuration du build</string>
+    <string name="s21_sub">Nimbus Météo</string>
+    <string name="s21_lab_version">Version</string>
+    <string name="s21_lab_build_number">Numéro de build</string>
+    <string name="s21_lab_variant">Variante</string>
+    <string name="s21_variant_debug">debug</string>
+    <string name="s21_variant_release">release</string>
+    <string name="s21_hint_variant">Release : minification R8, signature obligatoire, taille réduite d\'environ 35 %.</string>
+    <string name="s21_sect_signature">Signature</string>
+    <string name="s21_keystore_name">nexcode-release.jks</string>
+    <string name="s21_keystore_desc">Valable jusqu\'au 04/09/2027 · RSA 2048</string>
+    <string name="s21_chip_active">Actif</string>
+    <string name="s21_lab_keystore_password">Mot de passe du keystore</string>
+    <string name="s21_btn_generate_keystore">Générer un nouveau keystore</string>
+    <string name="s21_sect_options">Options</string>
+    <string name="s21_opt_r8_title">Minification R8</string>
+    <string name="s21_opt_r8_desc">Réduit et obfusque le code</string>
+    <string name="s21_opt_mapping_title">Exporter le mapping</string>
+    <string name="s21_opt_mapping_desc">Nécessaire pour analyser les crashs</string>
+    <string name="s21_opt_debuggable_title">Debuggable</string>
+    <string name="s21_opt_debuggable_desc">Désactivé automatiquement en release</string>
+    <string name="s21_btn_start_compilation">Lancer la compilation</string>
+
+    <!-- Écran 22 : Compilation -->
+    <string name="s22_title">Compilation</string>
+    <string name="s22_sub">Nimbus Météo · v1.2.0 (13) · release</string>
+    <string name="s22_progress_percent">68 %</string>
+    <string name="s22_progress_sub">Étape en cours · Compilation Kotlin (release) · 42 s</string>
+    <string name="s22_step_clean">Nettoyage</string>
+    <string name="s22_step_clean_du">0,8 s</string>
+    <string name="s22_step_gradle">Résolution des dépendances Gradle</string>
+    <string name="s22_step_gradle_du_cours">3,1 s · 34 artefacts</string>
+    <string name="s22_step_gradle_du_succes">3,1 s</string>
+    <string name="s22_step_kotlin">Compilation Kotlin (release)</string>
+    <string name="s22_step_kotlin_du_cours">42 s · 12 fichiers</string>
+    <string name="s22_step_kotlin_du_succes">38,4 s</string>
+    <string name="s22_step_res">Traitement des ressources</string>
+    <string name="s22_step_res_du_succes">4,2 s</string>
+    <string name="s22_step_dex">Conversion DEX</string>
+    <string name="s22_step_dex_du_succes">9,7 s</string>
+    <string name="s22_step_apk">Packaging APK</string>
+    <string name="s22_step_apk_du_succes">11,3 s</string>
+    <string name="s22_step_sign">Signature (nexcode-release.jks)</string>
+    <string name="s22_step_sign_du_succes">4,5 s</string>
+    <string name="s22_step_pending">en attente</string>
+    <string name="s22_btn_cancel">Annuler</string>
+    <string name="s22_btn_live_logs">Logs en direct</string>
+    <string name="s22_hint_background">La compilation continue si vous quittez cet écran · notification à la fin</string>
+    <string name="s22_banner_success">Compilation réussie · 1 min 12 s · app-release-signed.apk (8,1 Mo)</string>
+    <string name="s22_btn_view_apk">Voir l\'APK</string>
+    <string name="s22_btn_logs">Logs</string>
+
+    <!-- Écran 23 : Logs et erreurs -->
+    <string name="s23_title">Logs et erreurs</string>
+    <string name="s23_sub_def">Build #12 · release · interrompu</string>
+    <string name="s23_sub_succes">Build #13 · release · réussi</string>
+    <string name="s23_chip_all">Tout</string>
+    <string name="s23_chip_errors">2 erreurs</string>
+    <string name="s23_chip_warnings">Avertissements (5)</string>
+    <string name="s23_chip_kotlin">Kotlin</string>
+    <string name="s23_code_h_def">gradle-out · build #12</string>
+    <string name="s23_code_time_def">02 min 41 s</string>
+    <string name="s23_code_h_succes">gradle-out · build #13</string>
+    <string name="s23_code_time_succes">01 min 12 s</string>
+    <string name="s23_summary_title">2 erreurs regroupées</string>
+    <string name="s23_summary_sub">R.string.title_detail introuvable</string>
+    <string name="s23_btn_fix_ai">Corriger avec l\'IA</string>
+    <string name="s23_btn_retry">Relancer</string>
+    <string name="s23_banner_success">Aucune erreur. 2 avertissements mineurs (ressources inutilisées).</string>
+
+    <!-- Écran 24 : APK générés -->
+    <string name="s24_title">APK générés</string>
+    <string name="s24_sub">3 fichiers · 28,6 Mo au total</string>
+    <string name="s24_apk1_name">app-release-signed.apk</string>
+    <string name="s24_apk1_desc">v1.2.0 (13) · 8,1 Mo · il y a 2 h · signé · R8</string>
+    <string name="s24_apk2_name">app-debug.apk</string>
+    <string name="s24_apk2_desc">v1.2.0 (13) · 12,4 Mo · il y a 2 h · debuggable</string>
+    <string name="s24_apk3_name">app-release-signed.apk</string>
+    <string name="s24_apk3_desc">v1.1.9 (11) · 8,0 Mo · hier · signé</string>
+    <string name="s24_btn_install">Installer</string>
+    <string name="s24_banner_warn">L\'installation hors Play Store demande l\'autorisation « sources inconnues ». Un avertissement Play Protect peut apparaître — il est normal pour un APK signé par vous.</string>
+    <string name="s24_btn_github_releases">Publier sur GitHub Releases</string>
+
+    <!-- Écran 25 : Dépôt GitHub -->
+    <string name="s25_title">Dépôt</string>
+    <string name="s25_repo_sub">nimbus-dev / meteo-android</string>
+    <string name="s25_branch_label">Branche</string>
+    <string name="s25_branch_main">main</string>
+    <string name="s25_branch_status">À jour avec origin/main · il y a 12 min</string>
+    <string name="s25_btn_change_branch">Changer</string>
+    <string name="s25_banner_ahead">Le dépôt distant a 1 avance — un commit de nimbus-dev attend un pull.</string>
+    <string name="s25_sect_modified_files">3 fichiers modifiés</string>
+    <string name="s25_commit_msg_label">Message de commit</string>
+    <string name="s25_commit_msg_default">feat: écran de détails météo</string>
+    <string name="s25_commit_msg_hint">Format conventionnel détecté : type « feat » · portée omise</string>
+    <string name="s25_btn_pull">Tirer (pull)</string>
+    <string name="s25_btn_commit_push">Commit &amp; pousser</string>
+    <string name="s25_banner_err_title">Échec du push · 3 tentatives.</string>
+    <string name="s25_banner_err_desc">Connexion à github.com indisponible. Les commits locaux sont en sécurité — réessayez plus tard.</string>
+    <string name="s25_chip_unpushed">Non poussé</string>
+    <string name="s25_btn_retry_push">Réessayer le push</string>
+
+    <!-- Écran 26 : Historique des commits -->
+    <string name="s26_title">Historique des commits</string>
+    <string name="s26_sub">Branche main · 214 commits</string>
+    <string name="s26_chip_main">main</string>
+    <string name="s26_chip_all_branches">Toutes les branches</string>
+    <string name="s26_chip_pushed">Poussé</string>
+    <string name="s26_btn_load_more">Charger plus (209 restants)</string>
+
+    <!-- Écran 27 : Résolution de conflits -->
+    <string name="s27_title">Résolution de conflits</string>
+    <string name="s27_sub">Pull depuis origin/main</string>
+    <string name="s27_banner_conflicts">2 conflits après le pull de origin/main. Choisissez une version pour chaque fichier, ou combinez-les manuellement.</string>
+    <string name="s27_tag_your_version">VÔTRE VERSION</string>
+    <string name="s27_tag_remote">DISTANT</string>
+    <string name="s27_btn_use">Utiliser</string>
+    <string name="s27_card_smart_merge_title">Fusion intelligente</string>
+    <string name="s27_card_smart_merge_desc">L\'IA propose de combiner les deux versions sans perte.</string>
+    <string name="s27_btn_preview">Aperçu</string>
+    <string name="s27_btn_cancel_merge">Annuler le merge</string>
+    <string name="s27_btn_apply_choices">Appliquer les choix</string>
+
+    <!-- Écran 28 : Réglages -->
+    <string name="s28_title">Réglages</string>
+    <string name="s28_sect_account">Compte</string>
+    <string name="s28_account_user">nimbus-dev</string>
+    <string name="s28_account_sub">github.com/nimbus-dev · Plan gratuit</string>
+    <string name="s28_btn_manage">Gérer</string>
+    <string name="s28_btn_signout_github">Se déconnecter de GitHub</string>
+    <string name="s28_signout_dialog_title">Déconnexion GitHub</string>
+    <string name="s28_signout_dialog_msg">Voulez-vous vraiment vous déconnecter de votre compte GitHub ?</string>
+    <string name="s28_signout_dialog_confirm">Se déconnecter</string>
+    <string name="s28_signout_dialog_cancel">Annuler</string>
+    <string name="s28_sect_preferences">Préférences</string>
+    <string name="s28_pref_appearance_title">Apparence et éditeur</string>
+    <string name="s28_pref_appearance_sub">Thème sombre · police 14 sp · Nex Dark</string>
+    <string name="s28_pref_lang_title">Langue</string>
+    <string name="s28_pref_lang_val">Français (France)</string>
+    <string name="s28_pref_ai_title">IA · clé et modèle</string>
+    <string name="s28_pref_ai_sub">claude-sonnet-4.5 · Anthropic</string>
+    <string name="s28_sect_storage">Stockage</string>
+    <string name="s28_storage_used">1,8 Go utilisés</string>
+    <string name="s28_storage_total">sur 4 Go</string>
+    <string name="s28_storage_chip_projects">Projets · 1,2 Go</string>
+    <string name="s28_storage_chip_gradle">Caches Gradle · 480 Mo</string>
+    <string name="s28_storage_chip_apk">APK · 120 Mo</string>
+    <string name="s28_btn_clear_caches">Vider les caches (480 Mo)</string>
+    <string name="s28_sect_notifications">Notifications</string>
+    <string name="s28_notif_build_complete_title">Compilation terminée</string>
+    <string name="s28_notif_build_complete_sub">Succès comme échec</string>
+    <string name="s28_notif_build_errors_title">Erreurs de build</string>
+    <string name="s28_notif_build_errors_sub">Avec suggestion IA automatique</string>
+    <string name="s28_notif_deps_title">Mises à jour de dépendances</string>
+    <string name="s28_notif_deps_sub">Une fois par semaine</string>
+    <string name="s28_sect_application">Application</string>
+    <string name="s28_app_backup_title">Sauvegarde et à propos</string>
+    <string name="s28_app_backup_sub">Export, version 1.4.2, licences</string>
+
+    <!-- Écran 29 : Apparence et éditeur -->
+    <string name="s29_title">Apparence et éditeur</string>
+    <string name="s29_sect_ui_theme">Thème de l\'interface</string>
+    <string name="s29_theme_system">Système</string>
+    <string name="s29_theme_dark">Sombre</string>
+    <string name="s29_theme_light">Clair</string>
+    <string name="s29_sect_code_editor">Éditeur de code</string>
+    <string name="s29_font_size_label">Taille de police</string>
+    <string name="s29_font_size_val">14 sp</string>
+    <string name="s29_code_theme_label">Thème de code</string>
+    <string name="s29_code_theme_nex_dark">Nex Dark</string>
+    <string name="s29_code_theme_nex_light">Nex Light</string>
+    <string name="s29_code_theme_solarized">Solarisé</string>
+    <string name="s29_code_theme_high_contrast">Haut contraste</string>
+    <string name="s29_indent_label">Indentation</string>
+    <string name="s29_indent_2_spaces">2 espaces</string>
+    <string name="s29_indent_4_spaces">4 espaces</string>
+    <string name="s29_indent_tabs">Tabulations</string>
+    <string name="s29_opt_wrap_title">Retour à la ligne auto</string>
+    <string name="s29_opt_wrap_sub">Repli dans les longues lignes</string>
+    <string name="s29_opt_line_numbers_title">Numéros de ligne</string>
+    <string name="s29_opt_auto_brackets_title">Fermeture auto des parenthèses</string>
+
+    <!-- Écran 30 : Sauvegarde et à propos -->
+    <string name="s30_title">Sauvegarde et à propos</string>
+    <string name="s30_sect_backup">Sauvegarde</string>
+    <string name="s30_export_projects_title">Exporter tous les projets (.zip)</string>
+    <string name="s30_export_projects_sub">1,2 Go · dernier export le 2 nov. à 03:00</string>
+    <string name="s30_btn_export_now">Exporter maintenant</string>
+    <string name="s30_opt_auto_backup_title">Sauvegarde automatique</string>
+    <string name="s30_opt_auto_backup_sub">Chaque nuit à 03:00 · garde 3 versions</string>
+    <string name="s30_sect_about">À propos</string>
+    <string name="s30_about_version_label">Version</string>
+    <string name="s30_about_version_val">1.4.2 (build 42)</string>
+    <string name="s30_about_updates_label">Mises à jour</string>
+    <string name="s30_about_updates_val">À jour · vérifié le 10 nov.</string>
+    <string name="s30_about_licenses_title">Licences open source</string>
+    <string name="s30_about_licenses_sub">Gradle, Kotlin, Retrofit, Coil, Inter, JetBrains Mono…</string>
+    <string name="s30_about_help_title">Aide et assistance</string>
+    <string name="s30_about_help_sub">Documentation, raccourcis, contact</string>
+    <string name="s30_about_privacy_title">Politique de confidentialité</string>
+    <string name="s30_about_privacy_sub">Aucune donnée ne quitte l\'appareil sans votre accord</string>
+    <string name="s30_footer_slogan">Codez vraiment, depuis votre poche.</string>
+
+    <!-- Étape 14 : Modales -->
+    <string name="modal_cancel">Annuler</string>
+    <string name="modal_del_title">Supprimer le projet ?</string>
+    <string name="modal_del_msg_part1">sera supprimé de cet appareil avec ses builds et son historique de conversation. Le dépôt GitHub</string>
+    <string name="modal_del_msg_part2">n\'est pas affecté.</string>
+    <string name="modal_del_confirm">Supprimer</string>
+
+    <string name="modal_signout_title">Se déconnecter de GitHub ?</string>
+    <string name="modal_signout_msg">Vous ne pourrez plus pousser, tirer ni importer de dépôt avant de vous reconnecter. Vos projets locaux restent accessibles.</string>
+    <string name="modal_signout_confirm">Se déconnecter</string>
+
+    <string name="modal_builderr_title">La compilation a échoué</string>
+    <string name="modal_builderr_msg">2 erreurs dans MainActivity.kt — référence introuvable : R.string.title_detail. La ressource a été renommée en title_details.</string>
+    <string name="modal_builderr_btn_logs">Voir les logs</string>
+    <string name="modal_builderr_btn_ai">Corriger avec l\'IA</string>
+
+    <string name="modal_model_title">Choisir un modèle</string>
+    <string name="modal_model_sub">Les requêtes sont facturées sur votre propre clé API. Le modèle peut être changé à tout moment.</string>
+
+    <string name="modal_filemenu_new_file">Nouveau fichier</string>
+    <string name="modal_filemenu_rename">Renommer</string>
+    <string name="modal_filemenu_duplicate">Dupliquer</string>
+    <string name="modal_filemenu_delete">Supprimer</string>
 </resources>

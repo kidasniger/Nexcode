@@ -1,0 +1,46 @@
+<section class="screen hasnav st-def" id="s25" data-num="25" data-grp="G. GitHub" data-nav="build">
+  <div class="topbar">
+    <button class="icb" onclick="back()"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Dépôt</div><div class="sub mono" style="font-family:'JetBrains Mono',monospace;font-size:10.5px">nimbus-dev / meteo-android</div></div>
+    <div class="spacer"></div>
+    <button class="icb" onclick="go('s26',true)"><svg><use href="#i-clock"/></svg></button>
+  </div>
+  <div class="pad">
+    <div class="card card-p" style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div class="li-ic"><svg><use href="#i-branch"/></svg></div>
+      <div style="flex:1"><div class="card-t" style="font-size:13px">Branche <span class="monochip">main</span></div><div class="card-s">À jour avec origin/main · il y a 12 min</div></div>
+      <button class="btn btn-s btn-sm"><svg><use href="#i-down"/></svg> Changer</button>
+    </div>
+
+    <div class="stv" data-v="def">
+      <div class="banner banner-warn" style="margin-bottom:10px"><svg><use href="#i-alert"/></svg><div><b>Le dépôt distant a 1 avance</b> — un commit de nimbus-dev attend un pull.</div></div>
+      <div class="sect-t" style="margin-left:0">3 fichiers modifiés</div>
+      <div class="card" style="margin-bottom:10px">
+        <div class="kv"><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt)">MainActivity.kt</span><span class="v" style="color:var(--ok);font-weight:600">+18 <span style="color:var(--err)">−4</span></span></div>
+        <div class="divider"></div>
+        <div class="kv"><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt)">strings.xml</span><span class="v" style="color:var(--ok);font-weight:600">+6 <span style="color:var(--err)">−0</span></span></div>
+        <div class="divider"></div>
+        <div class="kv"><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt)">Theme.kt</span><span class="v" style="color:var(--ok);font-weight:600">+3 <span style="color:var(--err)">−1</span></span></div>
+      </div>
+      <div class="field">
+        <label class="lab">Message de commit</label>
+        <input class="input mono" value="feat: écran de détails météo" spellcheck="false">
+        <div class="hint">Format conventionnel détecté : type « feat » · portée omise</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-s" style="flex:1" onclick="go('s25')"><svg><use href="#i-pull"/></svg> Tirer (pull)</button>
+        <button class="btn btn-p" style="flex:1.4"><svg><use href="#i-push"/></svg> Commit &amp; pousser</button>
+      </div>
+    </div>
+
+    <div class="stv" data-v="err">
+      <div class="banner banner-err" style="margin-bottom:12px"><svg><use href="#i-wifi"/></svg><div><b>Échec du push · 3 tentatives.</b><br>Connexion à github.com indisponible. Les commits locaux sont en sécurité — réessayez plus tard.</div></div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="kv"><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt)">a3f92c1 · local</span><span class="chip chip-warn">Non poussé</span></div>
+        <div class="divider"></div>
+        <div class="kv"><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt)">b71e0d4 · local</span><span class="chip chip-warn">Non poussé</span></div>
+      </div>
+      <button class="btn btn-p btn-block"><svg><use href="#i-refresh"/></svg> Réessayer le push</button>
+    </div>
+  </div>
+</section>

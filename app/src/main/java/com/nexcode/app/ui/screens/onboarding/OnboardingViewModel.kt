@@ -64,8 +64,27 @@ class OnboardingViewModel(
 
     fun retryGitHubConnection() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isGitHubError = false, isGitHubConnected = true) }
-            secureVault.saveGitToken(_uiState.value.gitHubToken)
+            val token = _uiState.value.gitHubToken.trim()
+            if (token.isBlank()) {
+                _uiState.update { it.copy(isGitHubError = true) }
+                return@launch
+            }
+            val service = com.nexcode.app.data.github.repository.GitHubRepositoryService(context)
+            when (val res = service.verifyAndSaveToken(token)) {
+                is com.nexcode.app.data.github.repository.GitHubResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isGitHubError = false,
+                            isGitHubConnected = true,
+                            gitHubToken = token
+                        )
+                    }
+                }
+                is com.nexcode.app.data.github.repository.GitHubResult.Error,
+                is com.nexcode.app.data.github.repository.GitHubResult.NetworkError -> {
+                    _uiState.update { it.copy(isGitHubError = true) }
+                }
+            }
         }
     }
 

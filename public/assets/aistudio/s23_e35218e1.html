@@ -1,0 +1,60 @@
+<section class="screen hasnav st-def" id="s23" data-num="23" data-grp="F. Compilation" data-nav="build">
+  <div class="topbar">
+    <button class="icb" onclick="back()"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Logs et erreurs</div><div class="sub">Build #12 · release · interrompu</div></div>
+    <div class="spacer"></div>
+    <button class="icb"><svg><use href="#i-copy"/></svg></button>
+  </div>
+  <div class="pad" style="padding-top:4px">
+    <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:8px">
+      <span class="chip chip-acc">Tout</span>
+      <span class="chip chip-err"><span class="chip-dot"></span>2 erreurs</span>
+      <span class="chip chip-out">Avertissements (5)</span>
+      <span class="chip chip-out">Kotlin</span>
+    </div>
+
+    <div class="stv" data-v="def">
+      <div class="card code" style="margin-bottom:12px">
+        <div class="code-h"><span style="flex:1">gradle-out · build #12</span><span style="font-family:'JetBrains Mono',monospace">02 min 41 s</span></div>
+        <div class="log" style="padding:8px 0">
+          <div class="logline"><span class="tm">14:31:02</span><span class="tag tag-i">INFO</span><span class="msg">Configuration Gradle 8.7 · AGP 8.5.2</span></div>
+          <div class="logline"><span class="tm">14:31:05</span><span class="tag tag-i">INFO</span><span class="msg">:app · variante release · minifyEnabled true</span></div>
+          <div class="logline"><span class="tm">14:31:09</span><span class="tag tag-i">INFO</span><span class="msg">Compilation Kotlin : 12 fichiers sources</span></div>
+          <div class="logline w"><span class="tm">14:31:22</span><span class="tag tag-w">WARN</span><span class="msg">unchecked cast : Map&lt;String, Any?&gt; (CityRepository.kt:58)</span></div>
+          <div class="logline w"><span class="tm">14:31:22</span><span class="tag tag-w">WARN</span><span class="msg">unused resource : res/drawable/ic_old_refresh</span></div>
+          <div class="logline e"><span class="tm">14:31:26</span><span class="tag tag-e">ERREUR</span><span class="msg">MainActivity.kt:23:31 Unresolved reference: title_detail</span></div>
+          <div class="logline e"><span class="tm">14:31:26</span><span class="tag tag-e">ERREUR</span><span class="msg">MainActivity.kt:41:24 Unresolved reference: title_detail</span></div>
+          <div class="logline"><span class="tm">14:31:27</span><span class="tag tag-e">ÉCHEC</span><span class="msg">Compilation échouée — 2 erreurs, 5 avertissements</span></div>
+        </div>
+      </div>
+      <div class="card card-p" style="border-color:rgba(255,92,122,.35);margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <svg style="width:18px;height:18px;color:var(--err)"><use href="#i-alert"/></svg>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--err)">2 erreurs regroupées</div><div style="font-size:11px;color:var(--txt2);margin-top:2px">R.string.title_detail introuvable</div></div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--txt2);line-height:1.8;padding-left:2px">
+          <div>· MainActivity.kt <span style="color:var(--err)">23:31</span></div>
+          <div>· MainActivity.kt <span style="color:var(--err)">41:24</span></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn btn-p btn-sm" style="flex:1.2" onclick="go('s15',true)"><svg><use href="#i-spark"/></svg> Corriger avec l'IA</button>
+          <button class="btn btn-s btn-sm" style="flex:1" onclick="go('s21',true)"><svg><use href="#i-refresh"/></svg> Relancer</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stv" data-v="succes">
+      <div class="card code" style="margin-bottom:12px">
+        <div class="code-h"><span style="flex:1">gradle-out · build #13</span><span style="font-family:'JetBrains Mono',monospace">01 min 12 s</span></div>
+        <div class="log" style="padding:8px 0">
+          <div class="logline"><span class="tm">14:38:10</span><span class="tag tag-i">INFO</span><span class="msg">Configuration Gradle 8.7 · AGP 8.5.2</span></div>
+          <div class="logline"><span class="tm">14:38:13</span><span class="tag tag-i">INFO</span><span class="msg">:app · variante release · minifyEnabled true</span></div>
+          <div class="logline"><span class="tm">14:38:51</span><span class="tag tag-s">OK</span><span class="msg">Compilation Kotlin réussie : 13 fichiers</span></div>
+          <div class="logline"><span class="tm">14:39:01</span><span class="tag tag-s">OK</span><span class="msg">R8 : 4 812 classes · réduction de 38 %</span></div>
+          <div class="logline"><span class="tm">14:39:12</span><span class="tag tag-s">OK</span><span class="msg">APK signé : app-release-signed.apk (8,1 Mo)</span></div>
+        </div>
+      </div>
+      <div class="banner banner-ok"><svg><use href="#i-check-c"/></svg><div><b>Aucune erreur.</b> 2 avertissements mineurs (ressources inutilisées).</div></div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,50 @@
+<section class="screen hasnav st-cours" id="s22" data-num="22" data-grp="F. Compilation" data-nav="build">
+  <div class="topbar">
+    <button class="icb" onclick="back()"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Compilation</div><div class="sub">Nimbus Météo · v1.2.0 (13) · release</div></div>
+  </div>
+  <div class="pad">
+    <div class="stv" data-v="cours">
+      <div class="card card-p" style="text-align:center;padding:22px 16px;margin-bottom:14px">
+        <div style="font-size:34px;font-weight:800;letter-spacing:-.03em;font-family:'JetBrains Mono',monospace">68 %</div>
+        <div class="bar" style="margin:12px 20px 10px"><div class="bar-fill" style="width:68%"></div></div>
+        <div style="font-size:12.5px;color:var(--txt2)">Étape en cours · Compilation Kotlin (release) · 42 s</div>
+      </div>
+      <div class="card card-p" style="margin-bottom:14px">
+        <div class="steps">
+          <div class="step done"><div class="ic"><svg><use href="#i-check"/></svg></div><div class="tx"><div class="tt">Nettoyage</div><div class="du">0,8 s</div></div></div>
+          <div class="step done"><div class="ic"><svg><use href="#i-check"/></svg></div><div class="tx"><div class="tt">Résolution des dépendances Gradle</div><div class="du">3,1 s · 34 artefacts</div></div></div>
+          <div class="step run"><div class="ic"><div class="spin"></div></div><div class="tx"><div class="tt">Compilation Kotlin (release)</div><div class="du">42 s · 12 fichiers</div></div></div>
+          <div class="step"><div class="ic"><i style="width:7px;height:7px;border-radius:99px;background:var(--border)"></i></div><div class="tx"><div class="tt" style="color:var(--txt2)">Traitement des ressources</div><div class="du">en attente</div></div></div>
+          <div class="step"><div class="ic"><i style="width:7px;height:7px;border-radius:99px;background:var(--border)"></i></div><div class="tx"><div class="tt" style="color:var(--txt2)">Conversion DEX</div><div class="du">en attente</div></div></div>
+          <div class="step"><div class="ic"><i style="width:7px;height:7px;border-radius:99px;background:var(--border)"></i></div><div class="tx"><div class="tt" style="color:var(--txt2)">Packaging APK</div><div class="du">en attente</div></div></div>
+          <div class="step"><div class="ic"><i style="width:7px;height:7px;border-radius:99px;background:var(--border)"></i></div><div class="tx"><div class="tt" style="color:var(--txt2)">Signature (nexcode-release.jks)</div><div class="du">en attente</div></div></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-d" style="flex:1" onclick="go('s22')"><svg><use href="#i-stop"/></svg> Annuler</button>
+        <button class="btn btn-s" style="flex:1" onclick="go('s23',true)"><svg><use href="#i-terminal"/></svg> Logs en direct</button>
+      </div>
+      <div class="hint" style="text-align:center;margin-top:12px">La compilation continue si vous quittez cet écran · notification à la fin</div>
+    </div>
+
+    <div class="stv" data-v="succes">
+      <div class="banner banner-ok" style="margin-bottom:14px"><svg><use href="#i-check-c"/></svg><div><b>Compilation réussie</b> · 1 min 12 s · app-release-signed.apk (8,1 Mo)</div></div>
+      <div class="card card-p" style="margin-bottom:14px">
+        <div class="steps">
+          <div class="step done"><div class="ic"><svg><use href="#i-check"/></svg></div><div class="tx"><div class="tt">Nettoyage</div><div class="du">0,8 s</div></div></div>
+          <div class="step done"><div class="ic"><svg><use href="#i-check"/></svg></div><div class="tx"><div class="tt">Résolution des dépendances Gradle</div><div class="du">3,1 s</div></div></div>
+          <div class="step done"><div class="ic"><svg><use href="#i-check"/></svg></div><div class="tx"><div class="tt">Compilation Kotlin (release)</div><div class="du">38,4 s</div></div></div>
+          <div class="step done"><div class="ic"><svg><use href="#i-check"/></svg></div><div class="tx"><div class="tt">Traitement des ressources</div><div class="du">4,2 s</div></div></div>
+          <div class="step done"><div class="ic"><svg><use href="#i-check"/></svg></div><div class="tx"><div class="tt">Conversion DEX</div><div class="du">9,7 s</div></div></div>
+          <div class="step done"><div class="ic"><svg><use href="#i-check"/></svg></div><div class="tx"><div class="tt">Packaging APK</div><div class="du">11,3 s</div></div></div>
+          <div class="step done"><div class="ic"><svg><use href="#i-check"/></svg></div><div class="tx"><div class="tt">Signature (nexcode-release.jks)</div><div class="du">4,5 s</div></div></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" style="flex:1" onclick="go('s24',true)"><svg><use href="#i-box"/></svg> Voir l'APK</button>
+        <button class="btn btn-s" style="flex:1" onclick="go('s23',true)"><svg><use href="#i-terminal"/></svg> Logs</button>
+      </div>
+    </div>
+  </div>
+</section>

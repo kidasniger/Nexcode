@@ -23,6 +23,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,41 +81,27 @@ fun ScreenS08ProjectDetails(
         buildStatusLabel = "Build réussi"
     )
 
+    var showBuildErrorModal by remember { mutableStateOf(false) }
+
     // Dialogue modal de suppression (m-del)
     if (uiState.showDeleteDialog) {
-        NexcodeDialog(
-            onDismissRequest = { viewModel.dismissDeleteDialog() },
-            title = stringResource(id = R.string.s05_delete_dialog_title),
-            message = stringResource(id = R.string.s05_delete_dialog_msg, project.name),
-            confirmButton = {
-                NexcodeButton(
-                    text = stringResource(id = R.string.s03_confirm),
-                    onClick = {
-                        viewModel.confirmDeleteProject()
-                        onNavigateBack()
-                    },
-                    variant = NexcodeButtonVariant.DANGER,
-                    size = NexcodeButtonSize.SMALL,
-                    testTag = "s08_confirm_delete_btn"
-                )
-            },
-            dismissButton = {
-                NexcodeButton(
-                    text = stringResource(id = R.string.s03_cancel),
-                    onClick = { viewModel.dismissDeleteDialog() },
-                    variant = NexcodeButtonVariant.SECONDARY,
-                    size = NexcodeButtonSize.SMALL,
-                    testTag = "s08_cancel_delete_btn"
-                )
-            },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_trash),
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp),
-                    tint = colors.err
-                )
+        com.nexcode.app.ui.components.modals.ModalDeleteProject(
+            projectName = project.name,
+            githubRepo = "nimbus-dev/meteo-android",
+            onDismiss = { viewModel.dismissDeleteDialog() },
+            onConfirm = {
+                viewModel.confirmDeleteProject()
+                onNavigateBack()
             }
+        )
+    }
+
+    // Dialogue modal d'erreur de build (m-builderr)
+    if (showBuildErrorModal) {
+        com.nexcode.app.ui.components.modals.ModalBuildError(
+            onDismiss = { showBuildErrorModal = false },
+            onNavigateLogs = onNavigateBuildLogs,
+            onNavigateAiChat = onNavigateAiChat
         )
     }
 
@@ -408,7 +397,7 @@ fun ScreenS08ProjectDetails(
                             isSuccess = false,
                             title = "v1.1.8 (10) · release",
                             subtitle = "Le 3 nov. · 2 erreurs",
-                            onClick = onNavigateBuildReport,
+                            onClick = { showBuildErrorModal = true },
                             trailingContent = {
                                 NexcodeChip(
                                     text = stringResource(id = R.string.s08_logs_chip),

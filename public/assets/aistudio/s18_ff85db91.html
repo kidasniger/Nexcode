@@ -1,0 +1,60 @@
+<section class="screen hasnav" id="s18" data-num="18" data-grp="E. Interface visuelle" data-nav="editeur">
+  <div class="topbar" style="height:50px">
+    <button class="icb" onclick="back()"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Concepteur visuel</div><div class="sub">Écran d'accueil · Nimbus Météo</div></div>
+    <div class="spacer"></div>
+    <button class="icb" onclick="go('s20',true)"><svg><use href="#i-eye"/></svg></button>
+  </div>
+  <div class="dsg" style="height:640px">
+    <div class="palcol">
+      <div class="palit"><svg><use href="#i-text"/></svg><span class="lb">Texte</span></div>
+      <div class="palit"><svg><use href="#i-image"/></svg><span class="lb">Image</span></div>
+      <div class="palit"><svg><use href="#i-play"/></svg><span class="lb">Bouton</span></div>
+      <div class="palit"><svg><use href="#i-edit"/></svg><span class="lb">Champ</span></div>
+      <div class="palit"><svg><use href="#i-layout"/></svg><span class="lb">Carte</span></div>
+      <div class="palit"><svg><use href="#i-list"/></svg><span class="lb">Liste</span></div>
+      <div class="palit"><svg><use href="#i-down"/></svg><span class="lb">Colonne</span></div>
+      <div class="palit"><svg><use href="#i-lr"/></svg><span class="lb">Ligne</span></div>
+      <div class="palit"><svg><use href="#i-toggle"/></svg><span class="lb">Commut.</span></div>
+      <div class="palit"><svg><use href="#i-grid"/></svg><span class="lb">Grille</span></div>
+    </div>
+    <div class="canvasw">
+      <div class="mphone">
+        <div class="mh"><i></i></div>
+        <div class="mini-c">
+          <div class="mtb"><span class="mt">Mes villes</span><svg style="width:16px;height:16px;color:var(--txt2)"><use href="#i-plus"/></svg></div>
+          <div class="mini-txt" style="font-size:15px;font-weight:700;margin-bottom:8px">Bonjour Alex</div>
+          <div class="mini-img"><svg><use href="#i-image"/></svg></div>
+          <div style="height:8px"></div>
+          <div class="mini-btn">Actualiser</div>
+          <div style="height:10px"></div>
+          <div class="mini-card selbox" onclick="go('s19',true)">
+            <span class="tag">CARTE #3</span>
+            <i class="hnd tl"></i><i class="hnd br"></i>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><div class="mini-txt">Lyon</div><div style="font-size:9.5px;color:var(--txt2);margin-top:2px">Nuageux · 14 °C</div></div>
+              <div style="font-size:19px;font-weight:800">14°</div>
+            </div>
+          </div>
+          <div class="mini-card" style="opacity:.75">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><div class="mini-txt">Paris</div><div style="font-size:9.5px;color:var(--txt2);margin-top:2px">Éclaircies · 12 °C</div></div>
+              <div style="font-size:19px;font-weight:800">12°</div>
+            </div>
+          </div>
+          <div class="mini-card" style="opacity:.75">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><div class="mini-txt">Brest</div><div style="font-size:9.5px;color:var(--txt2);margin-top:2px">Pluie · 11 °C</div></div>
+              <div style="font-size:19px;font-weight:800">11°</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dsgfoot">
+    <svg style="width:16px;height:16px;color:var(--accent);flex:0 0 auto"><use href="#i-move"/></svg>
+    <span style="font-size:11px;color:var(--txt2);flex:1;line-height:1.4">Glissez un composant sur le canvas · appui long pour sélectionner</span>
+    <button class="btn btn-p btn-sm" onclick="go('s19',true)">Propriétés</button>
+  </div>
+</section>

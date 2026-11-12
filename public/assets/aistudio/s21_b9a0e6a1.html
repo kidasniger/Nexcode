@@ -1,0 +1,43 @@
+<section class="screen hasnav" id="s21" data-num="21" data-grp="F. Compilation" data-nav="build">
+  <div class="topbar">
+    <button class="icb" onclick="back()"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Configuration du build</div><div class="sub">Nimbus Météo</div></div>
+  </div>
+  <div class="pad">
+    <div class="col2" style="margin-bottom:14px">
+      <div class="field" style="margin:0"><label class="lab">Version</label><input class="input mono" style="height:44px" value="1.2.0"></div>
+      <div class="field" style="margin:0"><label class="lab">Numéro de build</label><input class="input mono" style="height:44px" value="13"></div>
+    </div>
+    <div class="field">
+      <label class="lab">Variante</label>
+      <div class="seg">
+        <button onclick="go('s21')">debug</button>
+        <button class="on">release</button>
+      </div>
+      <div class="hint">Release : minification R8, signature obligatoire, taille réduite d'environ 35 %.</div>
+    </div>
+    <div class="sect-t" style="margin-left:0">Signature</div>
+    <div class="card card-p" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="li-ic"><svg><use href="#i-lock"/></svg></div>
+        <div style="flex:1;min-width:0"><div class="card-t" style="font-family:'JetBrains Mono',monospace;font-size:12px">nexcode-release.jks</div><div class="card-s">Valable jusqu'au 04/09/2027 · RSA 2048</div></div>
+        <span class="chip chip-ok">Actif</span>
+      </div>
+      <div class="field" style="margin:12px 0 0">
+        <label class="lab">Mot de passe du keystore</label>
+        <input class="input mono" type="password" value="••••••••••••" spellcheck="false">
+      </div>
+      <button class="btn btn-s btn-sm" style="margin-top:4px"><svg><use href="#i-plus"/></svg> Générer un nouveau keystore</button>
+    </div>
+    <div class="sect-t" style="margin-left:0">Options</div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="kv"><div><div class="k" style="color:var(--txt);font-weight:600">Minification R8</div><div style="font-size:11px;color:var(--txt2);margin-top:2px">Réduit et obfusque le code</div></div><div class="switch on"></div></div>
+      <div class="divider"></div>
+      <div class="kv"><div><div class="k" style="color:var(--txt);font-weight:600">Exporter le mapping</div><div style="font-size:11px;color:var(--txt2);margin-top:2px">Nécessaire pour analyser les crashs</div></div><div class="switch on"></div></div>
+      <div class="divider"></div>
+      <div class="kv"><div><div class="k" style="color:var(--txt);font-weight:600">Debuggable</div><div style="font-size:11px;color:var(--txt2);margin-top:2px">Désactivé automatiquement en release</div></div><div class="switch"></div></div>
+    </div>
+    <button class="btn btn-p btn-block" onclick="go('s22',true)"><svg><use href="#i-play"/></svg> Lancer la compilation</button>
+    <div style="height:8px"></div>
+  </div>
+</section>

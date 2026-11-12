@@ -106,6 +106,7 @@ dependencies {
   implementation(libs.androidx.security.crypto)
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
+  implementation(libs.jgit)
   // implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
   implementation(libs.firebase.ai)

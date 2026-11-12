@@ -426,40 +426,66 @@ class ProjectsViewModel(
 
     fun importGit(onSuccess: () -> Unit) {
         val state = _uiState.value
-        val repoName = state.importGitUrl.substringAfterLast("/").ifEmpty { "Repo-Git" }
-        val initials = repoName.take(2).uppercase()
-        val imported = ProjectItem(
-            id = System.currentTimeMillis(),
-            name = repoName,
-            packageName = "com.git.${repoName.lowercase().replace("-", "")}",
-            initials = initials,
-            language = "Kotlin",
-            uiFramework = "Compose",
-            modifiedText = "modifié à l'instant",
-            buildStatus = ProjectBuildStatus.SUCCESS,
-            buildStatusLabel = "Build réussi",
-            version = "v1.0.0",
-            onGitHub = true,
-            fileCount = 34,
-            sizeText = "8,2 Mo",
-            buildCount = 2,
-            gitRepo = state.importGitUrl,
-            gitBranch = state.importGitBranch,
-            gitSyncText = "synchronisé à l'instant",
-            minSdk = 29
-        )
-        _uiState.update { current ->
-            val updated = listOf(imported) + current.projects
-            val filtered = filterProjectList(updated, current.searchQuery, current.selectedFilter)
-            current.copy(
-                projects = updated,
-                filteredProjects = filtered,
-                totalProjectCount = updated.size,
-                selectedProject = imported,
-                viewMode = ProjectsViewMode.DEFAULT
+        val repoUrl = state.importGitUrl.trim()
+        val branch = state.importGitBranch.trim().ifEmpty { "main" }
+        val repoName = repoUrl.substringAfterLast("/").removeSuffix(".git").ifEmpty { "Repo-Git" }
+        val targetDir = java.io.File("/storage/emulated/0/NEXCODE/$repoName")
+
+        viewModelScope.launch {
+            val gitService = com.nexcode.app.data.github.repository.GitHubRepositoryService(context)
+            gitService.cloneRepository(
+                cloneUrl = repoUrl,
+                targetDir = targetDir,
+                branch = branch
             )
+
+            val initials = repoName.take(2).uppercase()
+            val imported = ProjectItem(
+                id = System.currentTimeMillis(),
+                name = repoName,
+                packageName = "com.git.${repoName.lowercase().replace("-", "").replace(".", "")}",
+                initials = initials,
+                language = "Kotlin",
+                uiFramework = "Compose",
+                modifiedText = "modifié à l'instant",
+                buildStatus = ProjectBuildStatus.SUCCESS,
+                buildStatusLabel = "Build réussi",
+                version = "v1.0.0",
+                onGitHub = true,
+                fileCount = 34,
+                sizeText = "8,2 Mo",
+                buildCount = 1,
+                gitRepo = state.importGitUrl,
+                gitBranch = branch,
+                gitSyncText = "synchronisé à l'instant",
+                minSdk = 29
+            )
+
+            projectDao.insertProject(
+                ProjectEntity(
+                    id = imported.id,
+                    name = imported.name,
+                    packageName = imported.packageName,
+                    path = targetDir.absolutePath,
+                    minSdk = imported.minSdk,
+                    targetSdk = 35,
+                    gitBranch = branch
+                )
+            )
+
+            _uiState.update { current ->
+                val updated = listOf(imported) + current.projects
+                val filtered = filterProjectList(updated, current.searchQuery, current.selectedFilter)
+                current.copy(
+                    projects = updated,
+                    filteredProjects = filtered,
+                    totalProjectCount = updated.size,
+                    selectedProject = imported,
+                    viewMode = ProjectsViewMode.DEFAULT
+                )
+            }
+            onSuccess()
         }
-        onSuccess()
     }
 
     private fun filterProjectList(

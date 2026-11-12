@@ -54,6 +54,23 @@ import com.nexcode.app.ui.screens.chat.ChatViewModel
 import com.nexcode.app.ui.screens.chat.ScreenS15AiChat
 import com.nexcode.app.ui.screens.chat.ScreenS16History
 import com.nexcode.app.ui.screens.chat.ScreenS17ModificationReview
+import com.nexcode.app.ui.screens.designer.DesignerViewModel
+import com.nexcode.app.ui.screens.designer.ScreenS18VisualDesigner
+import com.nexcode.app.ui.screens.designer.ScreenS19Properties
+import com.nexcode.app.ui.screens.designer.ScreenS20Preview
+import com.nexcode.app.ui.screens.build.BuildViewModel
+import com.nexcode.app.ui.screens.build.ScreenS21BuildConfig
+import com.nexcode.app.ui.screens.build.ScreenS22Compilation
+import com.nexcode.app.ui.screens.build.ScreenS23BuildLogs
+import com.nexcode.app.ui.screens.build.ScreenS24ApkList
+import com.nexcode.app.ui.screens.git.GitViewModel
+import com.nexcode.app.ui.screens.git.ScreenS25GitRepository
+import com.nexcode.app.ui.screens.git.ScreenS26CommitHistory
+import com.nexcode.app.ui.screens.git.ScreenS27ConflictResolution
+import com.nexcode.app.ui.screens.settings.ScreenS28Settings
+import com.nexcode.app.ui.screens.settings.ScreenS29AppearanceEditor
+import com.nexcode.app.ui.screens.settings.ScreenS30BackupAbout
+import com.nexcode.app.ui.screens.settings.SettingsViewModel
 import com.nexcode.app.ui.theme.NexcodeTheme
 
 @androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,6 +85,10 @@ fun NexcodeNavHost(
     val projectsViewModel = remember { ProjectsViewModel(context.applicationContext) }
     val editorViewModel = remember { EditorViewModel(context.applicationContext) }
     val chatViewModel = remember { ChatViewModel(context.applicationContext) }
+    val designerViewModel = remember { DesignerViewModel(context.applicationContext) }
+    val buildViewModel = remember { BuildViewModel() }
+    val gitViewModel = remember { GitViewModel() }
+    val settingsViewModel = remember { SettingsViewModel() }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -92,7 +113,20 @@ fun NexcodeNavHost(
         NexcodeScreen.S14.route,
         NexcodeScreen.S15.route,
         NexcodeScreen.S16.route,
-        NexcodeScreen.S17.route
+        NexcodeScreen.S17.route,
+        NexcodeScreen.S18.route,
+        NexcodeScreen.S19.route,
+        NexcodeScreen.S20.route,
+        NexcodeScreen.S21.route,
+        NexcodeScreen.S22.route,
+        NexcodeScreen.S23.route,
+        NexcodeScreen.S24.route,
+        NexcodeScreen.S25.route,
+        NexcodeScreen.S26.route,
+        NexcodeScreen.S27.route,
+        NexcodeScreen.S28.route,
+        NexcodeScreen.S29.route,
+        NexcodeScreen.S30.route
     )
 
     Scaffold(
@@ -319,7 +353,7 @@ fun NexcodeNavHost(
                         }
                     },
                     onNavigateSearch = { navController.navigate(NexcodeScreen.S12.route) },
-                    onNavigateSettings = { navController.navigate(NexcodeScreen.S13.route) },
+                    onNavigateSettings = { navController.navigate(NexcodeScreen.S28.route) },
                     onNavigateDependencies = { navController.navigate(NexcodeScreen.S14.route) },
                     onNavigateBuild = { navController.navigate(NexcodeScreen.S21.route) },
                     onNavigateAiChat = { navController.navigate(NexcodeScreen.S15.route) }
@@ -396,12 +430,205 @@ fun NexcodeNavHost(
                 )
             }
 
-            // Écrans 18 à 30 (Coquilles restantes de l'Éditeur suite et du Build)
+            // Écran 18 : Concepteur visuel
+            composable(route = NexcodeScreen.S18.route) {
+                BackHandler {
+                    handleBackNavigation(navController, NexcodeScreen.S18)
+                }
+                ScreenS18VisualDesigner(
+                    viewModel = designerViewModel,
+                    onNavigateBack = { handleBackNavigation(navController, NexcodeScreen.S18) },
+                    onNavigateProperties = { navController.navigate(NexcodeScreen.S19.route) },
+                    onNavigatePreview = { navController.navigate(NexcodeScreen.S20.route) }
+                )
+            }
+
+            // Écran 19 : Propriétés
+            composable(route = NexcodeScreen.S19.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS19Properties(
+                    viewModel = designerViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigatePreview = { navController.navigate(NexcodeScreen.S20.route) }
+                )
+            }
+
+            // Écran 20 : Aperçu de l'application
+            composable(route = NexcodeScreen.S20.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS20Preview(
+                    viewModel = designerViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateDesigner = {
+                        navController.navigate(NexcodeScreen.S18.route) {
+                            popUpTo(NexcodeScreen.S18.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            // Écran 21 : Configuration du build
+            composable(route = NexcodeScreen.S21.route) {
+                BackHandler {
+                    handleBackNavigation(navController, NexcodeScreen.S21)
+                }
+                ScreenS21BuildConfig(
+                    viewModel = buildViewModel,
+                    onNavigateBack = { handleBackNavigation(navController, NexcodeScreen.S21) },
+                    onNavigateCompilation = {
+                        navController.navigate(NexcodeScreen.S22.route)
+                    }
+                )
+            }
+
+            // Écran 22 : Compilation
+            composable(route = NexcodeScreen.S22.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS22Compilation(
+                    viewModel = buildViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateLogs = {
+                        navController.navigate(NexcodeScreen.S23.route)
+                    },
+                    onNavigateApk = {
+                        navController.navigate(NexcodeScreen.S24.route)
+                    }
+                )
+            }
+
+            // Écran 23 : Logs et erreurs
+            composable(route = NexcodeScreen.S23.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS23BuildLogs(
+                    viewModel = buildViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateAiChat = {
+                        navController.navigate(NexcodeScreen.S15.route)
+                    },
+                    onNavigateBuildConfig = {
+                        navController.navigate(NexcodeScreen.S21.route) {
+                            popUpTo(NexcodeScreen.S21.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            // Écran 24 : APK générés
+            composable(route = NexcodeScreen.S24.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS24ApkList(
+                    viewModel = buildViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateGit = {
+                        navController.navigate(NexcodeScreen.S25.route)
+                    }
+                )
+            }
+
+            // Écran 25 : Dépôt GitHub
+            composable(route = NexcodeScreen.S25.route) {
+                BackHandler {
+                    handleBackNavigation(navController, NexcodeScreen.S25)
+                }
+                ScreenS25GitRepository(
+                    viewModel = gitViewModel,
+                    onNavigateBack = { handleBackNavigation(navController, NexcodeScreen.S25) },
+                    onNavigateHistory = {
+                        navController.navigate(NexcodeScreen.S26.route)
+                    },
+                    onNavigateConflict = {
+                        navController.navigate(NexcodeScreen.S27.route)
+                    }
+                )
+            }
+
+            // Écran 26 : Historique des commits
+            composable(route = NexcodeScreen.S26.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS26CommitHistory(
+                    viewModel = gitViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateConflict = {
+                        navController.navigate(NexcodeScreen.S27.route)
+                    }
+                )
+            }
+
+            // Écran 27 : Résolution de conflits
+            composable(route = NexcodeScreen.S27.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS27ConflictResolution(
+                    viewModel = gitViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Écran 28 : Réglages
+            composable(route = NexcodeScreen.S28.route) {
+                BackHandler {
+                    handleBackNavigation(navController, NexcodeScreen.S28)
+                }
+                ScreenS28Settings(
+                    viewModel = settingsViewModel,
+                    onNavigateBack = { handleBackNavigation(navController, NexcodeScreen.S28) },
+                    onNavigateAppearance = {
+                        navController.navigate(NexcodeScreen.S29.route)
+                    },
+                    onNavigateAiConfig = {
+                        navController.navigate(NexcodeScreen.S04.route)
+                    },
+                    onNavigateBackupAbout = {
+                        navController.navigate(NexcodeScreen.S30.route)
+                    }
+                )
+            }
+
+            // Écran 29 : Apparence et éditeur
+            composable(route = NexcodeScreen.S29.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS29AppearanceEditor(
+                    viewModel = settingsViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Écran 30 : Sauvegarde et à propos
+            composable(route = NexcodeScreen.S30.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS30BackupAbout(
+                    viewModel = settingsViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Écrans coquilles restants (tous les 30 écrans sont maintenant implémentés)
             val implementedRoutes = listOf(
                 "s01", "s02", "s03", "s04",
                 "s05", "s06", "s07", "s08", "s09",
                 "s10", "s11", "s12", "s13", "s14",
-                "s15", "s16", "s17"
+                "s15", "s16", "s17",
+                "s18", "s19", "s20",
+                "s21", "s22", "s23", "s24",
+                "s25", "s26", "s27",
+                "s28", "s29", "s30"
             )
             NexcodeScreen.ALL_SCREENS.filter { it.route !in implementedRoutes }.forEach { screen ->
                 composable(route = screen.route) {

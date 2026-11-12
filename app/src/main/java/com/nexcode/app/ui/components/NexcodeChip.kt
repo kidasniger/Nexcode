@@ -42,6 +42,7 @@ fun NexcodeChip(
     variant: NexcodeChipVariant = NexcodeChipVariant.DEFAULT,
     icon: Painter? = null,
     showDot: Boolean = false,
+    fontFamily: androidx.compose.ui.text.font.FontFamily? = null,
     onClick: (() -> Unit)? = null,
     testTag: String = "nexcode_chip"
 ) {
@@ -120,6 +121,7 @@ fun NexcodeChip(
         }
         Text(
             text = text,
+            fontFamily = fontFamily,
             fontSize = 11.5.sp,
             fontWeight = FontWeight.SemiBold,
             color = txtColor,

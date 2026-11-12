@@ -39,6 +39,7 @@ import com.nexcode.app.ui.components.NexcodeButtonVariant
 import com.nexcode.app.ui.components.NexcodeChip
 import com.nexcode.app.ui.components.NexcodeChipVariant
 import com.nexcode.app.ui.components.NexcodeTopBar
+import com.nexcode.app.ui.theme.InterFontFamily
 import com.nexcode.app.ui.theme.JetBrainsMonoFontFamily
 import com.nexcode.app.ui.theme.NexcodeTheme
 import com.nexcode.app.ui.theme.ShapeRadius12
@@ -58,7 +59,7 @@ fun ScreenS17ModificationReview(
             .fillMaxSize()
             .background(colors.bg)
     ) {
-        // TopBar S17 : Revue des modifications / Proposées il y a 2 min · claude-sonnet-4.5
+        // En-tete : TopBar Revue des modifications / Proposees il y a 2 min · claude-sonnet-4.5
         NexcodeTopBar(
             title = stringResource(id = R.string.s17_title),
             subtitle = stringResource(id = R.string.s17_sub_format, uiState.modelName),
@@ -66,22 +67,24 @@ fun ScreenS17ModificationReview(
             onNavigationClick = onNavigateBack
         )
 
-        // Contenu défilable
+        // Contenu defilable (.pad : padding horizontal 16px)
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 6.dp)
+                .padding(horizontal = 16.dp)
         ) {
             item {
-                // Carte récapitulative
+                Spacer(modifier = Modifier.height(2.dp))
+
+                // Carte recapitulative (.card .card-p : padding 14px 16px, margin-bottom: 10px)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(ShapeRadius12)
                         .background(colors.surface)
                         .border(1.dp, colors.border, ShapeRadius12)
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -103,22 +106,26 @@ fun ScreenS17ModificationReview(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = stringResource(id = R.string.s17_summary_title),
-                            fontSize = 13.5.sp,
+                            fontFamily = InterFontFamily,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.1.sp,
                             color = colors.txt
                         )
                         Text(
                             text = stringResource(id = R.string.s17_summary_sub),
+                            fontFamily = InterFontFamily,
                             fontSize = 12.sp,
+                            lineHeight = 18.sp,
                             color = colors.txt2,
-                            modifier = Modifier.padding(top = 2.dp)
+                            modifier = Modifier.padding(top = 3.dp)
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Boutons d'action globale : Tout accepter / Tout refuser
+                // Boutons d'action globale : Tout accepter / Tout refuser (gap: 8px, margin-bottom: 14px)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -147,7 +154,7 @@ fun ScreenS17ModificationReview(
                 Spacer(modifier = Modifier.height(14.dp))
             }
 
-            // Cartes de diff par fichier
+            // Cartes de diff par fichier (.card style="margin-bottom:10px;overflow:hidden")
             items(uiState.diffItems) { diffItem ->
                 DiffFileCard(
                     diffItem = diffItem,
@@ -179,7 +186,7 @@ private fun DiffFileCard(
             .background(colors.surface)
             .border(1.dp, colors.border, ShapeRadius12)
     ) {
-        // En-tête : Nom du fichier, stats (+X -Y) et puce de statut
+        // En-tete : Nom du fichier mono 12px gras + stats (+X -Y) et puce de statut
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -200,12 +207,14 @@ private fun DiffFileCard(
                 ) {
                     Text(
                         text = "+${diffItem.additionsCount}",
+                        fontFamily = InterFontFamily,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = colors.ok
                     )
                     Text(
                         text = "−${diffItem.deletionsCount}",
+                        fontFamily = InterFontFamily,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         color = colors.err
@@ -227,32 +236,45 @@ private fun DiffFileCard(
 
         HorizontalDivider(thickness = 0.5.dp, color = colors.border)
 
-        // Affichage des lignes de diff (.diff, .dl: ctx, add, del)
+        // Conteneur de diff (.diff font-family: JetBrains Mono, font-size: 11px, line-height: 1.6, background: var(--codebg))
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(colors.codeBg)
-                .padding(vertical = 4.dp)
         ) {
             diffItem.lines.forEach { line ->
                 val (lineBg, lineTextColor, sign, signColor) = when (line.type) {
-                    DiffLineType.CONTEXT -> Quadruple(Color.Transparent, colors.txt2, " ", colors.txt2.copy(alpha = 0.5f))
-                    DiffLineType.ADDITION -> Quadruple(colors.ok.copy(alpha = 0.12f), colors.txt, "+", colors.ok)
-                    DiffLineType.DELETION -> Quadruple(colors.err.copy(alpha = 0.12f), colors.txt2, "−", colors.err)
+                    DiffLineType.CONTEXT -> Quadruple(
+                        Color.Transparent,
+                        colors.txt2,
+                        " ",
+                        colors.txt2.copy(alpha = 0.7f)
+                    )
+                    DiffLineType.ADDITION -> Quadruple(
+                        colors.ok.copy(alpha = 0.1f),
+                        colors.ok,
+                        "+",
+                        colors.ok
+                    )
+                    DiffLineType.DELETION -> Quadruple(
+                        colors.err.copy(alpha = 0.1f),
+                        colors.err,
+                        "−",
+                        colors.err
+                    )
                 }
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(lineBg)
-                        .padding(horizontal = 8.dp, vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 10.dp, vertical = 1.dp),
+                    verticalAlignment = Alignment.Top
                 ) {
                     Text(
                         text = sign,
                         fontFamily = JetBrainsMonoFontFamily,
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp,
                         color = signColor,
                         modifier = Modifier.width(16.dp)
                     )
@@ -261,7 +283,7 @@ private fun DiffFileCard(
                         text = line.content,
                         fontFamily = JetBrainsMonoFontFamily,
                         fontSize = 11.sp,
-                        lineHeight = 16.sp,
+                        lineHeight = 17.5.sp,
                         color = lineTextColor
                     )
                 }
@@ -270,7 +292,7 @@ private fun DiffFileCard(
 
         HorizontalDivider(thickness = 0.5.dp, color = colors.border)
 
-        // Boutons d'action par fichier : Accepter / Refuser
+        // Boutons d'action par fichier (.btn .btn-s .btn-sm Accepter / Refuser avec padding: 10px 12px)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -300,4 +322,9 @@ private fun DiffFileCard(
     }
 }
 
-private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+private data class Quadruple<A, B, C, D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D
+)
