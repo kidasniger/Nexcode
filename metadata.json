@@ -1,0 +1,6 @@
+{
+  "name": "NEXCODE",
+  "description": "Environnement de développement Android sur smartphone",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
