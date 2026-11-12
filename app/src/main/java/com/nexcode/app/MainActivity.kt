@@ -9,6 +9,7 @@ import com.nexcode.app.ui.navigation.NexcodeNavHost
 import com.nexcode.app.ui.theme.NexcodeTheme
 
 class MainActivity : ComponentActivity() {
+    @androidx.compose.material3.ExperimentalMaterial3Api
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->

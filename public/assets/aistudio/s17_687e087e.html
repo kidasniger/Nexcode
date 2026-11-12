@@ -1,0 +1,62 @@
+<section class="screen hasnav" id="s17" data-num="17" data-grp="D. IA" data-nav="chat">
+  <div class="topbar">
+    <button class="icb" onclick="go('s15',true)"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Revue des modifications</div><div class="sub">Proposées il y a 2 min · claude-sonnet-4.5</div></div>
+  </div>
+  <div class="pad">
+    <div class="card card-p" style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div class="li-ic acc"><svg><use href="#i-spark"/></svg></div>
+      <div style="flex:1"><div class="card-t">3 modifications · 2 fichiers</div><div class="card-s">+27 lignes ajoutées · −5 supprimées</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn btn-p btn-sm" style="flex:1"><svg><use href="#i-check"/></svg> Tout accepter</button>
+      <button class="btn btn-d btn-sm" style="flex:1"><svg><use href="#i-close"/></svg> Tout refuser</button>
+    </div>
+
+    <div class="card" style="margin-bottom:10px;overflow:hidden">
+      <div class="kv" style="border-bottom:1px solid var(--border)"><div style="min-width:0"><div class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt);font-weight:700">MainActivity.kt</div><div class="v" style="font-weight:500;font-size:11px;text-align:left;color:var(--ok)">+18 <span style="color:var(--err)">−4</span></div></div><span class="chip chip-ok">Nouveau</span></div>
+      <div class="diff">
+        <div class="dl ctx"><span class="sg"> </span>fun CityScreen(city: String) {</div>
+        <div class="dl del"><span class="sg">−</span>    Text(text = "Météo à $city")</div>
+        <div class="dl add"><span class="sg">+</span>    Column {</div>
+        <div class="dl add"><span class="sg">+</span>        CityHeader(city = city)</div>
+        <div class="dl add"><span class="sg">+</span>        WeatherDetails(city = repo.find(city))</div>
+        <div class="dl add"><span class="sg">+</span>    }</div>
+        <div class="dl ctx"><span class="sg"> </span>}</div>
+      </div>
+      <div style="display:flex;gap:8px;padding:10px 12px">
+        <button class="btn btn-s btn-sm" style="flex:1"><svg><use href="#i-check"/></svg> Accepter</button>
+        <button class="btn btn-s btn-sm" style="flex:1"><svg><use href="#i-close"/></svg> Refuser</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:10px;overflow:hidden">
+      <div class="kv" style="border-bottom:1px solid var(--border)"><div style="min-width:0"><div class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt);font-weight:700">strings.xml</div><div class="v" style="font-weight:500;font-size:11px;text-align:left;color:var(--ok)">+6 <span style="color:var(--err)">−0</span></div></div><span class="chip chip-ok">Modifié</span></div>
+      <div class="diff">
+        <div class="dl ctx"><span class="sg"> </span>&lt;resources&gt;</div>
+        <div class="dl add"><span class="sg">+</span> &lt;string name="unit_humidity"&gt;Humidité&lt;/string&gt;</div>
+        <div class="dl add"><span class="sg">+</span> &lt;string name="unit_wind"&gt;Vent&lt;/string&gt;</div>
+        <div class="dl add"><span class="sg">+</span> &lt;string name="title_details"&gt;Détails météo&lt;/string&gt;</div>
+        <div class="dl ctx"><span class="sg"> </span>&lt;/resources&gt;</div>
+      </div>
+      <div style="display:flex;gap:8px;padding:10px 12px">
+        <button class="btn btn-s btn-sm" style="flex:1"><svg><use href="#i-check"/></svg> Accepter</button>
+        <button class="btn btn-s btn-sm" style="flex:1"><svg><use href="#i-close"/></svg> Refuser</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:10px;overflow:hidden">
+      <div class="kv" style="border-bottom:1px solid var(--border)"><div style="min-width:0"><div class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt);font-weight:700">City.kt</div><div class="v" style="font-weight:500;font-size:11px;text-align:left;color:var(--ok)">+3 <span style="color:var(--err)">−1</span></div></div><span class="chip chip-warn">En attente</span></div>
+      <div class="diff">
+        <div class="dl del"><span class="sg">−</span>data class City(val name: String)</div>
+        <div class="dl add"><span class="sg">+</span>data class City(</div>
+        <div class="dl add"><span class="sg">+</span>  val name: String,</div>
+        <div class="dl add"><span class="sg">+</span>  val humidity: Int, val windKmh: Int)</div>
+      </div>
+      <div style="display:flex;gap:8px;padding:10px 12px">
+        <button class="btn btn-s btn-sm" style="flex:1"><svg><use href="#i-check"/></svg> Accepter</button>
+        <button class="btn btn-s btn-sm" style="flex:1"><svg><use href="#i-close"/></svg> Refuser</button>
+      </div>
+    </div>
+  </div>
+</section>

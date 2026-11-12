@@ -23,10 +23,10 @@ sealed class NexcodeScreen(
 
     // Onglet Editeur (10 a 14 et 18 a 20)
     data object S10 : NexcodeScreen("s10", "Explorateur de fichiers", NexcodeNavTab.EDITOR, true)
-    data object S11 : NexcodeScreen("s11", "Editeur de code", NexcodeNavTab.EDITOR, true)
-    data object S12 : NexcodeScreen("s12", "Concepteur visuel", NexcodeNavTab.EDITOR, true)
-    data object S13 : NexcodeScreen("s13", "Recherche dans les fichiers", NexcodeNavTab.EDITOR, true)
-    data object S14 : NexcodeScreen("s14", "Branches Git", NexcodeNavTab.EDITOR, true)
+    data object S11 : NexcodeScreen("s11", "Éditeur de code", NexcodeNavTab.EDITOR, true)
+    data object S12 : NexcodeScreen("s12", "Rechercher et remplacer", NexcodeNavTab.EDITOR, true)
+    data object S13 : NexcodeScreen("s13", "Ressources", NexcodeNavTab.EDITOR, true)
+    data object S14 : NexcodeScreen("s14", "Dépendances Gradle", NexcodeNavTab.EDITOR, true)
 
     // Onglet Chat IA (15 a 17)
     data object S15 : NexcodeScreen("s15", "Chat IA", NexcodeNavTab.CHAT, true)

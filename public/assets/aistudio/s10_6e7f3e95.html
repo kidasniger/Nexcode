@@ -1,0 +1,31 @@
+<section class="screen hasnav" id="s10" data-num="10" data-grp="C. Éditeur" data-nav="editeur">
+  <div class="topbar">
+    <button class="icb" onclick="back()"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Nimbus Météo</div><div class="sub mono" style="font-family:'JetBrains Mono',monospace;font-size:10.5px">app · src · main · java · com · nimbus · meteo</div></div>
+    <div class="spacer"></div>
+    <button class="icb" onclick="go('s12',true)"><svg><use href="#i-search"/></svg></button>
+  </div>
+  <div class="card tree" style="margin:0 16px;border-radius:12px">
+    <button class="trow" onclick="go('s11',true)"><svg><use href="#i-folder"/></svg><span class="nm">app</span><span class="ct">3 sous-dossiers</span></button>
+    <button class="trow i1" onclick="go('s11',true)"><svg><use href="#i-folder"/></svg><span class="nm">src</span><span class="ct">2</span></button>
+    <button class="trow i2" onclick="go('s11',true)"><svg><use href="#i-folder"/></svg><span class="nm">main</span><span class="ct">4</span></button>
+    <button class="trow i3 sel" onclick="go('s11',true)"><svg style="color:var(--accent)"><use href="#i-file"/></svg><span class="nm" style="color:var(--accent)">MainActivity.kt</span><span class="mod" title="Modifié"></span></button>
+    <button class="trow i3" onclick="go('s11',true)"><svg><use href="#i-file"/></svg><span class="nm">CityRepository.kt</span></button>
+    <button class="trow i3" onclick="go('s11',true)"><svg><use href="#i-file"/></svg><span class="nm">Theme.kt</span><span class="mod"></span></button>
+    <button class="trow i3" onclick="go('s11',true)"><svg><use href="#i-file"/></svg><span class="nm">City.kt</span></button>
+    <button class="trow i2" onclick="go('s13',true)"><svg><use href="#i-folder"/></svg><span class="nm">res</span><span class="ct">6</span></button>
+    <button class="trow i3" onclick="go('s13',true)"><svg><use href="#i-file"/></svg><span class="nm">values · strings.xml</span><span class="mod"></span></button>
+    <button class="trow i3" onclick="go('s13',true)"><svg><use href="#i-file"/></svg><span class="nm">values · colors.xml</span></button>
+    <button class="trow i3" onclick="go('s13',true)"><svg><use href="#i-file"/></svg><span class="nm">mipmap · ic_launcher.xml</span></button>
+    <button class="trow i2" onclick="go('s11',true)"><svg><use href="#i-file"/></svg><span class="nm">AndroidManifest.xml</span></button>
+    <button class="trow i1" onclick="go('s14',true)"><svg><use href="#i-file"/></svg><span class="nm">build.gradle.kts</span></button>
+    <button class="trow i1" onclick="go('s14',true)"><svg><use href="#i-file"/></svg><span class="nm">settings.gradle.kts</span></button>
+    <div class="divider"></div>
+    <button class="trow" style="color:var(--txt2);font-family:'Inter',sans-serif;font-size:12px" onclick="mopen('m-filemenu')"><svg><use href="#i-more"/></svg><span class="nm">Appui long sur un fichier : menu</span></button>
+  </div>
+  <div style="display:flex;gap:8px;padding:12px 16px">
+    <button class="btn btn-s btn-sm" style="flex:1"><svg><use href="#i-folder"/></svg> Dossier</button>
+    <button class="btn btn-s btn-sm" style="flex:1"><svg><use href="#i-plus"/></svg> Fichier</button>
+    <button class="btn btn-p btn-sm" style="flex:1.2" onclick="go('s11',true)"><svg><use href="#i-code"/></svg> Ouvrir</button>
+  </div>
+</section>

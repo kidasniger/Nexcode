@@ -1,0 +1,79 @@
+<section class="screen hasnav" id="s11" data-num="11" data-grp="C. Éditeur" data-nav="editeur">
+  <div class="topbar" style="padding-bottom:0;border-bottom:1px solid var(--border);height:50px">
+    <button class="icb" style="width:34px" onclick="go('s10',true)"><svg><use href="#i-back"/></svg></button>
+    <div style="display:flex;align-items:center;gap:4px;flex:1;min-width:0">
+      <span style="font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">MainActivity.kt</span>
+      <span class="dotm" style="width:6px;height:6px;border-radius:99px;background:var(--warn);flex:0 0 auto"></span>
+    </div>
+    <button class="icb" style="width:34px" onclick="go('s12',true)"><svg><use href="#i-search"/></svg></button>
+    <button class="icb" style="width:34px" onclick="go('s13',true)"><svg><use href="#i-sliders"/></svg></button>
+  </div>
+  <div class="tabbar">
+    <button class="tab on"><span class="dotm"></span> MainActivity.kt</button>
+    <button class="tab">Theme.kt</button>
+    <button class="tab">CityRepository.kt</button>
+    <button class="tab"><svg style="width:13px;height:13px"><use href="#i-plus"/></svg></button>
+  </div>
+  <div class="code" style="margin:10px 12px;border-radius:12px">
+    <div class="code-h"><div class="dots"><i></i><i></i><i></i></div><span style="flex:1">MainActivity.kt · Kotlin</span><span class="chip chip-err" style="height:20px;font-size:10px">1 erreur</span></div>
+<pre><div class="cl"><span class="g">1</span><span><span class="k">package</span> com.nimbus.meteo</span></div>
+<div class="cl"><span class="g">2</span><span> </span></div>
+<div class="cl"><span class="g">3</span><span><span class="k">import</span> android.os.Bundle</span></div>
+<div class="cl"><span class="g">4</span><span><span class="k">import</span> androidx.activity.ComponentActivity</span></div>
+<div class="cl"><span class="g">5</span><span><span class="k">import</span> androidx.activity.compose.setContent</span></div>
+<div class="cl"><span class="g">6</span><span><span class="k">import</span> androidx.compose.material3.MaterialTheme</span></div>
+<div class="cl"><span class="g">7</span><span><span class="k">import</span> androidx.compose.runtime.Composable</span></div>
+<div class="cl"><span class="g">8</span><span> </span></div>
+<div class="cl"><span class="g">9</span><span><span class="k">class</span> <span class="t">MainActivity</span> : <span class="t">ComponentActivity</span>() {</span></div>
+<div class="cl"><span class="g">10</span><span>    <span class="k">override fun</span> <span class="f">onCreate</span>(savedInstanceState: <span class="t">Bundle</span>?) {</span></div>
+<div class="cl"><span class="g">11</span><span>        <span class="k">super</span>.<span class="f">onCreate</span>(savedInstanceState)</span></div>
+<div class="cl"><span class="g">12</span><span>        <span class="f">setContent</span> {</span></div>
+<div class="cl"><span class="g">13</span><span>            <span class="t">MaterialTheme</span>(colorScheme = <span class="t">AppTheme</span>.dark) {</span></div>
+<div class="cl"><span class="g">14</span><span>                <span class="f">CityScreen</span>(city = <span class="s">"Lyon"</span>)</span></div>
+<div class="cl"><span class="g">15</span><span>            }</span></div>
+<div class="cl"><span class="g">16</span><span>        }</span></div>
+<div class="cl"><span class="g">17</span><span>    }</span></div>
+<div class="cl"><span class="g">18</span><span>}</span></div>
+<div class="cl"><span class="g">19</span><span> </span></div>
+<div class="cl"><span class="g">20</span><span><span class="a">@Composable</span></span></div>
+<div class="cl"><span class="g">21</span><span><span class="k">fun</span> <span class="f">CityScreen</span>(city: <span class="t">String</span>) {</span></div>
+<div class="cl"><span class="g">22</span><span>    <span class="t">Column</span>(<span class="t">Modifier</span>.<span class="f">padding</span>(<span class="n">16</span>.dp)) {</span></div>
+<div class="cl e"><span class="g">23</span><span>        <span class="t">Text</span>(text = <span class="f">stringResource</span>(<span class="t">R</span>.string.<span style="border-bottom:1.5px dashed var(--err)">title_detail</span>),</span></div>
+<div class="cl"><span class="g">24</span><span>            style = <span class="t">MaterialTheme</span>.typography.headlineSmall)</span></div>
+<div class="cl"><span class="g">25</span><span>    }</span></div>
+<div class="cl"><span class="g">26</span><span>}</span></div>
+<div class="cl"><span class="g">27</span><span><span class="c">// TODO : extraire la ville des préférences</span></span></div>
+</pre>
+  </div>
+  <div class="card card-p" style="margin:0 12px;display:flex;gap:10px;align-items:flex-start;border-color:rgba(255,92,122,.35)">
+    <svg style="width:16px;height:16px;color:var(--err);flex:0 0 auto;margin-top:2px"><use href="#i-alert"/></svg>
+    <div style="flex:1">
+      <div style="font-size:12px;font-weight:700;color:var(--err)">Ligne 23 · référence introuvable</div>
+      <div style="font-size:11.5px;color:var(--txt2);margin-top:3px;line-height:1.5">R.string.title_detail n'existe pas — la ressource s'appelle title_details.</div>
+      <div style="display:flex;gap:6px;margin-top:9px">
+        <button class="btn btn-s btn-sm" onclick="go('s12',true)">Corriger (4 occurrences)</button>
+        <button class="btn btn-g btn-sm" onclick="go('s15',true)"><svg><use href="#i-spark"/></svg> IA</button>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:82px;background:var(--surface);border-top:1px solid var(--border);padding:8px 10px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none">
+    <button class="chip mono" style="font-family:'JetBrains Mono',monospace;min-width:44px;justify-content:center">⇥</button>
+    <button class="chip mono" style="font-family:'JetBrains Mono',monospace;min-width:44px;justify-content:center">{ }</button>
+    <button class="chip mono" style="font-family:'JetBrains Mono',monospace;min-width:44px;justify-content:center">( )</button>
+    <button class="chip mono" style="font-family:'JetBrains Mono',monospace;min-width:44px;justify-content:center">&lt; &gt;</button>
+    <button class="chip mono" style="font-family:'JetBrains Mono',monospace;min-width:44px;justify-content:center">"</button>
+    <button class="chip mono" style="font-family:'JetBrains Mono',monospace;min-width:44px;justify-content:center">$</button>
+    <button class="chip mono" style="font-family:'JetBrains Mono',monospace;min-width:44px;justify-content:center">=</button>
+    <button class="chip mono" style="font-family:'JetBrains Mono',monospace;min-width:44px;justify-content:center">:</button>
+    <button class="chip mono" style="font-family:'JetBrains Mono',monospace;min-width:44px;justify-content:center">;</button>
+    <button class="chip mono" style="font-family:'JetBrains Mono',monospace;min-width:44px;justify-content:center">_</button>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--border);height:46px;display:flex;align-items:center;padding:0 6px">
+    <button class="icb" style="width:38px;height:38px"><svg><use href="#i-undo"/></svg></button>
+    <button class="icb" style="width:38px;height:38px"><svg><use href="#i-redo"/></svg></button>
+    <div style="flex:1"></div>
+    <button class="icb" style="width:38px;height:38px" onclick="go('s14',true)"><svg><use href="#i-box"/></svg></button>
+    <button class="icb" style="width:38px;height:38px" onclick="go('s21',true)"><svg><use href="#i-play"/></svg></button>
+    <button class="icb acc" style="width:38px;height:38px" onclick="go('s15',true)"><svg><use href="#i-spark"/></svg></button>
+  </div>
+</section>

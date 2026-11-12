@@ -131,4 +131,101 @@
     <string name="s09_branch_label">Branche</string>
     <string name="s09_import_repo_btn">Importer le dépôt</string>
     <string name="s09_git_hint">Historique complet conservé · sous-modules exclus</string>
+
+    <!-- Écran 10 : Explorateur de fichiers -->
+    <string name="s10_project_name">Nimbus Météo</string>
+    <string name="s10_sub_path">app · src · main · java · com · nimbus · meteo</string>
+    <string name="s10_folder_subfolders_format">%1$d sous-dossiers</string>
+    <string name="s10_file_menu_hint">Appui long sur un fichier : menu</string>
+    <string name="s10_btn_folder">Dossier</string>
+    <string name="s10_btn_file">Fichier</string>
+    <string name="s10_btn_open">Ouvrir</string>
+    <string name="s10_menu_open">Ouvrir dans l\'éditeur</string>
+    <string name="s10_menu_rename">Renommer</string>
+    <string name="s10_menu_delete">Supprimer</string>
+
+    <!-- Écran 11 : Éditeur de code -->
+    <string name="s11_error_count_format">%1$d erreur</string>
+    <string name="s11_error_card_title">Ligne 23 · référence introuvable</string>
+    <string name="s11_error_card_desc">R.string.title_detail n\'existe pas — la ressource s\'appelle title_details.</string>
+    <string name="s11_btn_correct_occurrences">Corriger (4 occurrences)</string>
+    <string name="s11_btn_ai">IA</string>
+
+    <!-- Écran 12 : Rechercher et remplacer -->
+    <string name="s12_title">Rechercher et remplacer</string>
+    <string name="s12_results_count_format">%1$d résultats</string>
+    <string name="s12_replace_label">Remplacer par</string>
+    <string name="s12_chip_match_case">Respecter la casse</string>
+    <string name="s12_chip_regex">Regex</string>
+    <string name="s12_chip_whole_project">Projet entier</string>
+    <string name="s12_results_header">Résultats</string>
+    <string name="s12_replace_all_question">Remplacer tout ?</string>
+    <string name="s12_btn_preview">Aperçu</string>
+    <string name="s12_btn_replace_format">Remplacer (%1$d)</string>
+
+    <!-- Écran 13 : Ressources -->
+    <string name="s13_title">Ressources</string>
+    <string name="s13_sub">res · values</string>
+    <string name="s13_tab_strings">Chaînes</string>
+    <string name="s13_tab_colors">Couleurs</string>
+    <string name="s13_tab_dimensions">Dimensions</string>
+    <string name="s13_tab_themes">Thèmes</string>
+    <string name="s13_warn_unresolved_string">title_detail est référencé par MainActivity.kt ligne 23 mais n\'existe plus.</string>
+    <string name="s13_btn_correct">Corriger</string>
+    <string name="s13_translations_title">Traductions</string>
+    <string name="s13_translations_desc">2 langues configurées : français (défaut), anglais. 12 chaînes manquantes en anglais.</string>
+    <string name="s13_btn_complete_ai">Compléter avec l\'IA</string>
+    <string name="s13_btn_new_color">Nouvelle couleur</string>
+    <string name="s13_themes_title">themes.xml</string>
+    <string name="s13_themes_desc">Thème parent : Material3.DayNight.NoActionBar. Deux variantes : Theme.Nimbus et Theme.Nimbus.Dark.</string>
+    <string name="s13_btn_open_file">Ouvrir le fichier</string>
+
+    <!-- Écran 14 : Dépendances Gradle -->
+    <string name="s14_title">Dépendances Gradle</string>
+    <string name="s14_sub">build.gradle.kts (Module :app)</string>
+    <string name="s14_chip_up_to_date">À jour</string>
+    <string name="s14_chip_warn_update">2.12.0 dispo</string>
+    <string name="s14_chip_conflict">Conflit 2.0.21</string>
+    <string name="s14_warn_kotlin_conflict">kotlin-stdlib 2.0.20 diffère du plugin Kotlin 2.0.21 appliqué par Gradle. Aligner les deux versions.</string>
+    <string name="s14_add_dep_label">Ajouter une dépendance</string>
+    <string name="s14_add_dep_placeholder">androidx.lifecycle:lifecycle-viewmodel-ktx…</string>
+    <string name="s14_add_dep_hint">Recherche dans Maven Central et Google Maven.</string>
+    <string name="s14_btn_sync_gradle">Synchroniser Gradle</string>
+
+    <!-- Écran 15 : Chat IA -->
+    <string name="s15_title">Chat IA</string>
+    <string name="s15_default_model">claude-sonnet-4.5</string>
+    <string name="s15_context_label">Contexte de la conversation</string>
+    <string name="s15_btn_add_files">Fichiers</string>
+    <string name="s15_user_header_format">VOUS · %1$s</string>
+    <string name="s15_ai_header_format">CLAUDE · %1$s</string>
+    <string name="s15_btn_apply_project">Appliquer au projet</string>
+    <string name="s15_btn_copy">Copier</string>
+    <string name="s15_btn_stop">Stop</string>
+    <string name="s15_analyzing_format">Analyse de %1$s (%2$d lignes)…</string>
+    <string name="s15_wait_card_hint">Interrompre ou attendre — la réponse partielle est conservée.</string>
+    <string name="s15_input_placeholder">Décrire une modification…</string>
+    <string name="s15_review_advice">3 fichiers concernés : WeatherDetails.kt (nouveau), strings.xml (+2 chaînes), City.kt (+1 champ). Passez en revue avant application.</string>
+
+    <!-- Écran 16 : Historique -->
+    <string name="s16_title">Historique</string>
+    <string name="s16_conversations_count_format">%1$d conversations</string>
+    <string name="s16_search_placeholder">Rechercher dans les conversations…</string>
+    <string name="s16_chip_modifs_format">%1$d modifs</string>
+    <string name="s16_chip_applied">Appliqué</string>
+    <string name="s16_chip_cancelled">Annulée</string>
+    <string name="s16_new_conversation">Nouvelle conversation</string>
+
+    <!-- Écran 17 : Revue des modifications -->
+    <string name="s17_title">Revue des modifications</string>
+    <string name="s17_sub_format">Proposées il y a 2 min · %1$s</string>
+    <string name="s17_summary_title">3 modifications · 2 fichiers</string>
+    <string name="s17_summary_sub">+27 lignes ajoutées · −5 supprimées</string>
+    <string name="s17_btn_accept_all">Tout accepter</string>
+    <string name="s17_btn_reject_all">Tout refuser</string>
+    <string name="s17_chip_new">Nouveau</string>
+    <string name="s17_chip_modified">Modifié</string>
+    <string name="s17_chip_pending">En attente</string>
+    <string name="s17_btn_accept">Accepter</string>
+    <string name="s17_btn_reject">Refuser</string>
 </resources>

@@ -44,8 +44,19 @@ import com.nexcode.app.ui.screens.projects.ScreenS06NewProject
 import com.nexcode.app.ui.screens.projects.ScreenS07CreateWizard
 import com.nexcode.app.ui.screens.projects.ScreenS08ProjectDetails
 import com.nexcode.app.ui.screens.projects.ScreenS09ImportProject
+import com.nexcode.app.ui.screens.editor.EditorViewModel
+import com.nexcode.app.ui.screens.editor.ScreenS10FileExplorer
+import com.nexcode.app.ui.screens.editor.ScreenS11CodeEditor
+import com.nexcode.app.ui.screens.editor.ScreenS12SearchReplace
+import com.nexcode.app.ui.screens.editor.ScreenS13Resources
+import com.nexcode.app.ui.screens.editor.ScreenS14GradleDependencies
+import com.nexcode.app.ui.screens.chat.ChatViewModel
+import com.nexcode.app.ui.screens.chat.ScreenS15AiChat
+import com.nexcode.app.ui.screens.chat.ScreenS16History
+import com.nexcode.app.ui.screens.chat.ScreenS17ModificationReview
 import com.nexcode.app.ui.theme.NexcodeTheme
 
+@androidx.compose.material3.ExperimentalMaterial3Api
 @Composable
 fun NexcodeNavHost(
     modifier: Modifier = Modifier,
@@ -55,6 +66,8 @@ fun NexcodeNavHost(
     val context = LocalContext.current
     val onboardingViewModel = remember { OnboardingViewModel(context.applicationContext) }
     val projectsViewModel = remember { ProjectsViewModel(context.applicationContext) }
+    val editorViewModel = remember { EditorViewModel(context.applicationContext) }
+    val chatViewModel = remember { ChatViewModel(context.applicationContext) }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -71,7 +84,15 @@ fun NexcodeNavHost(
         NexcodeScreen.S06.route,
         NexcodeScreen.S07.route,
         NexcodeScreen.S08.route,
-        NexcodeScreen.S09.route
+        NexcodeScreen.S09.route,
+        NexcodeScreen.S10.route,
+        NexcodeScreen.S11.route,
+        NexcodeScreen.S12.route,
+        NexcodeScreen.S13.route,
+        NexcodeScreen.S14.route,
+        NexcodeScreen.S15.route,
+        NexcodeScreen.S16.route,
+        NexcodeScreen.S17.route
     )
 
     Scaffold(
@@ -266,8 +287,123 @@ fun NexcodeNavHost(
                 )
             }
 
-            // Écrans 10 à 30 (Coquilles restantes de l'Éditeur, Chat IA et Build)
-            NexcodeScreen.ALL_SCREENS.filter { it.route !in listOf("s01", "s02", "s03", "s04", "s05", "s06", "s07", "s08", "s09") }.forEach { screen ->
+            // Écran 10 : Explorateur de fichiers
+            composable(route = NexcodeScreen.S10.route) {
+                BackHandler {
+                    handleBackNavigation(navController, NexcodeScreen.S10)
+                }
+                ScreenS10FileExplorer(
+                    viewModel = editorViewModel,
+                    onNavigateBack = { handleBackNavigation(navController, NexcodeScreen.S10) },
+                    onNavigateSearch = { navController.navigate(NexcodeScreen.S12.route) },
+                    onNavigateEditor = { navController.navigate(NexcodeScreen.S11.route) },
+                    onNavigateResources = { navController.navigate(NexcodeScreen.S13.route) },
+                    onNavigateDependencies = { navController.navigate(NexcodeScreen.S14.route) }
+                )
+            }
+
+            // Écran 11 : Éditeur de code
+            composable(route = NexcodeScreen.S11.route) {
+                BackHandler {
+                    navController.navigate(NexcodeScreen.S10.route) {
+                        popUpTo(NexcodeScreen.S10.route) { inclusive = false }
+                        launchSingleTop = true
+                    }
+                }
+                ScreenS11CodeEditor(
+                    viewModel = editorViewModel,
+                    onNavigateBack = {
+                        navController.navigate(NexcodeScreen.S10.route) {
+                            popUpTo(NexcodeScreen.S10.route) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    },
+                    onNavigateSearch = { navController.navigate(NexcodeScreen.S12.route) },
+                    onNavigateSettings = { navController.navigate(NexcodeScreen.S13.route) },
+                    onNavigateDependencies = { navController.navigate(NexcodeScreen.S14.route) },
+                    onNavigateBuild = { navController.navigate(NexcodeScreen.S21.route) },
+                    onNavigateAiChat = { navController.navigate(NexcodeScreen.S15.route) }
+                )
+            }
+
+            // Écran 12 : Rechercher et remplacer
+            composable(route = NexcodeScreen.S12.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS12SearchReplace(
+                    viewModel = editorViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Écran 13 : Ressources
+            composable(route = NexcodeScreen.S13.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS13Resources(
+                    viewModel = editorViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateCorrectInSearch = { navController.navigate(NexcodeScreen.S12.route) }
+                )
+            }
+
+            // Écran 14 : Dépendances Gradle
+            composable(route = NexcodeScreen.S14.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS14GradleDependencies(
+                    viewModel = editorViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Écran 15 : Chat IA
+            composable(route = NexcodeScreen.S15.route) {
+                BackHandler {
+                    handleBackNavigation(navController, NexcodeScreen.S15)
+                }
+                ScreenS15AiChat(
+                    viewModel = chatViewModel,
+                    onNavigateBack = { handleBackNavigation(navController, NexcodeScreen.S15) },
+                    onNavigateHistory = { navController.navigate(NexcodeScreen.S16.route) },
+                    onNavigateReview = { navController.navigate(NexcodeScreen.S17.route) }
+                )
+            }
+
+            // Écran 16 : Historique des conversations
+            composable(route = NexcodeScreen.S16.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS16History(
+                    viewModel = chatViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateChat = { navController.popBackStack() }
+                )
+            }
+
+            // Écran 17 : Revue des modifications
+            composable(route = NexcodeScreen.S17.route) {
+                BackHandler {
+                    navController.popBackStack()
+                }
+                ScreenS17ModificationReview(
+                    viewModel = chatViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Écrans 18 à 30 (Coquilles restantes de l'Éditeur suite et du Build)
+            val implementedRoutes = listOf(
+                "s01", "s02", "s03", "s04",
+                "s05", "s06", "s07", "s08", "s09",
+                "s10", "s11", "s12", "s13", "s14",
+                "s15", "s16", "s17"
+            )
+            NexcodeScreen.ALL_SCREENS.filter { it.route !in implementedRoutes }.forEach { screen ->
                 composable(route = screen.route) {
                     BackHandler(enabled = screen.route != NexcodeScreen.S05.route) {
                         handleBackNavigation(navController, screen)

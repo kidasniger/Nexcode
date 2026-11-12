@@ -1,0 +1,67 @@
+<section class="screen hasnav" id="s13" data-num="13" data-grp="C. Éditeur" data-nav="editeur">
+  <div class="topbar">
+    <button class="icb" onclick="back()"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Ressources</div><div class="sub">res · values</div></div>
+    <div class="spacer"></div>
+    <button class="icb"><svg><use href="#i-plus"/></svg></button>
+  </div>
+  <div class="tabbar">
+    <button class="tab on" onclick="tab(this,'r-str')">Chaînes</button>
+    <button class="tab" onclick="tab(this,'r-col')">Couleurs</button>
+    <button class="tab" onclick="tab(this,'r-dim')">Dimensions</button>
+    <button class="tab" onclick="tab(this,'r-thm')">Thèmes</button>
+  </div>
+
+  <div class="pane on" id="r-str">
+    <div class="pad" style="padding-top:10px">
+      <div class="card" style="margin-bottom:8px">
+        <div class="kv"><div><div class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">app_name</div><div class="v" style="font-weight:500;font-size:13.5px;text-align:left">Nimbus Météo</div></div><button class="icb" style="width:34px;height:34px"><svg><use href="#i-edit"/></svg></button></div>
+        <div class="divider"></div>
+        <div class="kv"><div><div class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">title_details</div><div class="v" style="font-weight:500;font-size:13.5px;text-align:left">Détails météo</div></div><button class="icb" style="width:34px;height:34px"><svg><use href="#i-edit"/></svg></button></div>
+        <div class="divider"></div>
+        <div class="kv"><div><div class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">title_home</div><div class="v" style="font-weight:500;font-size:13.5px;text-align:left">Mes villes</div></div><button class="icb" style="width:34px;height:34px"><svg><use href="#i-edit"/></svg></button></div>
+        <div class="divider"></div>
+        <div class="kv"><div><div class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">err_network</div><div class="v" style="font-weight:500;font-size:13.5px;text-align:left">Connexion perdue — réessayez</div></div><button class="icb" style="width:34px;height:34px"><svg><use href="#i-edit"/></svg></button></div>
+        <div class="divider"></div>
+        <div class="kv"><div><div class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">unit_wind</div><div class="v" style="font-weight:500;font-size:13.5px;text-align:left">Vent</div></div><button class="icb" style="width:34px;height:34px"><svg><use href="#i-edit"/></svg></button></div>
+        <div class="divider"></div>
+        <div class="kv"><div><div class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">unit_humidity</div><div class="v" style="font-weight:500;font-size:13.5px;text-align:left">Humidité</div></div><button class="icb" style="width:34px;height:34px"><svg><use href="#i-edit"/></svg></button></div>
+      </div>
+      <div class="banner banner-warn"><svg><use href="#i-alert"/></svg><div><b>title_detail</b> est référencé par MainActivity.kt ligne 23 mais n'existe plus. <button class="btn btn-g btn-sm" style="height:26px;padding:0 10px" onclick="go('s12',true)">Corriger</button></div></div>
+      <div class="card card-p" style="margin-top:10px"><div class="card-t">Traductions</div><div class="card-s">2 langues configurées : français (défaut), anglais. <b>12 chaînes</b> manquantes en anglais.</div><button class="btn btn-s btn-sm" style="margin-top:10px">Compléter avec l'IA</button></div>
+    </div>
+  </div>
+
+  <div class="pane" id="r-col">
+    <div class="pad" style="padding-top:10px">
+      <div class="card" style="margin-bottom:8px">
+        <div class="kv"><div style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:22px;border-radius:7px;background:#3DDCFF;border:1px solid var(--border)"></span><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">accent_primary</span></div><span class="v mono" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">#3DDCFF</span></div>
+        <div class="divider"></div>
+        <div class="kv"><div style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:22px;border-radius:7px;background:#7C5CFF;border:1px solid var(--border)"></span><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">accent_secondary</span></div><span class="v mono" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">#7C5CFF</span></div>
+        <div class="divider"></div>
+        <div class="kv"><div style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:22px;border-radius:7px;background:#0B0F17;border:1px solid var(--border)"></span><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">background_dark</span></div><span class="v mono" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">#0B0F17</span></div>
+        <div class="divider"></div>
+        <div class="kv"><div style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:22px;border-radius:7px;background:#FF5C7A;border:1px solid var(--border)"></span><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">error_red</span></div><span class="v mono" style="font-family:'JetBrains Mono',monospace;font-size:11.5px">#FF5C7A</span></div>
+      </div>
+      <button class="btn btn-s btn-block"><svg><use href="#i-plus"/></svg> Nouvelle couleur</button>
+    </div>
+  </div>
+
+  <div class="pane" id="r-dim">
+    <div class="pad" style="padding-top:10px">
+      <div class="card">
+        <div class="kv"><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">spacing_md</span><span class="v">16 dp</span></div>
+        <div class="divider"></div>
+        <div class="kv"><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">radius_card</span><span class="v">12 dp</span></div>
+        <div class="divider"></div>
+        <div class="kv"><span class="k mono" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">text_body</span><span class="v">14 sp</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pane" id="r-thm">
+    <div class="pad" style="padding-top:10px">
+      <div class="card card-p"><div class="card-t">themes.xml</div><div class="card-s">Thème parent : Material3.DayNight.NoActionBar. Deux variantes : <span class="monochip">Theme.Nimbus</span> et <span class="monochip">Theme.Nimbus.Dark</span>.</div><button class="btn btn-s btn-sm" style="margin-top:10px">Ouvrir le fichier</button></div>
+    </div>
+  </div>
+</section>

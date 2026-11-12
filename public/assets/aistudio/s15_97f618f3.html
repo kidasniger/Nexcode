@@ -1,0 +1,70 @@
+<section class="screen hasnav st-def" id="s15" data-num="15" data-grp="D. IA" data-nav="chat">
+  <div class="topbar">
+    <button class="icb" onclick="back()"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Chat IA</div><div class="sub mono" style="font-family:'JetBrains Mono',monospace;font-size:10.5px" id="mdl-sub">claude-sonnet-4.5</div></div>
+    <div class="spacer"></div>
+    <button class="icb" onclick="mopen('m-model')"><svg><use href="#i-sliders"/></svg></button>
+    <button class="icb" onclick="go('s16',true)"><svg><use href="#i-clock"/></svg></button>
+  </div>
+  <div class="card" style="margin:0 16px 4px">
+    <div class="kv" style="padding:9px 12px"><span class="k" style="font-size:11.5px">Contexte de la conversation</span><button class="btn btn-g btn-sm" style="height:28px;padding:0 10px"><svg><use href="#i-plus"/></svg> Fichiers</button></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 10px">
+      <span class="chip chip-acc mono" style="font-family:'JetBrains Mono',monospace">MainActivity.kt</span>
+      <span class="chip chip-acc mono" style="font-family:'JetBrains Mono',monospace">Theme.kt</span>
+      <span class="chip chip-acc mono" style="font-family:'JetBrains Mono',monospace">strings.xml</span>
+    </div>
+  </div>
+
+  <div class="pad" style="padding-top:14px">
+    <div class="stv" data-v="def">
+      <div class="msg u"><div class="who">VOUS · 14:02</div><div class="bub">Ajoute un écran de détails météo qui affiche l'humidité et le vent de la ville sélectionnée.</div></div>
+      <div class="msg a"><div class="who">CLAUDE · 14:02</div>
+        <div class="bub">
+          <div>Voici un composable <b>WeatherDetails</b> qui réutilise votre thème et vos chaînes existantes :</div>
+          <div class="code" style="margin-top:10px">
+            <div class="code-h"><span style="flex:1">WeatherDetails.kt · nouveau fichier</span></div>
+<pre><div class="cl"><span class="g">1</span><span><span class="a">@Composable</span></span></div>
+<div class="cl"><span class="g">2</span><span><span class="k">fun</span> <span class="f">WeatherDetails</span>(city: <span class="t">City</span>) {</span></div>
+<div class="cl"><span class="g">3</span><span>    <span class="t">Column</span> {</span></div>
+<div class="cl"><span class="g">4</span><span>        <span class="f">DetailRow</span>(</span></div>
+<div class="cl"><span class="g">5</span><span>            label = <span class="f">stringResource</span>(<span class="t">R</span>.string.unit_humidity),</span></div>
+<div class="cl"><span class="g">6</span><span>            value = <span class="s">"${city.humidity} %"</span>)</span></div>
+<div class="cl"><span class="g">7</span><span>        )</span></div>
+<div class="cl"><span class="g">8</span><span>        <span class="f">DetailRow</span>(</span></div>
+<div class="cl"><span class="g">9</span><span>            label = <span class="f">stringResource</span>(<span class="t">R</span>.string.unit_wind),</span></div>
+<div class="cl"><span class="g">10</span><span>            value = <span class="s">"${city.windKmh} km/h"</span>)</span></div>
+<div class="cl"><span class="g">11</span><span>        )</span></div>
+<div class="cl"><span class="g">12</span><span>    }</span></div>
+<div class="cl"><span class="g">13</span><span>}</span></div>
+</pre>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:10px">
+            <button class="btn btn-p btn-sm" onclick="go('s17',true)"><svg><use href="#i-check"/></svg> Appliquer au projet</button>
+            <button class="btn btn-s btn-sm"><svg><use href="#i-copy"/></svg> Copier</button>
+          </div>
+        </div>
+      </div>
+      <div class="msg a"><div class="bub" style="font-size:12.5px">3 fichiers concernés : <b>WeatherDetails.kt</b> (nouveau), <b>strings.xml</b> (+2 chaînes), <b>City.kt</b> (+1 champ). Passez en revue avant application.</div></div>
+    </div>
+    <div class="stv" data-v="cours">
+      <div class="msg u"><div class="who">VOUS · 14:05</div><div class="bub">Refactorise CityRepository pour utiliser kotlinx-serialization.</div></div>
+      <div class="msg a">
+        <div class="bub" style="display:flex;align-items:center;gap:10px">
+          <div class="typing" style="padding:0"><i></i><i></i><i></i></div>
+          <span style="font-size:12px;color:var(--txt2)">Analyse de CityRepository.kt (148 lignes)…</span>
+        </div>
+      </div>
+      <div class="card card-p" style="margin-top:6px;display:flex;align-items:center;gap:10px">
+        <div class="spin" style="width:14px;height:14px;border:1.5px solid rgba(61,220,255,.25);border-top-color:var(--accent);border-radius:99px;animation:sp 1s linear infinite"></div>
+        <span style="font-size:12px;color:var(--txt2)">Interrompre ou attendre — la réponse partielle est conservée.</span>
+        <button class="btn btn-d btn-sm" style="margin-left:auto;height:30px"><svg><use href="#i-stop"/></svg> Stop</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute;left:0;right:0;bottom:82px;background:var(--surface);border-top:1px solid var(--border);padding:8px 10px;display:flex;gap:8px;align-items:center">
+    <button class="icb" style="width:38px;height:38px"><svg><use href="#i-clip"/></svg></button>
+    <input class="input" style="height:42px;font-size:13px" placeholder="Décrire une modification…">
+    <button class="icb acc" style="width:42px;height:42px;background:var(--accent);color:var(--on-acc);border-radius:99px"><svg><use href="#i-send"/></svg></button>
+  </div>
+</section>
