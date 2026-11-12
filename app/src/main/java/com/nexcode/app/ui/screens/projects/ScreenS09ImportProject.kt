@@ -1,0 +1,300 @@
+package com.nexcode.app.ui.screens.projects
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.R
+import com.nexcode.app.ui.components.NexcodeButton
+import com.nexcode.app.ui.components.NexcodeButtonVariant
+import com.nexcode.app.ui.components.NexcodeCard
+import com.nexcode.app.ui.components.NexcodeChip
+import com.nexcode.app.ui.components.NexcodeChipVariant
+import com.nexcode.app.ui.components.NexcodeTextField
+import com.nexcode.app.ui.components.NexcodeTopBar
+import com.nexcode.app.ui.theme.InterFontFamily
+import com.nexcode.app.ui.theme.NexcodeTheme
+import com.nexcode.app.ui.theme.ShapeRadius12
+import com.nexcode.app.ui.theme.ShapeRadius14
+
+@Composable
+fun ScreenS09ImportProject(
+    viewModel: ProjectsViewModel,
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val colors = NexcodeTheme.colors
+    val scrollState = rememberScrollState()
+
+    Box(
+        modifier = modifier
+            .testTag("screen_s09")
+            .fillMaxSize()
+            .background(colors.bg)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // TopBar avec bouton retour et titre
+            NexcodeTopBar(
+                title = stringResource(id = R.string.s09_title),
+                navigationIcon = painterResource(id = R.drawable.ic_back),
+                onNavigationClick = onNavigateBack
+            )
+
+            // Barre d'onglets personnalisée (.tabbar avec Fichier .zip et Dépôt GitHub)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.surface2)
+                    .padding(3.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                TabItem(
+                    title = stringResource(id = R.string.s09_tab_zip),
+                    iconRes = R.drawable.ic_box,
+                    isSelected = uiState.importTabIndex == 0,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setImportTab(0) }
+                )
+                TabItem(
+                    title = stringResource(id = R.string.s09_tab_git),
+                    iconRes = R.drawable.ic_branch,
+                    isSelected = uiState.importTabIndex == 1,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setImportTab(1) }
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                if (uiState.importTabIndex == 0) {
+                    // ============ VOLET 1 : FICHIER .ZIP ============
+                    val borderColor = colors.border
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(ShapeRadius14)
+                            .background(colors.codeBg)
+                            .drawBehind {
+                                drawRoundRect(
+                                    color = borderColor,
+                                    style = Stroke(
+                                        width = 1.5.dp.toPx(),
+                                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 10f), 0f)
+                                    ),
+                                    cornerRadius = CornerRadius(14.dp.toPx(), 14.dp.toPx())
+                                )
+                            }
+                            .clickable {
+                                viewModel.importZip { onNavigateBack() }
+                            }
+                            .padding(vertical = 34.dp, horizontal = 20.dp)
+                            .testTag("s09_zip_drop_card"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_download),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .padding(bottom = 8.dp),
+                                tint = colors.accent
+                            )
+
+                            Text(
+                                text = stringResource(id = R.string.s09_choose_zip_title),
+                                fontFamily = InterFontFamily,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.txt
+                            )
+
+                            Text(
+                                text = stringResource(id = R.string.s09_choose_zip_desc),
+                                fontFamily = InterFontFamily,
+                                fontSize = 11.5.sp,
+                                color = colors.txt2,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 17.sp,
+                                modifier = Modifier.padding(top = 6.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Carte d'importation récente
+                    NexcodeCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("s09_recent_zip_card")
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(ShapeRadius12)
+                                    .background(colors.surface2),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_file),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = colors.accent
+                                )
+                            }
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(id = R.string.s09_recent_zip_name),
+                                    fontFamily = InterFontFamily,
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.txt
+                                )
+                                Text(
+                                    text = stringResource(id = R.string.s09_recent_zip_desc),
+                                    fontFamily = InterFontFamily,
+                                    fontSize = 11.5.sp,
+                                    color = colors.txt2,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
+
+                            NexcodeChip(
+                                text = stringResource(id = R.string.s09_success_chip),
+                                variant = NexcodeChipVariant.SUCCESS
+                            )
+                        }
+                    }
+                } else {
+                    // ============ VOLET 2 : DÉPÔT GITHUB ============
+                    NexcodeTextField(
+                        value = uiState.importGitUrl,
+                        onValueChange = { viewModel.updateImportGitUrl(it) },
+                        label = stringResource(id = R.string.s09_repo_url_label),
+                        isMono = true,
+                        testTag = "s09_git_url_input"
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    NexcodeTextField(
+                        value = uiState.importGitBranch,
+                        onValueChange = { viewModel.updateImportGitBranch(it) },
+                        label = stringResource(id = R.string.s09_branch_label),
+                        isMono = true,
+                        testTag = "s09_git_branch_input"
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    NexcodeButton(
+                        text = stringResource(id = R.string.s09_import_repo_btn),
+                        onClick = { viewModel.importGit { onNavigateBack() } },
+                        variant = NexcodeButtonVariant.PRIMARY,
+                        icon = painterResource(id = R.drawable.ic_pull),
+                        fullWidth = true,
+                        testTag = "s09_import_git_btn"
+                    )
+
+                    Text(
+                        text = stringResource(id = R.string.s09_git_hint),
+                        fontFamily = InterFontFamily,
+                        fontSize = 11.5.sp,
+                        color = colors.txt2,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TabItem(
+    title: String,
+    iconRes: Int,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val colors = NexcodeTheme.colors
+
+    Box(
+        modifier = modifier
+            .height(38.dp)
+            .clip(RoundedCornerShape(9.dp))
+            .background(if (isSelected) colors.surface else androidx.compose.ui.graphics.Color.Transparent)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = if (isSelected) colors.accent else colors.txt2
+            )
+            Text(
+                text = title,
+                fontFamily = InterFontFamily,
+                fontSize = 12.5.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) colors.txt else colors.txt2
+            )
+        }
+    }
+}

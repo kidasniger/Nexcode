@@ -1,0 +1,44 @@
+<section class="screen nonav st-def" id="s03" data-num="3" data-grp="A. Démarrage">
+  <div class="topbar">
+    <button class="icb" onclick="back()"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Connectez GitHub</div></div>
+  </div>
+  <div class="pad" style="padding-top:6px">
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:18px 10px 22px">
+      <div class="tile p" style="width:68px;height:68px;border-radius:20px"><svg style="width:30px;height:30px"><use href="#i-branch"/></svg></div>
+      <div style="font-size:15.5px;font-weight:700;margin-top:14px">Votre code, synchronisé</div>
+      <div style="font-size:12.5px;color:var(--txt2);margin-top:6px;line-height:1.6;max-width:280px">Poussez vos commits, importez vos dépôts et téléchargez vos APK depuis GitHub Releases.</div>
+    </div>
+
+    <div class="stv" data-v="def">
+      <div class="field">
+        <label class="lab">Jeton d'accès personnel</label>
+        <div class="inwrap">
+          <input class="input mono" type="password" value="ghp_9f2Xk7QzLm4Np8Rt" spellcheck="false">
+          <button class="icb end" style="width:36px;height:36px" onclick="this.previousElementSibling.type=this.previousElementSibling.type==='password'?'text':'password'"><svg><use href="#i-eye"/></svg></button>
+        </div>
+        <div class="hint">Créez un jeton sur github.com → Paramètres → Développeur. Portées requises : <span class="monochip" style="font-size:10px">repo</span> <span class="monochip" style="font-size:10px">workflow</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin:18px 0">
+        <div class="divider" style="flex:1"></div><span style="font-size:11px;color:var(--txt2);font-weight:600">ou</span><div class="divider" style="flex:1"></div>
+      </div>
+      <button class="btn btn-s btn-block" onclick="go('s03')"><svg><use href="#i-qr"/></svg> Se connecter avec un code appareil</button>
+      <div style="text-align:center;font-size:11px;color:var(--txt2);margin-top:8px">Entrez le code affiché sur github.com/login/device</div>
+      <div class="banner banner-ok" style="margin-top:20px"><svg><use href="#i-check-c"/></svg><div>Connecté en tant que <b>nimbus-dev</b> · 4 dépôts accessibles</div></div>
+      <button class="btn btn-s btn-sm" style="margin-top:12px" onclick="mopen('m-signout')"><svg><use href="#i-logout"/></svg> Se déconnecter</button>
+    </div>
+
+    <div class="stv" data-v="err">
+      <div class="banner banner-err"><svg><use href="#i-wifi"/></svg><div><b>Impossible de joindre github.com.</b><br>Vérifiez votre connexion réseau puis réessayez. Votre jeton n'a pas été modifié.</div></div>
+      <div class="field" style="margin-top:16px">
+        <label class="lab">Jeton d'accès personnel</label>
+        <input class="input mono" type="password" value="ghp_9f2Xk7QzLm4Np8Rt" spellcheck="false">
+      </div>
+      <button class="btn btn-p btn-block" style="margin-top:8px"><svg><use href="#i-refresh"/></svg> Réessayer</button>
+    </div>
+
+    <div style="position:sticky;bottom:0;padding:14px 0 8px;background:var(--bg)">
+      <button class="btn btn-p btn-block" onclick="go('s04')">Continuer</button>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,38 @@
+<section class="screen nonav" id="s04" data-num="4" data-grp="A. Démarrage">
+  <div class="topbar">
+    <button class="icb" onclick="back()"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Configuration de l'IA</div><div class="sub">Votre clé reste sur l'appareil</div></div>
+  </div>
+  <div class="pad" style="padding-top:4px">
+    <div class="field">
+      <label class="lab">Fournisseur</label>
+      <div class="card" style="overflow:hidden">
+        <button class="rowbtn" style="padding:13px 14px"><div class="li-ic acc"><svg><use href="#i-spark"/></svg></div><div class="tx" style="flex:1"><div class="t">Anthropic</div><div class="s">Recommandé pour le code Kotlin</div></div><div style="width:18px;height:18px;border-radius:99px;border:1.5px solid var(--accent);display:flex;align-items:center;justify-content:center"><i style="width:9px;height:9px;border-radius:99px;background:var(--accent)"></i></div></button>
+        <div class="divider"></div>
+        <button class="rowbtn" style="padding:13px 14px"><div class="li-ic"><svg><use href="#i-spark"/></svg></div><div class="tx" style="flex:1"><div class="t">OpenAI</div><div class="s">Via clé personnelle</div></div><div style="width:18px;height:18px;border-radius:99px;border:1.5px solid var(--border)"></div></button>
+        <div class="divider"></div>
+        <button class="rowbtn" style="padding:13px 14px"><div class="li-ic"><svg><use href="#i-db"/></svg></div><div class="tx" style="flex:1"><div class="t">Serveur personnalisé</div><div class="s">Endpoint compatible OpenAI (Ollama…)</div></div><div style="width:18px;height:18px;border-radius:99px;border:1.5px solid var(--border)"></div></button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lab">Clé API</label>
+      <div class="inwrap">
+        <input class="input mono" type="password" value="sk-ant-api03-x9L2mQ7vNp4Tt8Rw" spellcheck="false">
+        <button class="icb end" style="width:36px;height:36px"><svg><use href="#i-eye"/></svg></button>
+      </div>
+      <div class="hint">Chiffrée avec le coffre Android et jamais envoyée à NEXCODE.</div>
+    </div>
+    <div class="field">
+      <label class="lab">Modèle</label>
+      <button class="btn btn-s btn-block" style="justify-content:space-between" onclick="mopen('m-model')">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600" id="mdl-lbl">claude-sonnet-4.5</span>
+        <svg style="width:16px;height:16px;color:var(--txt2)"><use href="#i-down"/></svg>
+      </button>
+    </div>
+    <button class="btn btn-s btn-block" id="ai-test" onclick="testAI(this)"><svg><use href="#i-flash"/></svg> Tester la connexion</button>
+    <div id="ai-res" class="banner banner-ok" style="display:none;margin-top:12px"><svg><use href="#i-check-c"/></svg><div>Connexion réussie · <b>412 ms</b> · modèle joignable</div></div>
+    <div style="position:sticky;bottom:0;padding:14px 0 8px;background:var(--bg)">
+      <button class="btn btn-p btn-block" onclick="go('s05',true)">Terminer la configuration</button>
+    </div>
+  </div>
+</section>

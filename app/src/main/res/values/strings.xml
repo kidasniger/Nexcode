@@ -1,3 +1,134 @@
 <resources>
     <string name="app_name">NEXCODE</string>
+
+    <!-- Écran 1 : Lancement -->
+    <string name="s01_tagline">Codez vraiment,\ndepuis votre poche.</string>
+    <string name="s01_progress_label">Préparation de l\'atelier…</string>
+    <string name="s01_skip">Passer</string>
+
+    <!-- Écran 2 : Présentation -->
+    <string name="s02_title">Créez un projet\nen quelques minutes</string>
+    <string name="s02_desc">Choisissez un modèle — Kotlin Compose, Kotlin XML, Java ou Flutter — et NEXCODE prépare toute la structure du projet.</string>
+    <string name="s02_card_title">Modèles prêts à compiler</string>
+    <string name="s02_card_desc">Manifeste, Gradle, thème et écran d\'accueil inclus.</string>
+    <string name="s02_next">Suivant</string>
+    <string name="s02_step_label">1 sur 3 · Créer</string>
+
+    <!-- Écran 3 : Connexion GitHub -->
+    <string name="s03_title">Connectez GitHub</string>
+    <string name="s03_subtitle">Votre code, synchronisé</string>
+    <string name="s03_desc">Poussez vos commits, importez vos dépôts et téléchargez vos APK depuis GitHub Releases.</string>
+    <string name="s03_token_label">Jeton d\'accès personnel</string>
+    <string name="s03_token_hint">Créez un jeton sur github.com → Paramètres → Développeur. Portées requises : repo workflow</string>
+    <string name="s03_or">ou</string>
+    <string name="s03_device_code_btn">Se connecter avec un code appareil</string>
+    <string name="s03_device_code_desc">Entrez le code affiché sur github.com/login/device</string>
+    <string name="s03_connected_banner">Connecté en tant que nimbus-dev · 4 dépôts accessibles</string>
+    <string name="s03_disconnect_btn">Se déconnecter</string>
+    <string name="s03_disconnect_confirm_title">Déconnexion de GitHub</string>
+    <string name="s03_disconnect_confirm_msg">Voulez-vous vraiment déconnecter votre compte GitHub ? Le jeton sera supprimé du coffre.</string>
+    <string name="s03_cancel">Annuler</string>
+    <string name="s03_confirm">Confirmer</string>
+    <string name="s03_error_banner">Impossible de joindre github.com.\nVérifiez votre connexion réseau puis réessayez. Votre jeton n\'a pas été modifié.</string>
+    <string name="s03_retry">Réessayer</string>
+    <string name="s03_continue">Continuer</string>
+
+    <!-- Écran 4 : Configuration de l'IA -->
+    <string name="s04_title">Configuration de l\'IA</string>
+    <string name="s04_subtitle">Votre clé reste sur l\'appareil</string>
+    <string name="s04_provider_label">Fournisseur</string>
+    <string name="s04_provider_anthropic">Anthropic</string>
+    <string name="s04_provider_anthropic_sub">Recommandé pour le code Kotlin</string>
+    <string name="s04_provider_openai">OpenAI</string>
+    <string name="s04_provider_openai_sub">Via clé personnelle</string>
+    <string name="s04_provider_custom">Serveur personnalisé</string>
+    <string name="s04_provider_custom_sub">Endpoint compatible OpenAI (Ollama…)</string>
+    <string name="s04_key_label">Clé API</string>
+    <string name="s04_key_hint">Chiffrée avec le coffre Android et jamais envoyée à NEXCODE.</string>
+    <string name="s04_model_label">Modèle</string>
+    <string name="s04_test_btn">Tester la connexion</string>
+    <string name="s04_test_success">Connexion réussie · 412 ms · modèle joignable</string>
+    <string name="s04_test_error">Échec de la connexion. Vérifiez votre clé API.</string>
+    <string name="s04_finish">Terminer la configuration</string>
+    <string name="s04_choose_model_title">Choisir le modèle IA</string>
+    <string name="s04_choose_model_sub">Sélectionnez le modèle adapté à vos besoins</string>
+
+    <!-- Écran 5 : Projets -->
+    <string name="s05_title">Projets</string>
+    <string name="s05_subtitle_format">%1$d projets · %2$s</string>
+    <string name="s05_search_placeholder">Rechercher un projet…</string>
+    <string name="s05_chip_all">Tous</string>
+    <string name="s05_chip_kotlin">Kotlin</string>
+    <string name="s05_chip_java">Java</string>
+    <string name="s05_chip_flutter">Flutter</string>
+    <string name="s05_chip_exported">Exportés</string>
+    <string name="s05_recent_section">Récents</string>
+    <string name="s05_empty_title">Aucun projet</string>
+    <string name="s05_empty_desc">Créez votre premier projet depuis un modèle, ou importez une archive .zip et un dépôt GitHub.</string>
+    <string name="s05_create">Créer</string>
+    <string name="s05_import">Importer</string>
+    <string name="s05_new_fab">Nouveau</string>
+    <string name="s05_delete_dialog_title">Supprimer le projet</string>
+    <string name="s05_delete_dialog_msg">Voulez-vous vraiment supprimer « %s » ? Cette action supprimera définitivement les fichiers locaux du projet.</string>
+
+    <!-- Écran 6 : Nouveau projet -->
+    <string name="s06_title">Nouveau projet</string>
+    <string name="s06_subtitle">Choisissez un modèle</string>
+    <string name="s06_template_compose_title">Kotlin · Compose</string>
+    <string name="s06_recommended">Recommandé</string>
+    <string name="s06_template_compose_desc">UI déclarative, thème Material 3, preuve de concept rapide.</string>
+    <string name="s06_template_xml_title">Kotlin · XML</string>
+    <string name="s06_template_xml_desc">Vues classiques, plus léger sur les vieux appareils.</string>
+    <string name="s06_template_java_title">Java</string>
+    <string name="s06_template_java_desc">Projet Java traditionnel avec AppCompat.</string>
+    <string name="s06_template_flutter_title">Flutter</string>
+    <string name="s06_template_flutter_desc">Dart + SDK Flutter, compilation via Flutter CLI.</string>
+    <string name="s06_template_empty_title">Projet vide</string>
+    <string name="s06_template_empty_desc">Structure minimale Gradle, à composer vous-même.</string>
+    <string name="s06_continue_format">Continuer avec %s</string>
+
+    <!-- Écran 7 : Assistant de création -->
+    <string name="s07_title">Assistant de création</string>
+    <string name="s07_step_chip">1 / 2</string>
+    <string name="s07_name_label">Nom de l\'application</string>
+    <string name="s07_name_hint">Affiché sous l\'icône et dans les réglages système.</string>
+    <string name="s07_package_label">Nom du package</string>
+    <string name="s07_package_hint">Identifiant définitif sur le Play Store — il ne pourra plus être changé.</string>
+    <string name="s07_minsdk_label">SDK minimum</string>
+    <string name="s07_minsdk_hint">Android 10 (29) couvre 94 % des appareils actifs.</string>
+    <string name="s07_icon_label">Icône</string>
+    <string name="s07_icon_title">Icône générée</string>
+    <string name="s07_icon_desc">Dérivée du symbole NEXCODE, calques fond + avant-plan exportés.</string>
+    <string name="s07_change">Changer</string>
+    <string name="s07_ai_scaffold_title">Pré-remplir avec l\'IA</string>
+    <string name="s07_ai_scaffold_desc">Génère MainActivity, le thème, les chaînes et un test unitaire de base.</string>
+    <string name="s07_create_btn">Créer le projet</string>
+
+    <!-- Écran 8 : Détails du projet -->
+    <string name="s08_git_sync_desc">Branche main · synchronisé il y a 12 min</string>
+    <string name="s08_up_to_date">À jour</string>
+    <string name="s08_files_label">Fichiers</string>
+    <string name="s08_size_label">Taille</string>
+    <string name="s08_builds_label">Builds</string>
+    <string name="s08_quick_actions">Actions rapides</string>
+    <string name="s08_action_edit">Éditer</string>
+    <string name="s08_action_compile">Compiler</string>
+    <string name="s08_action_ai_chat">Chat IA</string>
+    <string name="s08_action_designer">Concepteur</string>
+    <string name="s08_last_builds">Derniers builds</string>
+    <string name="s08_logs_chip">Logs</string>
+
+    <!-- Écran 9 : Importer un projet -->
+    <string name="s09_title">Importer un projet</string>
+    <string name="s09_tab_zip">Fichier .zip</string>
+    <string name="s09_tab_git">Dépôt GitHub</string>
+    <string name="s09_choose_zip_title">Choisir un fichier .zip</string>
+    <string name="s09_choose_zip_desc">Archive Gradle ou export NEXCODE\nMaximum 200 Mo</string>
+    <string name="s09_recent_zip_name">meteo-android-main.zip</string>
+    <string name="s09_recent_zip_desc">46,3 Mo · importé le 2 nov.</string>
+    <string name="s09_success_chip">Réussi</string>
+    <string name="s09_repo_url_label">URL du dépôt</string>
+    <string name="s09_branch_label">Branche</string>
+    <string name="s09_import_repo_btn">Importer le dépôt</string>
+    <string name="s09_git_hint">Historique complet conservé · sous-modules exclus</string>
 </resources>

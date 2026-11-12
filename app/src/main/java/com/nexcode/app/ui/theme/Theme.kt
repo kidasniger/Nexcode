@@ -9,53 +9,104 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 
+// Choix de thème : Système, Clair, Sombre
+enum class AppThemeMode {
+    SYSTEM,
+    LIGHT,
+    DARK
+}
+
 private val DarkColorScheme = darkColorScheme(
     primary = DarkAccent,
     onPrimary = DarkOnAccent,
+    primaryContainer = DarkSurface2,
+    onPrimaryContainer = DarkTxt,
     secondary = DarkAccent2,
-    background = DarkBackground,
+    onSecondary = DarkTxt,
+    secondaryContainer = DarkSurface2,
+    onSecondaryContainer = DarkTxt,
+    background = DarkBg,
+    onBackground = DarkTxt,
     surface = DarkSurface,
-    onBackground = DarkText,
-    onSurface = DarkText,
+    onSurface = DarkTxt,
+    surfaceVariant = DarkSurface2,
+    onSurfaceVariant = DarkTxt2,
     outline = DarkBorder,
-    error = DarkError
+    outlineVariant = DarkBorder,
+    error = DarkErr,
+    onError = DarkBg
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = LightAccent,
     onPrimary = LightOnAccent,
+    primaryContainer = LightSurface2,
+    onPrimaryContainer = LightTxt,
     secondary = LightAccent2,
-    background = LightBackground,
+    onSecondary = LightTxt,
+    secondaryContainer = LightSurface2,
+    onSecondaryContainer = LightTxt,
+    background = LightBg,
+    onBackground = LightTxt,
     surface = LightSurface,
-    onBackground = LightText,
-    onSurface = LightText,
+    onSurface = LightTxt,
+    surfaceVariant = LightSurface2,
+    onSurfaceVariant = LightTxt2,
     outline = LightBorder,
-    error = LightError
+    outlineVariant = LightBorder,
+    error = LightErr,
+    onError = LightOnAccent
 )
 
-val LocalNexcodeColors = staticCompositionLocalOf { DarkNexcodeCustomColors }
+val LocalNexcodeColors = staticCompositionLocalOf { DarkNexcodeColors }
+val LocalCodeColors = staticCompositionLocalOf { DarkCodeColors }
+val LocalThemeMode = staticCompositionLocalOf { AppThemeMode.SYSTEM }
 
 object NexcodeTheme {
-    val customColors: NexcodeCustomColors
+    val colors: NexcodeColors
         @Composable
         @ReadOnlyComposable
         get() = LocalNexcodeColors.current
+
+    val codeColors: CodeColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalCodeColors.current
+
+    val spacing: NexcodeSpacing
+        get() = NexcodeSpacing
+
+    val themeMode: AppThemeMode
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalThemeMode.current
 }
 
 @Composable
 fun NexcodeTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: AppThemeMode = AppThemeMode.SYSTEM,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-    val customColors = if (darkTheme) DarkNexcodeCustomColors else LightNexcodeCustomColors
+    val systemInDark = isSystemInDarkTheme()
+    val isDark = when (themeMode) {
+        AppThemeMode.SYSTEM -> systemInDark
+        AppThemeMode.LIGHT -> false
+        AppThemeMode.DARK -> true
+    }
+
+    val colorScheme = if (isDark) DarkColorScheme else LightColorScheme
+    val nexcodeColors = if (isDark) DarkNexcodeColors else LightNexcodeColors
+    val codeColors = if (isDark) DarkCodeColors else LightCodeColors
 
     CompositionLocalProvider(
-        LocalNexcodeColors provides customColors
+        LocalNexcodeColors provides nexcodeColors,
+        LocalCodeColors provides codeColors,
+        LocalThemeMode provides themeMode
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,
+            shapes = Shapes,
             content = content
         )
     }

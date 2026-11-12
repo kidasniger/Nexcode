@@ -3,105 +3,149 @@ package com.nexcode.app.ui.theme
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-// Jetons exacts - Thème sombre
-val DarkBackground = Color(0xFF0B0F17)
+// Jetons exacts - Thème sombre (CSS data-theme="dark")
+val DarkBg = Color(0xFF0B0F17)
 val DarkSurface = Color(0xFF121826)
 val DarkSurface2 = Color(0xFF1A2233)
 val DarkBorder = Color(0xFF263047)
-val DarkText = Color(0xFFE8EDF7)
-val DarkText2 = Color(0xFF9AA7BF)
+val DarkTxt = Color(0xFFE8EDF7)
+val DarkTxt2 = Color(0xFF9AA7BF)
 val DarkAccent = Color(0xFF3DDCFF)
 val DarkAccent2 = Color(0xFF7C5CFF)
 val DarkOnAccent = Color(0xFF04242E)
-val DarkSuccess = Color(0xFF3DDC97)
-val DarkWarning = Color(0xFFFFB84D)
-val DarkError = Color(0xFFFF5C7A)
-val DarkCodeBackground = Color(0xFF0E1420)
+val DarkOk = Color(0xFF3DDC97)
+val DarkWarn = Color(0xFFFFB84D)
+val DarkErr = Color(0xFFFF5C7A)
+val DarkCodeBg = Color(0xFF0E1420)
 
-// Jetons exacts - Thème clair
-val LightBackground = Color(0xFFF6F8FC)
+// Coloration syntaxique sombre
+val DarkKw = Color(0xFFA78BFA)
+val DarkStr = Color(0xFF3DDC97)
+val DarkFn = Color(0xFF3DDCFF)
+val DarkNum = Color(0xFFFFB84D)
+val DarkCmt = Color(0xFF5E6B85)
+val DarkType = Color(0xFF7CD7F0)
+val DarkAnn = Color(0xFFFFB84D)
+
+// Jetons exacts - Thème clair (CSS data-theme="light")
+val LightBg = Color(0xFFF6F8FC)
 val LightSurface = Color(0xFFFFFFFF)
 val LightSurface2 = Color(0xFFEDF1F7)
 val LightBorder = Color(0xFFDDE4EF)
-val LightText = Color(0xFF0B0F17)
-val LightText2 = Color(0xFF5A6579)
+val LightTxt = Color(0xFF0B0F17)
+val LightTxt2 = Color(0xFF5A6579)
 val LightAccent = Color(0xFF0E7C9E)
 val LightAccent2 = Color(0xFF6A48E8)
 val LightOnAccent = Color(0xFFFFFFFF)
-val LightSuccess = Color(0xFF0E8A5F)
-val LightWarning = Color(0xFF9A6A1B)
-val LightError = Color(0xFFC9284D)
-val LightCodeBackground = Color(0xFFF0F3F9)
+val LightOk = Color(0xFF0E8A5F)
+val LightWarn = Color(0xFF9A6A1B)
+val LightErr = Color(0xFFC9284D)
+val LightCodeBg = Color(0xFFF0F3F9)
 
-// Coloration syntaxique - Sombre
-val DarkCodeKeyword = Color(0xFFA78BFA)
-val DarkCodeString = Color(0xFF3DDC97)
-val DarkCodeFunction = Color(0xFF3DDCFF)
-val DarkCodeNumber = Color(0xFFFFB84D)
-val DarkCodeComment = Color(0xFF5E6B85)
-val DarkCodeType = Color(0xFF7CD7F0)
-val DarkCodeAnnotation = Color(0xFFFFB84D)
+// Coloration syntaxique claire
+val LightKw = Color(0xFF6D28D9)
+val LightStr = Color(0xFF0E8A5F)
+val LightFn = Color(0xFF0E7C9E)
+val LightNum = Color(0xFF9A6A1B)
+val LightCmt = Color(0xFF7B8699)
+val LightType = Color(0xFF155E8A)
+val LightAnn = Color(0xFF9A6A1B)
 
-// Coloration syntaxique - Clair
-val LightCodeKeyword = Color(0xFF6D28D9)
-val LightCodeString = Color(0xFF0E8A5F)
-val LightCodeFunction = Color(0xFF0E7C9E)
-val LightCodeNumber = Color(0xFF9A6A1B)
-val LightCodeComment = Color(0xFF7B8699)
-val LightCodeType = Color(0xFF155E8A)
-val LightCodeAnnotation = Color(0xFF9A6A1B)
+// Éléments spécifiques du thème clair
+val LightTopBarBg = LightBg
+val LightBNavBg = Color(0xFFFFFFFF)
+
+// Éléments spécifiques du thème sombre
+val DarkTopBarBg = DarkBg
+val DarkBNavBg = DarkSurface
 
 @Immutable
-data class NexcodeCustomColors(
+data class CodeColors(
+    val background: Color,
+    val keyword: Color,
+    val string: Color,
+    val function: Color,
+    val number: Color,
+    val comment: Color,
+    val type: Color,
+    val annotation: Color
+)
+
+val DarkCodeColors = CodeColors(
+    background = DarkCodeBg,
+    keyword = DarkKw,
+    string = DarkStr,
+    function = DarkFn,
+    number = DarkNum,
+    comment = DarkCmt,
+    type = DarkType,
+    annotation = DarkAnn
+)
+
+val LightCodeColors = CodeColors(
+    background = LightCodeBg,
+    keyword = LightKw,
+    string = LightStr,
+    function = LightFn,
+    number = LightNum,
+    comment = LightCmt,
+    type = LightType,
+    annotation = LightAnn
+)
+
+@Immutable
+data class NexcodeColors(
+    val bg: Color,
+    val surface: Color,
     val surface2: Color,
     val border: Color,
-    val text2: Color,
+    val txt: Color,
+    val txt2: Color,
+    val accent: Color,
     val accent2: Color,
     val onAccent: Color,
-    val success: Color,
-    val warning: Color,
-    val codeBackground: Color,
-    val codeKeyword: Color,
-    val codeString: Color,
-    val codeFunction: Color,
-    val codeNumber: Color,
-    val codeComment: Color,
-    val codeType: Color,
-    val codeAnnotation: Color
-)
+    val ok: Color,
+    val warn: Color,
+    val err: Color,
+    val topBarBg: Color,
+    val bNavBg: Color,
+    val codeColors: CodeColors
+) {
+    val codeBg: Color get() = codeColors.background
+}
 
-val DarkNexcodeCustomColors = NexcodeCustomColors(
+val DarkNexcodeColors = NexcodeColors(
+    bg = DarkBg,
+    surface = DarkSurface,
     surface2 = DarkSurface2,
     border = DarkBorder,
-    text2 = DarkText2,
+    txt = DarkTxt,
+    txt2 = DarkTxt2,
+    accent = DarkAccent,
     accent2 = DarkAccent2,
     onAccent = DarkOnAccent,
-    success = DarkSuccess,
-    warning = DarkWarning,
-    codeBackground = DarkCodeBackground,
-    codeKeyword = DarkCodeKeyword,
-    codeString = DarkCodeString,
-    codeFunction = DarkCodeFunction,
-    codeNumber = DarkCodeNumber,
-    codeComment = DarkCodeComment,
-    codeType = DarkCodeType,
-    codeAnnotation = DarkCodeAnnotation
+    ok = DarkOk,
+    warn = DarkWarn,
+    err = DarkErr,
+    topBarBg = DarkTopBarBg,
+    bNavBg = DarkBNavBg,
+    codeColors = DarkCodeColors
 )
 
-val LightNexcodeCustomColors = NexcodeCustomColors(
+val LightNexcodeColors = NexcodeColors(
+    bg = LightBg,
+    surface = LightSurface,
     surface2 = LightSurface2,
     border = LightBorder,
-    text2 = LightText2,
+    txt = LightTxt,
+    txt2 = LightTxt2,
+    accent = LightAccent,
     accent2 = LightAccent2,
     onAccent = LightOnAccent,
-    success = LightSuccess,
-    warning = LightWarning,
-    codeBackground = LightCodeBackground,
-    codeKeyword = LightCodeKeyword,
-    codeString = LightCodeString,
-    codeFunction = LightCodeFunction,
-    codeNumber = LightCodeNumber,
-    codeComment = LightCodeComment,
-    codeType = LightCodeType,
-    codeAnnotation = LightCodeAnnotation
+    ok = LightOk,
+    warn = LightWarn,
+    err = LightErr,
+    topBarBg = LightTopBarBg,
+    bNavBg = LightBNavBg,
+    codeColors = LightCodeColors
 )

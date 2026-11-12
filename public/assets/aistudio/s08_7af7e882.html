@@ -1,0 +1,61 @@
+<section class="screen hasnav" id="s08" data-num="8" data-grp="B. Projets" data-nav="projets">
+  <div class="topbar">
+    <button class="icb" onclick="go('s05',true)"><svg><use href="#i-back"/></svg></button>
+    <div class="spacer"></div>
+    <button class="icb" onclick="mopen('m-del')"><svg><use href="#i-trash"/></svg></button>
+    <button class="icb"><svg><use href="#i-more"/></svg></button>
+  </div>
+  <div class="pad" style="margin-top:-44px;padding-top:0">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      <div class="tile" style="width:62px;height:62px;font-size:22px">NM</div>
+      <div>
+        <div style="font-size:19px;font-weight:800;letter-spacing:-.02em">Nimbus Météo</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--txt2)">com.nimbus.meteo</div>
+        <div style="display:flex;gap:5px;margin-top:7px"><span class="chip chip-acc">Kotlin</span><span class="chip chip-out">Compose</span><span class="chip chip-out">minSdk 29</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:10px">
+      <button class="rowbtn" style="padding:13px 14px" onclick="go('s25')">
+        <div class="li-ic"><svg><use href="#i-branch"/></svg></div>
+        <div class="tx" style="flex:1;min-width:0"><div class="t" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600">github.com/nimbus-dev/meteo-android</div><div class="s">Branche main · synchronisé il y a 12 min</div></div>
+        <span class="chip chip-ok">À jour</span>
+      </button>
+    </div>
+
+    <div class="col3" style="margin-bottom:10px">
+      <div class="card card-p" style="text-align:center"><div style="font-size:17px;font-weight:800">34</div><div style="font-size:10.5px;color:var(--txt2);margin-top:2px">Fichiers</div></div>
+      <div class="card card-p" style="text-align:center"><div style="font-size:17px;font-weight:800">8,2 Mo</div><div style="font-size:10.5px;color:var(--txt2);margin-top:2px">Taille</div></div>
+      <div class="card card-p" style="text-align:center"><div style="font-size:17px;font-weight:800">12</div><div style="font-size:10.5px;color:var(--txt2);margin-top:2px">Builds</div></div>
+    </div>
+
+    <div class="sect-t">Actions rapides</div>
+    <div class="col2" style="margin-bottom:4px">
+      <button class="btn btn-s" style="width:100%" onclick="go('s10')"><svg><use href="#i-code"/></svg> Éditer</button>
+      <button class="btn btn-p" style="width:100%" onclick="go('s21')"><svg><use href="#i-play"/></svg> Compiler</button>
+      <button class="btn btn-s" style="width:100%" onclick="go('s15',true)"><svg><use href="#i-spark"/></svg> Chat IA</button>
+      <button class="btn btn-s" style="width:100%" onclick="go('s18',true)"><svg><use href="#i-layout"/></svg> Concepteur</button>
+    </div>
+
+    <div class="sect-t">Derniers builds</div>
+    <div class="card" style="margin-bottom:12px">
+      <button class="rowbtn" style="padding:12px 14px" onclick="go('s24',true)">
+        <div class="li-ic ok"><svg><use href="#i-check-c"/></svg></div>
+        <div class="tx" style="flex:1"><div class="t" style="font-size:13px">v1.2.0 (12) · release</div><div class="s">Il y a 2 h · 8,1 Mo · signé</div></div>
+        <svg style="width:16px;height:16px;color:var(--txt2)"><use href="#i-fwd"/></svg>
+      </button>
+      <div class="divider"></div>
+      <button class="rowbtn" style="padding:12px 14px" onclick="go('s24',true)">
+        <div class="li-ic ok"><svg><use href="#i-check-c"/></svg></div>
+        <div class="tx" style="flex:1"><div class="t" style="font-size:13px">v1.1.9 (11) · debug</div><div class="s">Hier · 12,4 Mo</div></div>
+        <svg style="width:16px;height:16px;color:var(--txt2)"><use href="#i-fwd"/></svg>
+      </button>
+      <div class="divider"></div>
+      <button class="rowbtn" style="padding:12px 14px" onclick="go('s23',true)">
+        <div class="li-ic err"><svg><use href="#i-x-c"/></svg></div>
+        <div class="tx" style="flex:1"><div class="t" style="font-size:13px">v1.1.8 (10) · release</div><div class="s">Le 3 nov. · 2 erreurs</div></div>
+        <span class="chip chip-err">Logs</span>
+      </button>
+    </div>
+  </div>
+</section>

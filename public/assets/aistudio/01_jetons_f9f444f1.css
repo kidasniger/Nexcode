@@ -1,0 +1,20 @@
+.phone[data-theme="dark"]{
+  --bg:#0B0F17; --surface:#121826; --surface2:#1A2233; --border:#263047;
+  --txt:#E8EDF7; --txt2:#9AA7BF;
+  --accent:#3DDCFF; --accent2:#7C5CFF; --on-acc:#04242E;
+  --ok:#3DDC97; --warn:#FFB84D; --err:#FF5C7A;
+  --codebg:#0E1420;
+  --kw:#A78BFA; --str:#3DDC97; --fn:#3DDCFF; --num:#FFB84D; --cmt:#5E6B85; --type:#7CD7F0; --ann:#FFB84D;
+}
+.phone[data-theme="light"]{
+  --bg:#F6F8FC; --surface:#FFFFFF; --surface2:#EDF1F7; --border:#DDE4EF;
+  --txt:#0B0F17; --txt2:#5A6579;
+  --accent:#0E7C9E; --accent2:#6A48E8; --on-acc:#FFFFFF;
+  --ok:#0E8A5F; --warn:#9A6A1B; --err:#C9284D;
+  --codebg:#F0F3F9;
+  --kw:#6D28D9; --str:#0E8A5F; --fn:#0E7C9E; --num:#9A6A1B; --cmt:#7B8699; --type:#155E8A; --ann:#9A6A1B;
+}
+.phone[data-theme="light"] .hole{background:#111827;border-color:#2A3244}
+.phone[data-theme="light"] .topbar{background:var(--bg)}
+.phone[data-theme="light"] .bnav{background:#FFFFFF}
+.phone[data-theme="light"] .canvasw{background:repeating-linear-gradient(0deg,transparent 0 15px,rgba(11,15,23,.02) 15px 16px)}

@@ -1,0 +1,43 @@
+<section class="screen hasnav" id="s07" data-num="7" data-grp="B. Projets" data-nav="projets">
+  <div class="topbar">
+    <button class="icb" onclick="back()"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Assistant de création</div><div class="sub">Kotlin · Compose</div></div>
+    <div class="spacer"></div>
+    <span class="chip chip-out">1 / 2</span>
+  </div>
+  <div class="pad">
+    <div class="bar" style="margin-bottom:18px"><div class="bar-fill" style="width:50%"></div></div>
+    <div class="field">
+      <label class="lab">Nom de l'application</label>
+      <input class="input" value="Nimbus Météo" spellcheck="false">
+      <div class="hint">Affiché sous l'icône et dans les réglages système.</div>
+    </div>
+    <div class="field">
+      <label class="lab">Nom du package</label>
+      <input class="input mono" value="com.nimbus.meteo" spellcheck="false">
+      <div class="hint"><svg style="width:12px;height:12px;display:inline;vertical-align:-2px"><use href="#i-info"/></svg> Identifiant définitif sur le Play Store — il ne pourra plus être changé.</div>
+    </div>
+    <div class="field">
+      <label class="lab">SDK minimum</label>
+      <div class="seg">
+        <button>24</button><button>26</button><button class="on">29</button><button>33</button>
+      </div>
+      <div class="hint">Android 10 (29) couvre 94 % des appareils actifs.</div>
+    </div>
+    <div class="field">
+      <label class="lab">Icône</label>
+      <div class="card card-p" style="display:flex;align-items:center;gap:14px">
+        <div style="width:58px;height:58px;border-radius:16px;background:#0B0F17;border:1px solid var(--border);display:flex;align-items:center;justify-content:center">
+          <svg width="30" height="30" viewBox="0 0 48 48" fill="none"><use href="#g-nx"/></svg>
+        </div>
+        <div class="tx" style="flex:1"><div class="card-t">Icône générée</div><div class="card-s">Dérivée du symbole NEXCODE, calques fond + avant-plan exportés.</div></div>
+        <button class="btn btn-s btn-sm">Changer</button>
+      </div>
+    </div>
+    <div class="card card-p" style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+      <div class="tx" style="flex:1"><div class="card-t">Pré-remplir avec l'IA</div><div class="card-s">Génère MainActivity, le thème, les chaînes et un test unitaire de base.</div></div>
+      <div class="switch on"></div>
+    </div>
+    <div style="padding:10px 0 8px"><button class="btn btn-p btn-block" onclick="go('s08')"><svg><use href="#i-flash"/></svg> Créer le projet</button></div>
+  </div>
+</section>

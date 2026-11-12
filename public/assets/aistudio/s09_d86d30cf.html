@@ -1,0 +1,38 @@
+<section class="screen hasnav" id="s09" data-num="9" data-grp="B. Projets" data-nav="projets">
+  <div class="topbar">
+    <button class="icb" onclick="go('s05',true)"><svg><use href="#i-back"/></svg></button>
+    <div><div class="ttl">Importer un projet</div></div>
+  </div>
+  <div class="pad">
+    <div class="tabbar" style="margin:0 -16px 14px">
+      <button class="tab on" onclick="tab(this,'i-zip')"><svg><use href="#i-box"/></svg> Fichier .zip</button>
+      <button class="tab" onclick="tab(this,'i-git')"><svg><use href="#i-branch"/></svg> Dépôt GitHub</button>
+    </div>
+
+    <div class="pane on" id="i-zip">
+      <button class="card" style="width:100%;border-style:dashed;border-width:1.5px;padding:34px 20px;background:var(--codebg);text-align:center" onclick="go('s05',true)">
+        <svg style="width:34px;height:34px;color:var(--accent);margin:0 auto 12px"><use href="#i-download"/></svg>
+        <div style="font-size:14px;font-weight:700">Choisir un fichier .zip</div>
+        <div style="font-size:11.5px;color:var(--txt2);margin-top:6px;line-height:1.5">Archive Gradle ou export NEXCODE<br>Maximum 200 Mo</div>
+      </button>
+      <div class="card card-p" style="margin-top:12px;display:flex;gap:10px;align-items:center">
+        <div class="li-ic"><svg><use href="#i-file"/></svg></div>
+        <div class="tx" style="flex:1"><div class="card-t" style="font-size:12.5px">meteo-android-main.zip</div><div class="card-s">46,3 Mo · importé le 2 nov.</div></div>
+        <span class="chip chip-ok">Réussi</span>
+      </div>
+    </div>
+
+    <div class="pane" id="i-git">
+      <div class="field">
+        <label class="lab">URL du dépôt</label>
+        <input class="input mono" value="github.com/nimbus-dev/meteo-android" spellcheck="false">
+      </div>
+      <div class="field">
+        <label class="lab">Branche</label>
+        <input class="input mono" value="main" spellcheck="false">
+      </div>
+      <button class="btn btn-p btn-block"><svg><use href="#i-pull"/></svg> Importer le dépôt</button>
+      <div class="hint" style="text-align:center;margin-top:10px">Historique complet conservé · sous-modules exclus</div>
+    </div>
+  </div>
+</section>
