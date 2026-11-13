@@ -21,22 +21,24 @@ enum class IndentationPreference {
 
 data class SettingsUiState(
     // Compte
-    val accountUsername: String = "nimbus-dev",
-    val accountPlan: String = "github.com/nimbus-dev · Plan gratuit",
+    val accountInitials: String = "?",
+    val accountUsername: String = "Non connecté",
+    val accountPlan: String = "Aucun compte associé",
     val showSignOutDialog: Boolean = false,
-    val isSignedOut: Boolean = false,
+    val isSignedOut: Boolean = true,
 
     // Préférences S28
     val language: String = "Français (France)",
     val aiModelSummary: String = "claude-sonnet-4.5 · Anthropic",
 
     // Stockage S28
-    val storageUsedText: String = "1,8 Go utilisés",
+    val storageUsedText: String = "0 Mo utilisés",
     val storageTotalText: String = "sur 4 Go",
-    val storageBarFillRatio: Float = 0.45f,
-    val storageProjectsText: String = "Projets · 1,2 Go",
-    val storageGradleText: String = "Caches Gradle · 480 Mo",
-    val storageApkText: String = "APK · 120 Mo",
+    val storageBarFillRatio: Float = 0f,
+    val storageProjectsText: String = "Projets · 0 Mo",
+    val storageGradleText: String = "Caches · 0 Mo",
+    val storageApkText: String = "APK · 0 Mo",
+    val clearCacheButtonLabel: String = "Vider les caches (0 Mo)",
     val isCacheCleared: Boolean = false,
 
     // Notifications S28
@@ -54,9 +56,9 @@ data class SettingsUiState(
     val autoCloseBrackets: Boolean = true,
 
     // Sauvegarde & À propos S30
-    val lastExportText: String = "1,2 Go · dernier export le 2 nov. à 03:00",
+    val lastExportText: String = "Export local des projets au format .zip",
     val autoBackupEnabled: Boolean = true,
     val appVersion: String = "1.4.2 (build 42)",
-    val updateStatus: String = "À jour · vérifié le 10 nov.",
+    val updateStatus: String = "À jour",
     val userNotice: String? = null
 )

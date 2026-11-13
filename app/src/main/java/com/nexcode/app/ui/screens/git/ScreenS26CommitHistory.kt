@@ -57,6 +57,10 @@ fun ScreenS26CommitHistory(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    LaunchedEffect(Unit) {
+        viewModel.refreshGitStatus(fetchRemote = false)
+    }
+
     LaunchedEffect(uiState.userNotice) {
         uiState.userNotice?.let { notice ->
             snackbarHostState.showSnackbar(notice)
@@ -97,7 +101,7 @@ fun ScreenS26CommitHistory(
                         color = colors.txt
                     )
                     Text(
-                        text = stringResource(id = R.string.s26_sub),
+                        text = "Branche ${uiState.currentBranch} · ${uiState.totalCommitsCount} commits",
                         fontSize = 12.sp,
                         color = colors.txt2
                     )
@@ -111,40 +115,37 @@ fun ScreenS26CommitHistory(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 6.dp)
             ) {
-                // Chips de filtre des branches (main, Toutes les branches)
+                val isCurrentBranchFilter = uiState.selectedFilterBranch != "all"
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    val isMain = uiState.selectedFilterBranch == "main"
-
-                    // Chip main (chip-acc)
                     Box(
                         modifier = Modifier
                             .testTag("s26_chip_main")
                             .clip(PillShape)
-                            .background(if (isMain) colors.accent else colors.surface2)
-                            .then(if (!isMain) Modifier.border(1.dp, colors.border, PillShape) else Modifier)
-                            .clickable { viewModel.selectFilterBranch("main") }
+                            .background(if (isCurrentBranchFilter) colors.accent else colors.surface2)
+                            .then(if (!isCurrentBranchFilter) Modifier.border(1.dp, colors.border, PillShape) else Modifier)
+                            .clickable { viewModel.selectFilterBranch(uiState.currentBranch) }
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = stringResource(id = R.string.s26_chip_main),
+                            text = uiState.currentBranch,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (isMain) colors.onAccent else colors.txt
+                            color = if (isCurrentBranchFilter) colors.onAccent else colors.txt
                         )
                     }
 
-                    // Chip Toutes les branches (chip-out)
                     Box(
                         modifier = Modifier
                             .testTag("s26_chip_all_branches")
                             .clip(PillShape)
-                            .background(if (!isMain) colors.accent else colors.surface2)
-                            .then(if (isMain) Modifier.border(1.dp, colors.border, PillShape) else Modifier)
+                            .background(if (!isCurrentBranchFilter) colors.accent else colors.surface2)
+                            .then(if (isCurrentBranchFilter) Modifier.border(1.dp, colors.border, PillShape) else Modifier)
                             .clickable { viewModel.selectFilterBranch("all") }
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
@@ -152,46 +153,55 @@ fun ScreenS26CommitHistory(
                             text = stringResource(id = R.string.s26_chip_all_branches),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (!isMain) colors.onAccent else colors.txt
+                            color = if (!isCurrentBranchFilter) colors.onAccent else colors.txt
                         )
                     }
                 }
 
-                // Carte liste des commits (.card)
+                // Carte liste des commits
                 NexcodeCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 10.dp)
                 ) {
-                    uiState.commits.forEachIndexed { index, commit ->
-                        if (index > 0) {
-                            HorizontalDivider(
-                                color = colors.border,
-                                thickness = 1.dp,
-                                modifier = Modifier.padding(vertical = 10.dp)
+                    if (uiState.commits.isEmpty()) {
+                        Text(
+                            text = "Aucun commit trouvé dans ce dépôt local.",
+                            fontSize = 12.5.sp,
+                            color = colors.txt2
+                        )
+                    } else {
+                        uiState.commits.forEachIndexed { index, commit ->
+                            if (index > 0) {
+                                HorizontalDivider(
+                                    color = colors.border,
+                                    thickness = 1.dp,
+                                    modifier = Modifier.padding(vertical = 10.dp)
+                                )
+                            }
+                            CommitListItem(
+                                commit = commit,
+                                onClick = {
+                                    if (uiState.conflicts.isNotEmpty()) {
+                                        onNavigateConflict()
+                                    }
+                                }
                             )
                         }
-                        CommitListItem(
-                            commit = commit,
-                            onClick = {
-                                if (index == 0) {
-                                    onNavigateConflict()
-                                }
-                            }
-                        )
                     }
                 }
 
-                // Bouton Charger plus (209 restants)
-                NexcodeButton(
-                    text = stringResource(id = R.string.s26_btn_load_more),
-                    onClick = { viewModel.loadMoreCommits() },
-                    variant = NexcodeButtonVariant.SECONDARY,
-                    size = NexcodeButtonSize.DEFAULT,
-                    icon = painterResource(id = R.drawable.ic_down),
-                    fullWidth = true,
-                    testTag = "s26_btn_load_more"
-                )
+                if (uiState.commits.size >= uiState.commitLoadLimit) {
+                    NexcodeButton(
+                        text = "Charger plus",
+                        onClick = { viewModel.loadMoreCommits() },
+                        variant = NexcodeButtonVariant.SECONDARY,
+                        size = NexcodeButtonSize.DEFAULT,
+                        icon = painterResource(id = R.drawable.ic_down),
+                        fullWidth = true,
+                        testTag = "s26_btn_load_more"
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -221,7 +231,6 @@ private fun CommitListItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Icône de commit (.li-ic ou .li-ic.acc)
         val iconBg = if (commit.isAccentIcon) colors.accent.copy(alpha = 0.15f) else colors.surface2
         val iconTint = if (commit.isAccentIcon) colors.accent else colors.txt2
 
@@ -256,19 +265,22 @@ private fun CommitListItem(
             )
         }
 
-        // Chip Poussé (.chip.chip-ok)
+        val chipBg = if (commit.isPushed) colors.ok.copy(alpha = 0.12f) else colors.warn.copy(alpha = 0.12f)
+        val chipBorder = if (commit.isPushed) colors.ok.copy(alpha = 0.35f) else colors.warn.copy(alpha = 0.35f)
+        val chipTextColor = if (commit.isPushed) colors.ok else colors.warn
+
         Box(
             modifier = Modifier
                 .clip(PillShape)
-                .background(colors.ok.copy(alpha = 0.12f))
-                .border(1.dp, colors.ok.copy(alpha = 0.35f), PillShape)
+                .background(chipBg)
+                .border(1.dp, chipBorder, PillShape)
                 .padding(horizontal = 9.dp, vertical = 3.dp)
         ) {
             Text(
-                text = stringResource(id = R.string.s26_chip_pushed),
+                text = stringResource(id = if (commit.isPushed) R.string.s26_chip_pushed else R.string.s25_chip_unpushed),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
-                color = colors.ok
+                color = chipTextColor
             )
         }
     }

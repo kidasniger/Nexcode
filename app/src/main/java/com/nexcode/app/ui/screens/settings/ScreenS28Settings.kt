@@ -55,6 +55,7 @@ fun ScreenS28Settings(
     onNavigateAppearance: () -> Unit,
     onNavigateAiConfig: () -> Unit,
     onNavigateBackupAbout: () -> Unit,
+    onNavigateGitHub: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -151,7 +152,7 @@ fun ScreenS28Settings(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "ND",
+                                text = state.accountInitials,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.accent
@@ -176,8 +177,8 @@ fun ScreenS28Settings(
                         }
 
                         NexcodeButton(
-                            text = "Gérer",
-                            onClick = { },
+                            text = if (state.isSignedOut) "Connecter" else "Gérer",
+                            onClick = onNavigateGitHub,
                             variant = NexcodeButtonVariant.SECONDARY,
                             modifier = Modifier
                                 .height(30.dp)
@@ -185,41 +186,43 @@ fun ScreenS28Settings(
                         )
                     }
 
-                    HorizontalDivider(color = colors.border)
+                    if (!state.isSignedOut) {
+                        HorizontalDivider(color = colors.border)
 
-                    // Bouton se déconnecter
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { viewModel.setSignOutDialogVisible(true) }
-                            .padding(horizontal = 14.dp, vertical = 12.dp)
-                            .testTag("s28_btn_signout"),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
+                        // Bouton se déconnecter
+                        Row(
                             modifier = Modifier
-                                .size(30.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(colors.err.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
+                                .fillMaxWidth()
+                                .clickable { viewModel.setSignOutDialogVisible(true) }
+                                .padding(horizontal = 14.dp, vertical = 12.dp)
+                                .testTag("s28_btn_signout"),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_logout),
-                                contentDescription = null,
-                                tint = colors.err,
-                                modifier = Modifier.size(16.dp)
+                            Box(
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(colors.err.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_logout),
+                                    contentDescription = null,
+                                    tint = colors.err,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Text(
+                                text = "Se déconnecter de GitHub",
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.err,
+                                modifier = Modifier.weight(1f)
                             )
                         }
-
-                        Spacer(modifier = Modifier.width(12.dp))
-
-                        Text(
-                            text = "Se déconnecter de GitHub",
-                            fontSize = 13.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.err,
-                            modifier = Modifier.weight(1f)
-                        )
                     }
                 }
             }
@@ -272,8 +275,13 @@ fun ScreenS28Settings(
                                 fontWeight = FontWeight.SemiBold,
                                 color = colors.txt
                             )
+                            val themeLabel = when (state.uiTheme) {
+                                UiThemePreference.SYSTEM -> "Thème système"
+                                UiThemePreference.DARK -> "Thème sombre"
+                                UiThemePreference.LIGHT -> "Thème clair"
+                            }
                             Text(
-                                text = "Thème sombre · police 14 sp · Nex Dark",
+                                text = "$themeLabel · police ${state.editorFontSizeSp} sp",
                                 fontSize = 11.5.sp,
                                 color = colors.txt2,
                                 modifier = Modifier.padding(top = 2.dp)
@@ -457,7 +465,7 @@ fun ScreenS28Settings(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     NexcodeButton(
-                        text = "Vider les caches (480 Mo)",
+                        text = state.clearCacheButtonLabel,
                         onClick = { viewModel.clearCaches() },
                         variant = NexcodeButtonVariant.SECONDARY,
                         icon = painterResource(id = R.drawable.ic_trash),

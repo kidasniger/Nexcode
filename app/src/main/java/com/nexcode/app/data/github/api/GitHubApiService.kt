@@ -4,7 +4,9 @@ import com.nexcode.app.data.github.model.ArtifactsResponse
 import com.nexcode.app.data.github.model.GitHubBranch
 import com.nexcode.app.data.github.model.GitHubRepository
 import com.nexcode.app.data.github.model.GitHubUser
+import com.nexcode.app.data.github.model.GitHubWorkflowsResponse
 import com.nexcode.app.data.github.model.WorkflowDispatchPayload
+import com.nexcode.app.data.github.model.WorkflowJobsResponse
 import com.nexcode.app.data.github.model.WorkflowRunsResponse
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -27,7 +29,7 @@ interface GitHubApiService {
     suspend fun getUserRepositories(
         @Header("Authorization") authHeader: String,
         @Query("sort") sort: String = "updated",
-        @Query("per_page") perPage: Int = 30
+        @Query("per_page") perPage: Int = 100
     ): Response<List<GitHubRepository>>
 
     @GET("repos/{owner}/{repo}")
@@ -43,6 +45,13 @@ interface GitHubApiService {
         @Path("owner") owner: String,
         @Path("repo") repo: String
     ): Response<List<GitHubBranch>>
+
+    @GET("repos/{owner}/{repo}/actions/workflows")
+    suspend fun getWorkflows(
+        @Header("Authorization") authHeader: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String
+    ): Response<GitHubWorkflowsResponse>
 
     @POST("repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches")
     suspend fun triggerWorkflowDispatch(
@@ -60,6 +69,22 @@ interface GitHubApiService {
         @Path("repo") repo: String,
         @Query("per_page") perPage: Int = 10
     ): Response<WorkflowRunsResponse>
+
+    @GET("repos/{owner}/{repo}/actions/runs/{run_id}/jobs")
+    suspend fun getWorkflowRunJobs(
+        @Header("Authorization") authHeader: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @Path("run_id") runId: Long
+    ): Response<WorkflowJobsResponse>
+
+    @POST("repos/{owner}/{repo}/actions/runs/{run_id}/cancel")
+    suspend fun cancelWorkflowRun(
+        @Header("Authorization") authHeader: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @Path("run_id") runId: Long
+    ): Response<Unit>
 
     @GET("repos/{owner}/{repo}/actions/runs/{run_id}/logs")
     @Streaming

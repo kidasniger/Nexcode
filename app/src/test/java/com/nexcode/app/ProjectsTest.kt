@@ -2,11 +2,14 @@ package com.nexcode.app
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.nexcode.app.data.github.repository.GitHubRepositoryService
 import com.nexcode.app.ui.screens.projects.ProjectFilter
 import com.nexcode.app.ui.screens.projects.ProjectTemplateType
-import com.nexcode.app.ui.screens.projects.ProjectsViewModel
 import com.nexcode.app.ui.screens.projects.ProjectsViewMode
+import com.nexcode.app.ui.screens.projects.ProjectsViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.eclipse.jgit.api.Git
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -16,6 +19,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.File
+import java.nio.file.Files
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -27,115 +32,99 @@ class ProjectsTest {
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
-        viewModel = ProjectsViewModel(context)
+        viewModel = ProjectsViewModel(context, GitHubRepositoryService(context, api = FakeGitHubApiService()))
     }
 
     @Test
-    fun testInitialProjectsState() {
+    fun testInitialProjectsStateStartsEmpty() = runBlocking {
+        delay(50)
         val state = viewModel.uiState.value
-        assertEquals(6, state.projects.size)
-        assertEquals(6, state.filteredProjects.size)
-        assertEquals("Nimbus Météo", state.projects.first().name)
+        assertEquals(0, state.projects.size)
+        assertEquals(ProjectsViewMode.EMPTY, state.viewMode)
         assertEquals(ProjectFilter.ALL, state.selectedFilter)
-        assertEquals(ProjectsViewMode.DEFAULT, state.viewMode)
-        assertNotNull(state.selectedProject)
     }
 
     @Test
-    fun testSearchAndFilter() {
-        // Recherche
-        viewModel.onSearchQueryChange("Ticket")
-        assertEquals(1, viewModel.uiState.value.filteredProjects.size)
-        assertEquals("TicketFlash", viewModel.uiState.value.filteredProjects.first().name)
-
-        viewModel.onSearchQueryChange("")
-        assertEquals(6, viewModel.uiState.value.filteredProjects.size)
-
-        // Filtre Kotlin
-        viewModel.onFilterSelect(ProjectFilter.KOTLIN)
-        val kotlinProjects = viewModel.uiState.value.filteredProjects
-        assertTrue(kotlinProjects.all { it.language == "Kotlin" })
-
-        // Filtre Java
-        viewModel.onFilterSelect(ProjectFilter.JAVA)
-        val javaProjects = viewModel.uiState.value.filteredProjects
-        assertEquals(1, javaProjects.size)
-        assertEquals("NotesSimples", javaProjects.first().name)
-
-        // Filtre Flutter
-        viewModel.onFilterSelect(ProjectFilter.FLUTTER)
-        val flutterProjects = viewModel.uiState.value.filteredProjects
-        assertEquals(1, flutterProjects.size)
-        assertEquals("SuiviFitness", flutterProjects.first().name)
-
-        // Filtre Exportés
-        viewModel.onFilterSelect(ProjectFilter.EXPORTED)
-        val exportedProjects = viewModel.uiState.value.filteredProjects
-        assertEquals(1, exportedProjects.size)
-        assertEquals("MarquesPages", exportedProjects.first().name)
-    }
-
-    @Test
-    fun testToggleViewMode() {
-        assertEquals(ProjectsViewMode.DEFAULT, viewModel.uiState.value.viewMode)
-        viewModel.toggleViewMode()
-        assertEquals(ProjectsViewMode.EMPTY, viewModel.uiState.value.viewMode)
-        viewModel.toggleViewMode()
-        assertEquals(ProjectsViewMode.DEFAULT, viewModel.uiState.value.viewMode)
-    }
-
-    @Test
-    fun testTemplateSelectionAndProjectCreation() = runBlocking {
+    fun testCreateSearchFilterAndDeleteProject() = runBlocking {
         viewModel.selectTemplate(ProjectTemplateType.COMPOSE)
-        assertEquals(ProjectTemplateType.COMPOSE, viewModel.uiState.value.selectedTemplate)
-
         viewModel.updateNewAppName("Mon Super App")
-        assertEquals("Mon Super App", viewModel.uiState.value.newAppName)
         assertEquals("com.monsuperapp.app", viewModel.uiState.value.newPackageName)
-
         viewModel.selectMinSdk(29)
-        assertEquals(29, viewModel.uiState.value.selectedMinSdk)
-
         val createdId = viewModel.createProjectSync()
-
         assertTrue(createdId > 0)
-        val state = viewModel.uiState.value
-        assertEquals(7, state.projects.size)
-        assertEquals("Mon Super App", state.projects.first().name)
-        assertEquals("com.monsuperapp.app", state.projects.first().packageName)
-    }
 
-    @Test
-    fun testDeleteProject() = runBlocking {
-        val target = viewModel.uiState.value.projects.first()
+        viewModel.selectTemplate(ProjectTemplateType.JAVA)
+        viewModel.updateNewAppName("NotesJava")
+        viewModel.createProjectSync()
+
+        delay(100)
+        var state = viewModel.uiState.value
+        assertEquals(2, state.projects.size)
+        assertEquals(ProjectsViewMode.DEFAULT, state.viewMode)
+
+        viewModel.onSearchQueryChange("Super")
+        assertEquals(1, viewModel.uiState.value.filteredProjects.size)
+        assertEquals("Mon Super App", viewModel.uiState.value.filteredProjects.first().name)
+        viewModel.onSearchQueryChange("")
+
+        viewModel.onFilterSelect(ProjectFilter.JAVA)
+        assertEquals(1, viewModel.uiState.value.filteredProjects.size)
+        assertEquals("NotesJava", viewModel.uiState.value.filteredProjects.first().name)
+        viewModel.onFilterSelect(ProjectFilter.ALL)
+
+        val target = viewModel.uiState.value.projects.first { it.id == createdId }
+        assertTrue(File(target.localPath).exists())
+
         viewModel.openDeleteDialog(target)
         assertTrue(viewModel.uiState.value.showDeleteDialog)
-        assertEquals(target, viewModel.uiState.value.projectToDelete)
-
         viewModel.confirmDeleteProjectSync()
-        assertFalse(viewModel.uiState.value.showDeleteDialog)
-        assertEquals(5, viewModel.uiState.value.projects.size)
-        assertFalse(viewModel.uiState.value.projects.any { it.id == target.id })
+
+        delay(100)
+        state = viewModel.uiState.value
+        assertFalse(state.showDeleteDialog)
+        assertFalse(state.projects.any { it.id == createdId })
+        assertFalse(File(target.localPath).exists())
     }
 
     @Test
-    fun testImportZipAndGit() {
-        var zipImported = false
-        viewModel.importZip { zipImported = true }
-        assertTrue(zipImported)
-        assertEquals(7, viewModel.uiState.value.projects.size)
-        assertEquals("Météo Android", viewModel.uiState.value.projects.first().name)
+    fun testImportRealZipAndLocalBareGitClone() = runBlocking {
+        // 1. Test real .zip extraction
+        val tempDir = Files.createTempDirectory("nexcode_zip_test").toFile()
+        val zipFile = File(tempDir, "archive-demo.zip")
+        val zipBytes = FakeGitHubApiService.createZipBytes(
+            "archive-demo/app/src/main/java/Main.kt" to "fun main() {}".toByteArray(),
+            "archive-demo/build.gradle.kts" to "plugins {}".toByteArray()
+        )
+        zipFile.writeBytes(zipBytes)
+
+        val zipImported = viewModel.importZipFileSync(zipFile)
+        assertNotNull(zipImported)
+        delay(100)
+        assertTrue(viewModel.uiState.value.projects.any { it.name == "archive-demo" })
+
+        // 2. Test real JGit clone from local bare repo
+        val bareDir = File(tempDir, "remote-app.git")
+        Git.init().setBare(true).setDirectory(bareDir).call().close()
+        val workDir = File(tempDir, "seed")
+        Git.cloneRepository().setURI(bareDir.toURI().toString()).setDirectory(workDir).call().use { git ->
+            File(workDir, "README.md").writeText("# Remote App")
+            git.add().addFilepattern(".").call()
+            git.commit().setMessage("init").setAuthor("Test", "t@e.com").call()
+            git.push().call()
+        }
 
         viewModel.setImportTab(1)
-        assertEquals(1, viewModel.uiState.value.importTabIndex)
+        viewModel.updateImportGitUrl(bareDir.toURI().toString())
+        val currentBranch = Git.open(workDir).use { it.repository.branch }
+        viewModel.updateImportGitBranch(currentBranch)
 
-        viewModel.updateImportGitUrl("github.com/nimbus-dev/custom-repo")
-        viewModel.updateImportGitBranch("develop")
+        val clonedItem = viewModel.importGitSync()
+        assertNotNull(clonedItem)
+        delay(100)
+        val clonedProject = viewModel.uiState.value.projects.firstOrNull { it.name.contains("remote-app") }
+        assertNotNull(clonedProject)
+        assertTrue(File(clonedProject!!.localPath, ".git").exists())
 
-        var gitImported = false
-        viewModel.importGit { gitImported = true }
-        assertTrue(gitImported)
-        assertEquals(8, viewModel.uiState.value.projects.size)
-        assertEquals("custom-repo", viewModel.uiState.value.projects.first().name)
+        tempDir.deleteRecursively()
     }
 }

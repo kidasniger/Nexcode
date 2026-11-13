@@ -22,7 +22,8 @@ data class GitCommit(
     val message: String,
     val author: String,
     val date: String,
-    val isAccentIcon: Boolean = false
+    val isAccentIcon: Boolean = false,
+    val isPushed: Boolean = true
 )
 
 enum class ConflictChoice {
@@ -40,50 +41,30 @@ data class ConflictItem(
 
 data class GitUiState(
     // Écran 25 : Dépôt
-    val repoFullName: String = "nimbus-dev / meteo-android",
+    val repoFullName: String = "Aucun dépôt sélectionné",
     val currentBranch: String = "main",
-    val branchStatusText: String = "À jour avec origin/main · il y a 12 min",
+    val availableBranches: List<String> = emptyList(),
+    val branchStatusText: String = "Aucun dépôt Git initialisé",
+    val aheadBy: Int = 0,
+    val behindBy: Int = 0,
+    val hasGitRepo: Boolean = false,
+    val isBusy: Boolean = false,
     val viewMode: GitViewMode = GitViewMode.DEFAULT,
-    val modifiedFiles: List<ModifiedFile> = listOf(
-        ModifiedFile("MainActivity.kt", 18, 4),
-        ModifiedFile("strings.xml", 6, 0),
-        ModifiedFile("Theme.kt", 3, 1)
-    ),
-    val commitMessage: String = "feat: écran de détails météo",
-    val unpushedCommits: List<UnpushedCommit> = listOf(
-        UnpushedCommit("a3f92c1", "local"),
-        UnpushedCommit("b71e0d4", "local")
-    ),
+    val errorTitle: String = "Échec du push.",
+    val errorDescription: String = "Connexion à github.com indisponible. Les commits locaux sont en sécurité — réessayez plus tard.",
+    val modifiedFiles: List<ModifiedFile> = emptyList(),
+    val commitMessage: String = "",
+    val unpushedCommits: List<UnpushedCommit> = emptyList(),
 
     // Écran 26 : Historique des commits
     val historyBranch: String = "main",
-    val totalCommitsCount: Int = 214,
+    val totalCommitsCount: Int = 0,
+    val commitLoadLimit: Int = 20,
     val selectedFilterBranch: String = "main",
-    val commits: List<GitCommit> = listOf(
-        GitCommit("c1", "a3f92c1", "feat : écran de détails météo", "nimbus-dev", "il y a 2 h", isAccentIcon = true),
-        GitCommit("c2", "b71e0d4", "fix : gestion du cache hors ligne", "nimbus-dev", "hier", isAccentIcon = false),
-        GitCommit("c3", "c9a1b77", "chore : mise à jour des dépendances Gradle", "nimbus-dev", "le 3 nov.", isAccentIcon = false),
-        GitCommit("c4", "d44f0e2", "feat : recherche dans les projets", "nimbus-dev", "le 1 nov.", isAccentIcon = false),
-        GitCommit("c5", "e12c9a4", "style : thème Material 3 sombre", "nimbus-dev", "le 28 oct.", isAccentIcon = false)
-    ),
+    val commits: List<GitCommit> = emptyList(),
 
     // Écran 27 : Résolution de conflits
-    val conflicts: List<ConflictItem> = listOf(
-        ConflictItem(
-            id = "conf_1",
-            fileAndLine = "MainActivity.kt · ligne 14",
-            localLines = listOf("CityScreen(city =", "  prefs.defaultCity)"),
-            remoteLines = listOf("CityScreen(city =", "  repo.firstCity())"),
-            selectedChoice = ConflictChoice.LOCAL
-        ),
-        ConflictItem(
-            id = "conf_2",
-            fileAndLine = "strings.xml · ligne 3",
-            localLines = listOf("<string name=", "\"title_details\">"),
-            remoteLines = listOf("<string name=", "\"title_detail\">"),
-            selectedChoice = ConflictChoice.REMOTE
-        )
-    ),
+    val conflicts: List<ConflictItem> = emptyList(),
 
     val userNotice: String? = null
 )

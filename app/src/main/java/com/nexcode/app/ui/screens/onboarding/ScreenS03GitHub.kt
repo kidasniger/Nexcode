@@ -2,7 +2,6 @@ package com.nexcode.app.ui.screens.onboarding
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,28 +14,32 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
@@ -47,12 +50,10 @@ import com.nexcode.app.ui.components.NexcodeButtonSize
 import com.nexcode.app.ui.components.NexcodeButtonVariant
 import com.nexcode.app.ui.components.NexcodeChip
 import com.nexcode.app.ui.components.NexcodeChipVariant
-import com.nexcode.app.ui.components.NexcodeDialog
 import com.nexcode.app.ui.components.NexcodeIconButton
 import com.nexcode.app.ui.components.NexcodeTextField
 import com.nexcode.app.ui.components.NexcodeTopBar
 import com.nexcode.app.ui.theme.InterFontFamily
-import com.nexcode.app.ui.theme.JetBrainsMonoFontFamily
 import com.nexcode.app.ui.theme.NexcodeTheme
 
 @Composable
@@ -65,6 +66,14 @@ fun ScreenS03GitHub(
     val uiState by viewModel.uiState.collectAsState()
     val colors = NexcodeTheme.colors
     val scrollState = rememberScrollState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.userNotice) {
+        uiState.userNotice?.let { notice ->
+            snackbarHostState.showSnackbar(notice)
+            viewModel.dismissNotice()
+        }
+    }
 
     // Dialogue modal de déconnexion (m-signout)
     if (uiState.showDisconnectDialog) {
@@ -87,7 +96,6 @@ fun ScreenS03GitHub(
                 navigationIcon = painterResource(id = R.drawable.ic_back),
                 onNavigationClick = onNavigateBack,
                 actions = {
-                    // Puce permettant de basculer facilement entre état normal et état erreur (conforme démo maquette)
                     NexcodeChip(
                         text = if (uiState.isGitHubError) "Erreur" else "Défaut",
                         variant = if (uiState.isGitHubError) NexcodeChipVariant.ERROR else NexcodeChipVariant.DEFAULT,
@@ -140,7 +148,7 @@ fun ScreenS03GitHub(
                         fontFamily = InterFontFamily,
                         fontSize = 12.5.sp,
                         color = colors.txt2,
-                        lineHeight = 20.sp, // 1.6 * 12.5
+                        lineHeight = 20.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .padding(top = 6.dp)
@@ -150,12 +158,17 @@ fun ScreenS03GitHub(
 
                 if (!uiState.isGitHubError) {
                     // ============ VARIANTE PAR DÉFAUT (stv data-v="def") ============
-                    // Champ Jeton d'accès personnel
                     NexcodeTextField(
                         value = uiState.gitHubToken,
                         onValueChange = { viewModel.updateGitHubToken(it) },
                         label = stringResource(id = R.string.s03_token_label),
+                        placeholder = "ghp_…",
                         isMono = true,
+                        visualTransformation = if (uiState.isTokenVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
                         trailingContent = {
                             NexcodeIconButton(
                                 icon = painterResource(id = R.drawable.ic_eye),
@@ -163,11 +176,30 @@ fun ScreenS03GitHub(
                                 contentDescription = "Afficher/Masquer le jeton"
                             )
                         },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { viewModel.connectWithToken() }
+                        ),
                         testTag = "s03_token_input"
                     )
 
-                    // Indice avec puces monochip "repo" et "workflow"
+                    if (!uiState.isGitHubConnected && uiState.gitHubToken.isNotBlank()) {
+                        Box(modifier = Modifier.padding(bottom = 12.dp)) {
+                            NexcodeButton(
+                                text = if (uiState.isConnectingGitHub) "Connexion…" else "Vérifier et connecter",
+                                onClick = { viewModel.connectWithToken() },
+                                variant = NexcodeButtonVariant.PRIMARY,
+                                size = NexcodeButtonSize.SMALL,
+                                enabled = !uiState.isConnectingGitHub,
+                                fullWidth = true,
+                                testTag = "s03_verify_token_btn"
+                            )
+                        }
+                    }
+
                     Text(
                         text = buildAnnotatedString {
                             append(stringResource(id = R.string.s03_token_hint))
@@ -179,7 +211,6 @@ fun ScreenS03GitHub(
                         modifier = Modifier.padding(bottom = 14.dp)
                     )
 
-                    // Séparateur avec "ou"
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -198,10 +229,9 @@ fun ScreenS03GitHub(
                         HorizontalDivider(modifier = Modifier.weight(1f), color = colors.border)
                     }
 
-                    // Bouton se connecter avec un code appareil
                     NexcodeButton(
                         text = stringResource(id = R.string.s03_device_code_btn),
-                        onClick = { /* Ouvre le flux device code */ },
+                        onClick = { viewModel.showDeviceCodeNotice() },
                         variant = NexcodeButtonVariant.SECONDARY,
                         icon = painterResource(id = R.drawable.ic_qr),
                         fullWidth = true,
@@ -230,7 +260,6 @@ fun ScreenS03GitHub(
                             )
                         }
 
-                        // Bouton se déconnecter
                         Box(modifier = Modifier.padding(top = 12.dp)) {
                             NexcodeButton(
                                 text = stringResource(id = R.string.s03_disconnect_btn),
@@ -245,7 +274,7 @@ fun ScreenS03GitHub(
                 } else {
                     // ============ VARIANTE ERREUR (stv data-v="err") ============
                     NexcodeBanner(
-                        text = stringResource(id = R.string.s03_error_banner),
+                        text = uiState.gitHubErrorMessage ?: stringResource(id = R.string.s03_error_banner),
                         icon = painterResource(id = R.drawable.ic_wifi),
                         variant = NexcodeBannerVariant.ERROR,
                         testTag = "s03_error_banner"
@@ -257,18 +286,38 @@ fun ScreenS03GitHub(
                         value = uiState.gitHubToken,
                         onValueChange = { viewModel.updateGitHubToken(it) },
                         label = stringResource(id = R.string.s03_token_label),
+                        placeholder = "ghp_…",
                         isMono = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        visualTransformation = if (uiState.isTokenVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        trailingContent = {
+                            NexcodeIconButton(
+                                icon = painterResource(id = R.drawable.ic_eye),
+                                onClick = { viewModel.toggleTokenVisibility() },
+                                contentDescription = "Afficher/Masquer le jeton"
+                            )
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { viewModel.retryGitHubConnection() }
+                        ),
                         testTag = "s03_token_err_input"
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     NexcodeButton(
-                        text = stringResource(id = R.string.s03_retry),
+                        text = if (uiState.isConnectingGitHub) "Connexion…" else stringResource(id = R.string.s03_retry),
                         onClick = { viewModel.retryGitHubConnection() },
                         variant = NexcodeButtonVariant.PRIMARY,
                         icon = painterResource(id = R.drawable.ic_refresh),
+                        enabled = !uiState.isConnectingGitHub,
                         fullWidth = true,
                         testTag = "s03_retry_btn"
                     )
@@ -285,13 +334,27 @@ fun ScreenS03GitHub(
                     .padding(horizontal = 16.dp, vertical = 14.dp)
             ) {
                 NexcodeButton(
-                    text = stringResource(id = R.string.s03_continue),
-                    onClick = onNavigateNext,
+                    text = if (uiState.isConnectingGitHub) "Vérification…" else stringResource(id = R.string.s03_continue),
+                    onClick = {
+                        if (!uiState.isGitHubConnected && uiState.gitHubToken.isNotBlank()) {
+                            viewModel.connectWithToken { onNavigateNext() }
+                        } else {
+                            onNavigateNext()
+                        }
+                    },
                     variant = NexcodeButtonVariant.PRIMARY,
+                    enabled = !uiState.isConnectingGitHub,
                     fullWidth = true,
                     testTag = "s03_continue_btn"
                 )
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 78.dp)
+        )
     }
 }

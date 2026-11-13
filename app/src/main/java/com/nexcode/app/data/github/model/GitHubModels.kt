@@ -11,6 +11,7 @@ data class GitHubUser(
     val name: String? = null,
     val email: String? = null,
     @Json(name = "public_repos") val publicRepos: Int = 0,
+    @Json(name = "total_private_repos") val totalPrivateRepos: Int = 0,
     val plan: GitHubPlan? = null
 )
 
@@ -45,7 +46,21 @@ data class GitHubBranchCommit(
 @JsonClass(generateAdapter = true)
 data class WorkflowDispatchPayload(
     val ref: String,
-    val inputs: Map<String, String> = emptyMap()
+    val inputs: Map<String, String>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class GitHubWorkflowsResponse(
+    @Json(name = "total_count") val totalCount: Int,
+    val workflows: List<GitHubWorkflow>
+)
+
+@JsonClass(generateAdapter = true)
+data class GitHubWorkflow(
+    val id: Long,
+    val name: String,
+    val path: String,
+    val state: String
 )
 
 @JsonClass(generateAdapter = true)
@@ -66,6 +81,33 @@ data class WorkflowRun(
     @Json(name = "created_at") val createdAt: String,
     @Json(name = "updated_at") val updatedAt: String,
     @Json(name = "run_number") val runNumber: Int
+)
+
+@JsonClass(generateAdapter = true)
+data class WorkflowJobsResponse(
+    @Json(name = "total_count") val totalCount: Int,
+    val jobs: List<WorkflowJob>
+)
+
+@JsonClass(generateAdapter = true)
+data class WorkflowJob(
+    val id: Long,
+    val name: String,
+    val status: String,
+    val conclusion: String? = null,
+    @Json(name = "started_at") val startedAt: String? = null,
+    @Json(name = "completed_at") val completedAt: String? = null,
+    val steps: List<WorkflowJobStep> = emptyList()
+)
+
+@JsonClass(generateAdapter = true)
+data class WorkflowJobStep(
+    val name: String,
+    val status: String, // "queued", "in_progress", "completed"
+    val conclusion: String? = null,
+    val number: Int,
+    @Json(name = "started_at") val startedAt: String? = null,
+    @Json(name = "completed_at") val completedAt: String? = null
 )
 
 @JsonClass(generateAdapter = true)

@@ -15,5 +15,9 @@ data class ProjectEntity(
     val minSdk: Int = 26,
     val targetSdk: Int = 35,
     val gitBranch: String = "main",
+    val gitRepo: String = "",
+    val language: String = "Kotlin",
+    val uiFramework: String = "Compose",
+    val onGitHub: Boolean = false,
     val isFavorite: Boolean = false
 )

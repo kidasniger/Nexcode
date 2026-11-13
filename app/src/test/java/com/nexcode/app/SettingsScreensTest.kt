@@ -1,9 +1,15 @@
 package com.nexcode.app
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import com.nexcode.app.data.github.repository.GitHubRepositoryService
+import com.nexcode.app.data.github.repository.GitHubResult
+import com.nexcode.app.data.preferences.NexcodeSecureVault
 import com.nexcode.app.ui.screens.settings.CodeThemePreference
 import com.nexcode.app.ui.screens.settings.IndentationPreference
 import com.nexcode.app.ui.screens.settings.SettingsViewModel
 import com.nexcode.app.ui.screens.settings.UiThemePreference
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -11,87 +17,87 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import java.io.File
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class SettingsScreensTest {
 
+    private lateinit var context: Context
+    private lateinit var fakeApi: FakeGitHubApiService
+    private lateinit var gitService: GitHubRepositoryService
     private lateinit var viewModel: SettingsViewModel
 
     @Before
     fun setUp() {
-        viewModel = SettingsViewModel()
+        context = ApplicationProvider.getApplicationContext()
+        fakeApi = FakeGitHubApiService()
+        gitService = GitHubRepositoryService(context, api = fakeApi)
+        runBlocking { gitService.clearGitSession() }
+        viewModel = SettingsViewModel(context, gitService)
     }
 
     @Test
-    fun testInitialSettingsState() {
-        val state = viewModel.uiState.value
-        assertEquals("nimbus-dev", state.accountUsername)
-        assertEquals("github.com/nimbus-dev · Plan gratuit", state.accountPlan)
-        assertFalse(state.showSignOutDialog)
+    fun testAccountSyncAndRealSignOut() = runBlocking {
+        // Starts disconnected
+        viewModel.refreshAccountAndStorageSync()
+        assertTrue(viewModel.uiState.value.isSignedOut)
+        assertEquals("Non connecté", viewModel.uiState.value.accountUsername)
+        assertEquals("?", viewModel.uiState.value.accountInitials)
+
+        // Verify real session
+        val res = gitService.verifyAndSaveToken("ghp_settings_token")
+        assertTrue(res is GitHubResult.Success)
+        viewModel.refreshAccountAndStorageSync()
+
+        var state = viewModel.uiState.value
         assertFalse(state.isSignedOut)
+        assertEquals("octo-dev", state.accountUsername)
+        assertEquals("OD", state.accountInitials)
+        assertEquals("github.com/octo-dev · Plan Pro", state.accountPlan)
 
-        assertEquals("Français (France)", state.language)
-        assertEquals("claude-sonnet-4.5 · Anthropic", state.aiModelSummary)
-
-        assertEquals("1,8 Go utilisés", state.storageUsedText)
-        assertEquals("sur 4 Go", state.storageTotalText)
-        assertEquals("Caches Gradle · 480 Mo", state.storageGradleText)
-        assertFalse(state.isCacheCleared)
-
-        assertTrue(state.notifyBuildCompleted)
-        assertTrue(state.notifyBuildErrors)
-        assertFalse(state.notifyDependencyUpdates)
-
-        assertEquals(UiThemePreference.DARK, state.uiTheme)
-        assertEquals(14, state.editorFontSizeSp)
-        assertEquals(CodeThemePreference.NEX_DARK, state.codeTheme)
-        assertEquals(IndentationPreference.SPACES_4, state.indentation)
-        assertTrue(state.wordWrap)
-        assertTrue(state.lineNumbers)
-        assertTrue(state.autoCloseBrackets)
-
-        assertEquals("1.4.2 (build 42)", state.appVersion)
-        assertEquals("À jour · vérifié le 10 nov.", state.updateStatus)
-        assertTrue(state.autoBackupEnabled)
-        assertNull(state.userNotice)
-    }
-
-    @Test
-    fun testSignOutDialogAndConfirmation() {
+        // Confirm sign-out wipes token and resets state
         viewModel.setSignOutDialogVisible(true)
         assertTrue(viewModel.uiState.value.showSignOutDialog)
 
-        viewModel.confirmSignOut()
-        val state = viewModel.uiState.value
+        viewModel.confirmSignOutSync()
+        state = viewModel.uiState.value
         assertFalse(state.showSignOutDialog)
         assertTrue(state.isSignedOut)
         assertEquals("Non connecté", state.accountUsername)
-        assertNotNull(state.userNotice)
+        assertNull(NexcodeSecureVault(context).getGitToken())
     }
 
     @Test
-    fun testClearCaches() {
-        viewModel.clearCaches()
-        val state = viewModel.uiState.value
-        assertTrue(state.isCacheCleared)
-        assertEquals("Caches Gradle · 0 Mo", state.storageGradleText)
-        assertEquals("1,3 Go utilisés", state.storageUsedText)
-        assertNotNull(state.userNotice)
+    fun testRealStorageMeasurementAndClearCaches() = runBlocking {
+        val dummyCache = File(context.cacheDir, "gradle_dummy_cache.bin")
+        dummyCache.writeBytes(ByteArray(4096))
+
+        viewModel.refreshAccountAndStorageSync()
+        assertTrue(dummyCache.exists())
+        assertTrue(viewModel.uiState.value.storageGradleText.contains("Ko"))
+
+        viewModel.clearCachesSync()
+        assertFalse(dummyCache.exists())
+        assertTrue(viewModel.uiState.value.isCacheCleared)
+        assertEquals("Caches · 0 Mo", viewModel.uiState.value.storageGradleText)
+        assertNotNull(viewModel.uiState.value.userNotice)
     }
 
     @Test
-    fun testNotificationToggles() {
+    fun testNotificationAndAppearanceSettings() {
         viewModel.toggleNotifyBuildCompleted(false)
         viewModel.toggleNotifyBuildErrors(false)
         viewModel.toggleNotifyDependencyUpdates(true)
 
-        val state = viewModel.uiState.value
+        var state = viewModel.uiState.value
         assertFalse(state.notifyBuildCompleted)
         assertFalse(state.notifyBuildErrors)
         assertTrue(state.notifyDependencyUpdates)
-    }
 
-    @Test
-    fun testAppearanceAndEditorSettings() {
         viewModel.setUiTheme(UiThemePreference.LIGHT)
         assertEquals(UiThemePreference.LIGHT, viewModel.uiState.value.uiTheme)
 
@@ -112,21 +118,9 @@ class SettingsScreensTest {
         viewModel.toggleLineNumbers(false)
         viewModel.toggleAutoCloseBrackets(false)
 
-        val state = viewModel.uiState.value
+        state = viewModel.uiState.value
         assertFalse(state.wordWrap)
         assertFalse(state.lineNumbers)
         assertFalse(state.autoCloseBrackets)
-    }
-
-    @Test
-    fun testBackupAndExportFlow() {
-        viewModel.toggleAutoBackup(false)
-        assertFalse(viewModel.uiState.value.autoBackupEnabled)
-
-        viewModel.exportProjectsNow()
-        assertNotNull(viewModel.uiState.value.userNotice)
-
-        viewModel.dismissNotice()
-        assertNull(viewModel.uiState.value.userNotice)
     }
 }

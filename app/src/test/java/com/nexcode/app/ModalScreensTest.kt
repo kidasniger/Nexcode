@@ -2,10 +2,13 @@ package com.nexcode.app
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.nexcode.app.data.github.repository.GitHubRepositoryService
 import com.nexcode.app.ui.screens.chat.ChatViewModel
 import com.nexcode.app.ui.screens.editor.EditorViewModel
 import com.nexcode.app.ui.screens.projects.ProjectsViewModel
 import com.nexcode.app.ui.screens.settings.SettingsViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -29,11 +32,15 @@ class ModalScreensTest {
     }
 
     @Test
-    fun testModalDeleteProjectStateInProjectsViewModel() {
-        val viewModel = ProjectsViewModel(context)
-        assertFalse(viewModel.uiState.value.showDeleteDialog)
+    fun testModalDeleteProjectStateInProjectsViewModel() = runBlocking {
+        val viewModel = ProjectsViewModel(context, GitHubRepositoryService(context, api = FakeGitHubApiService()))
+        viewModel.updateNewAppName("ModalTestApp")
+        viewModel.createProjectSync()
+        delay(80)
 
-        viewModel.openDeleteDialog(viewModel.uiState.value.projects.first())
+        assertFalse(viewModel.uiState.value.showDeleteDialog)
+        val project = viewModel.uiState.value.projects.first()
+        viewModel.openDeleteDialog(project)
         assertTrue(viewModel.uiState.value.showDeleteDialog)
         assertNotNull(viewModel.uiState.value.projectToDelete)
 
@@ -76,8 +83,8 @@ class ModalScreensTest {
     }
 
     @Test
-    fun testModalSignOutStateInSettingsViewModel() {
-        val viewModel = SettingsViewModel()
+    fun testModalSignOutStateInSettingsViewModel() = runBlocking {
+        val viewModel = SettingsViewModel(context, GitHubRepositoryService(context, api = FakeGitHubApiService()))
         assertFalse(viewModel.uiState.value.showSignOutDialog)
 
         viewModel.setSignOutDialogVisible(true)
@@ -87,7 +94,7 @@ class ModalScreensTest {
         assertFalse(viewModel.uiState.value.showSignOutDialog)
 
         viewModel.setSignOutDialogVisible(true)
-        viewModel.confirmSignOut()
+        viewModel.confirmSignOutSync()
         assertFalse(viewModel.uiState.value.showSignOutDialog)
         assertTrue(viewModel.uiState.value.isSignedOut)
         assertEquals("Non connecté", viewModel.uiState.value.accountUsername)

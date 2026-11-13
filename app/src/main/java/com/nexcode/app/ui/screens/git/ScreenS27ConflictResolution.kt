@@ -3,7 +3,6 @@ package com.nexcode.app.ui.screens.git
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -105,7 +103,7 @@ fun ScreenS27ConflictResolution(
                         color = colors.txt
                     )
                     Text(
-                        text = stringResource(id = R.string.s27_sub),
+                        text = "Pull depuis origin/${uiState.currentBranch}",
                         fontSize = 12.sp,
                         color = colors.txt2
                     )
@@ -119,102 +117,112 @@ fun ScreenS27ConflictResolution(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 6.dp)
             ) {
-                // Bannière avertissement conflits
-                NexcodeBanner(
-                    text = stringResource(id = R.string.s27_banner_conflicts),
-                    icon = painterResource(id = R.drawable.ic_merge),
-                    variant = NexcodeBannerVariant.WARNING,
-                    modifier = Modifier.padding(bottom = 12.dp),
-                    testTag = "s27_banner_conflicts"
-                )
-
-                // Cartes de conflit comparatives
-                uiState.conflicts.forEach { conflict ->
-                    ConflictCard(
-                        conflict = conflict,
-                        onSelectChoice = { choice ->
-                            viewModel.chooseConflictResolution(conflict.id, choice)
-                        }
+                if (uiState.conflicts.isEmpty()) {
+                    NexcodeBanner(
+                        text = "Aucun conflit de fusion actif dans le dépôt.",
+                        icon = painterResource(id = R.drawable.ic_check_c),
+                        variant = NexcodeBannerVariant.SUCCESS,
+                        modifier = Modifier.padding(bottom = 12.dp),
+                        testTag = "s27_banner_no_conflicts"
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
-                }
+                } else {
+                    NexcodeBanner(
+                        text = "${uiState.conflicts.size} conflit(s) après le pull de origin/${uiState.currentBranch}. Choisissez une version pour chaque fichier.",
+                        icon = painterResource(id = R.drawable.ic_merge),
+                        variant = NexcodeBannerVariant.WARNING,
+                        modifier = Modifier.padding(bottom = 12.dp),
+                        testTag = "s27_banner_conflicts"
+                    )
 
-                // Carte Fusion intelligente (.card.card-p)
-                NexcodeCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp)
-                ) {
+                    uiState.conflicts.forEach { conflict ->
+                        ConflictCard(
+                            conflict = conflict,
+                            onSelectChoice = { choice ->
+                                viewModel.chooseConflictResolution(conflict.id, choice)
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+
+                    // Carte Fusion intelligente
+                    NexcodeCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(11.dp))
+                                    .background(colors.accent2.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_spark),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(19.dp),
+                                    tint = colors.accent2
+                                )
+                            }
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(id = R.string.s27_card_smart_merge_title),
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.txt
+                                )
+                                Text(
+                                    text = stringResource(id = R.string.s27_card_smart_merge_desc),
+                                    fontSize = 11.5.sp,
+                                    color = colors.txt2,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
+
+                            NexcodeButton(
+                                text = stringResource(id = R.string.s27_btn_preview),
+                                onClick = { viewModel.previewSmartMerge() },
+                                variant = NexcodeButtonVariant.SECONDARY,
+                                size = NexcodeButtonSize.SMALL,
+                                testTag = "s27_btn_preview_merge"
+                            )
+                        }
+                    }
+
+                    // Boutons d'action : Annuler le merge + Appliquer les choix
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(RoundedCornerShape(11.dp))
-                                .background(colors.accent2.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_spark),
-                                contentDescription = null,
-                                modifier = Modifier.size(19.dp),
-                                tint = colors.accent2
-                            )
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(id = R.string.s27_card_smart_merge_title),
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.txt
-                            )
-                            Text(
-                                text = stringResource(id = R.string.s27_card_smart_merge_desc),
-                                fontSize = 11.5.sp,
-                                color = colors.txt2,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                        }
+                        NexcodeButton(
+                            text = stringResource(id = R.string.s27_btn_cancel_merge),
+                            onClick = { viewModel.cancelMerge(onDone = onNavigateBack) },
+                            variant = NexcodeButtonVariant.SECONDARY,
+                            size = NexcodeButtonSize.DEFAULT,
+                            enabled = !uiState.isBusy,
+                            modifier = Modifier.weight(1f),
+                            testTag = "s27_btn_cancel_merge"
+                        )
 
                         NexcodeButton(
-                            text = stringResource(id = R.string.s27_btn_preview),
-                            onClick = { viewModel.previewSmartMerge() },
-                            variant = NexcodeButtonVariant.SECONDARY,
-                            size = NexcodeButtonSize.SMALL,
-                            testTag = "s27_btn_preview_merge"
+                            text = stringResource(id = R.string.s27_btn_apply_choices),
+                            onClick = {
+                                viewModel.applyConflictResolutions(onSuccess = onNavigateBack)
+                            },
+                            variant = NexcodeButtonVariant.PRIMARY,
+                            size = NexcodeButtonSize.DEFAULT,
+                            icon = painterResource(id = R.drawable.ic_check),
+                            enabled = !uiState.isBusy,
+                            modifier = Modifier.weight(1.3f),
+                            testTag = "s27_btn_apply_choices"
                         )
                     }
-                }
-
-                // Boutons d'action : Annuler le merge + Appliquer les choix
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    NexcodeButton(
-                        text = stringResource(id = R.string.s27_btn_cancel_merge),
-                        onClick = onNavigateBack,
-                        variant = NexcodeButtonVariant.SECONDARY,
-                        size = NexcodeButtonSize.DEFAULT,
-                        modifier = Modifier.weight(1f),
-                        testTag = "s27_btn_cancel_merge"
-                    )
-
-                    NexcodeButton(
-                        text = stringResource(id = R.string.s27_btn_apply_choices),
-                        onClick = {
-                            viewModel.applyConflictResolutions(onSuccess = onNavigateBack)
-                        },
-                        variant = NexcodeButtonVariant.PRIMARY,
-                        size = NexcodeButtonSize.DEFAULT,
-                        icon = painterResource(id = R.drawable.ic_check),
-                        modifier = Modifier.weight(1.3f),
-                        testTag = "s27_btn_apply_choices"
-                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -246,7 +254,6 @@ private fun ConflictCard(
             .border(1.dp, colors.border, ShapeRadius14)
     ) {
         Column {
-            // Header: Fichier et ligne
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -264,13 +271,11 @@ private fun ConflictCard(
 
             HorizontalDivider(color = colors.border, thickness = 1.dp)
 
-            // Comparaison 2 colonnes
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(IntrinsicSize.Min)
             ) {
-                // Colonne VÔTRE VERSION (gauche)
                 val isLocalSelected = conflict.selectedChoice == ConflictChoice.LOCAL
                 Column(
                     modifier = Modifier
@@ -278,7 +283,6 @@ private fun ConflictCard(
                         .fillMaxHeight()
                         .border(BorderStroke(0.5.dp, colors.border))
                 ) {
-                    // Header tag VÔTRE VERSION
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -301,7 +305,6 @@ private fun ConflictCard(
                         )
                     }
 
-                    // Contenu du code
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -319,7 +322,6 @@ private fun ConflictCard(
                         }
                     }
 
-                    // Bouton Utiliser
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -348,7 +350,6 @@ private fun ConflictCard(
                     }
                 }
 
-                // Colonne DISTANT (droite)
                 val isRemoteSelected = conflict.selectedChoice == ConflictChoice.REMOTE
                 Column(
                     modifier = Modifier
@@ -356,7 +357,6 @@ private fun ConflictCard(
                         .fillMaxHeight()
                         .border(BorderStroke(0.5.dp, colors.border))
                 ) {
-                    // Header tag DISTANT
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -379,7 +379,6 @@ private fun ConflictCard(
                         )
                     }
 
-                    // Contenu du code
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -397,7 +396,6 @@ private fun ConflictCard(
                         }
                     }
 
-                    // Bouton Utiliser
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()

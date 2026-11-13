@@ -25,6 +25,10 @@ class NexcodePreferences(private val context: Context) {
         val KEY_BUILD_AUTO_INSTALL = booleanPreferencesKey("build_auto_install")
         val KEY_GIT_USER_NAME = stringPreferencesKey("git_user_name")
         val KEY_GIT_USER_EMAIL = stringPreferencesKey("git_user_email")
+        val KEY_GIT_LOGIN = stringPreferencesKey("git_login")
+        val KEY_GIT_REPO_COUNT = intPreferencesKey("git_repo_count")
+        val KEY_GIT_PLAN = stringPreferencesKey("git_plan")
+        val KEY_ACTIVE_PROJECT_ID = androidx.datastore.preferences.core.longPreferencesKey("active_project_id")
         val KEY_ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
 
         // Valeurs par defaut sures
@@ -73,6 +77,22 @@ class NexcodePreferences(private val context: Context) {
         prefs[KEY_GIT_USER_EMAIL] ?: ""
     }
 
+    val gitLoginFlow: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_GIT_LOGIN] ?: ""
+    }
+
+    val gitRepoCountFlow: Flow<Int> = context.dataStore.data.map { prefs ->
+        prefs[KEY_GIT_REPO_COUNT] ?: 0
+    }
+
+    val gitPlanFlow: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_GIT_PLAN] ?: "free"
+    }
+
+    val activeProjectIdFlow: Flow<Long?> = context.dataStore.data.map { prefs ->
+        prefs[KEY_ACTIVE_PROJECT_ID]
+    }
+
     val onboardingDoneFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[KEY_ONBOARDING_DONE] ?: false
     }
@@ -110,6 +130,36 @@ class NexcodePreferences(private val context: Context) {
             it[KEY_GIT_USER_NAME] = name
             it[KEY_GIT_USER_EMAIL] = email
         }
+    }
+
+    suspend fun setGitAccount(
+        login: String,
+        name: String,
+        email: String,
+        repoCount: Int,
+        plan: String
+    ) {
+        context.dataStore.edit {
+            it[KEY_GIT_LOGIN] = login
+            it[KEY_GIT_USER_NAME] = name
+            it[KEY_GIT_USER_EMAIL] = email
+            it[KEY_GIT_REPO_COUNT] = repoCount
+            it[KEY_GIT_PLAN] = plan
+        }
+    }
+
+    suspend fun clearGitAccount() {
+        context.dataStore.edit {
+            it.remove(KEY_GIT_LOGIN)
+            it.remove(KEY_GIT_USER_NAME)
+            it.remove(KEY_GIT_USER_EMAIL)
+            it.remove(KEY_GIT_REPO_COUNT)
+            it.remove(KEY_GIT_PLAN)
+        }
+    }
+
+    suspend fun setActiveProjectId(projectId: Long) {
+        context.dataStore.edit { it[KEY_ACTIVE_PROJECT_ID] = projectId }
     }
 
     suspend fun setOnboardingDone(done: Boolean) {

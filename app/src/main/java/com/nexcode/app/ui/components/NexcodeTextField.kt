@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nexcode.app.ui.theme.InterFontFamily
@@ -55,6 +56,7 @@ fun NexcodeTextField(
     errorMessage: String? = null,
     isMono: Boolean = false,
     singleLine: Boolean = true,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     leadingContent: (@Composable () -> Unit)? = null,
     trailingContent: (@Composable () -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -132,6 +134,7 @@ fun NexcodeTextField(
                             .onFocusChanged { isFocused = it.isFocused },
                         textStyle = textStyle,
                         singleLine = singleLine,
+                        visualTransformation = visualTransformation,
                         cursorBrush = SolidColor(colors.accent),
                         keyboardOptions = keyboardOptions,
                         keyboardActions = keyboardActions

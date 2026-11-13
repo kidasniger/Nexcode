@@ -3,12 +3,15 @@ package com.nexcode.app.ui.screens.onboarding
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nexcode.app.data.github.repository.GitHubRepositoryService
+import com.nexcode.app.data.github.repository.GitHubResult
 import com.nexcode.app.data.preferences.NexcodePreferences
 import com.nexcode.app.data.preferences.NexcodeSecureVault
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -16,18 +19,21 @@ data class OnboardingUiState(
     // Écran 1
     val preparationProgress: Float = 0.62f,
 
-    // Écran 3 : GitHub
-    val gitHubToken: String = "ghp_9f2Xk7QzLm4Np8Rt",
+    // Écran 3 : GitHub (données réelles)
+    val gitHubToken: String = "",
     val isTokenVisible: Boolean = false,
-    val isGitHubConnected: Boolean = true,
-    val gitHubUsername: String = "nimbus-dev",
-    val gitHubRepoCount: Int = 4,
+    val isGitHubConnected: Boolean = false,
+    val isConnectingGitHub: Boolean = false,
+    val gitHubUsername: String = "",
+    val gitHubRepoCount: Int = 0,
     val isGitHubError: Boolean = false,
+    val gitHubErrorMessage: String? = null,
     val showDisconnectDialog: Boolean = false,
+    val userNotice: String? = null,
 
     // Écran 4 : Configuration IA
     val selectedProvider: String = "Anthropic",
-    val apiKey: String = "sk-ant-api03-x9L2mQ7vNp4Tt8Rw",
+    val apiKey: String = "",
     val isApiKeyVisible: Boolean = false,
     val selectedModel: String = "claude-sonnet-4.5",
     val showModelSheet: Boolean = false,
@@ -36,22 +42,92 @@ data class OnboardingUiState(
 )
 
 class OnboardingViewModel(
-    context: Context
+    private val context: Context,
+    private val gitService: GitHubRepositoryService = GitHubRepositoryService(context)
 ) : ViewModel() {
 
     private val secureVault = NexcodeSecureVault(context)
     private val preferences = NexcodePreferences(context)
 
+    private val initialSavedToken = secureVault.getGitToken().orEmpty()
+
     private val _uiState = MutableStateFlow(
         OnboardingUiState(
-            apiKey = secureVault.getApiKey() ?: "sk-ant-api03-x9L2mQ7vNp4Tt8Rw",
-            gitHubToken = secureVault.getGitToken() ?: "ghp_9f2Xk7QzLm4Np8Rt"
+            apiKey = secureVault.getApiKey().orEmpty(),
+            gitHubToken = initialSavedToken,
+            isGitHubConnected = initialSavedToken.isNotBlank()
         )
     )
     val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
+    init {
+        loadSavedGitHubSession()
+    }
+
+    fun refreshSessionFromStorage() {
+        loadSavedGitHubSession()
+    }
+
+    private fun loadSavedGitHubSession() {
+        viewModelScope.launch {
+            val savedToken = secureVault.getGitToken().orEmpty()
+            if (savedToken.isBlank()) {
+                _uiState.update {
+                    it.copy(
+                        gitHubToken = "",
+                        isGitHubConnected = false,
+                        gitHubUsername = "",
+                        gitHubRepoCount = 0
+                    )
+                }
+                return@launch
+            }
+            val cachedLogin = preferences.gitLoginFlow.first()
+            val cachedRepoCount = preferences.gitRepoCountFlow.first()
+            _uiState.update {
+                it.copy(
+                    gitHubToken = savedToken,
+                    isGitHubConnected = cachedLogin.isNotBlank(),
+                    gitHubUsername = cachedLogin,
+                    gitHubRepoCount = cachedRepoCount
+                )
+            }
+            when (val result = gitService.getAuthenticatedUser()) {
+                is GitHubResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isGitHubConnected = true,
+                            isGitHubError = false,
+                            gitHubErrorMessage = null,
+                            gitHubUsername = result.data.user.login,
+                            gitHubRepoCount = result.data.repoCount
+                        )
+                    }
+                }
+                is GitHubResult.Error -> {
+                    if (result.code == 401) {
+                        _uiState.update {
+                            it.copy(
+                                isGitHubConnected = false,
+                                isGitHubError = true,
+                                gitHubErrorMessage = result.message
+                            )
+                        }
+                    }
+                }
+                is GitHubResult.NetworkError -> Unit
+            }
+        }
+    }
+
     fun updateGitHubToken(token: String) {
-        _uiState.update { it.copy(gitHubToken = token) }
+        _uiState.update {
+            it.copy(
+                gitHubToken = token,
+                isGitHubConnected = false,
+                gitHubErrorMessage = null
+            )
+        }
     }
 
     fun toggleTokenVisibility() {
@@ -62,30 +138,78 @@ class OnboardingViewModel(
         _uiState.update { it.copy(isGitHubError = !it.isGitHubError) }
     }
 
-    fun retryGitHubConnection() {
-        viewModelScope.launch {
-            val token = _uiState.value.gitHubToken.trim()
-            if (token.isBlank()) {
-                _uiState.update { it.copy(isGitHubError = true) }
-                return@launch
+    fun connectWithToken(onConnected: (() -> Unit)? = null) {
+        val token = _uiState.value.gitHubToken.trim()
+        if (token.isBlank()) {
+            _uiState.update {
+                it.copy(
+                    isGitHubError = true,
+                    isGitHubConnected = false,
+                    gitHubErrorMessage = "Veuillez saisir un jeton d'accès personnel GitHub."
+                )
             }
-            val service = com.nexcode.app.data.github.repository.GitHubRepositoryService(context)
-            when (val res = service.verifyAndSaveToken(token)) {
-                is com.nexcode.app.data.github.repository.GitHubResult.Success -> {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isConnectingGitHub = true,
+                    isGitHubError = false,
+                    gitHubErrorMessage = null
+                )
+            }
+            when (val result = gitService.verifyAndSaveToken(token)) {
+                is GitHubResult.Success -> {
                     _uiState.update {
                         it.copy(
-                            isGitHubError = false,
+                            isConnectingGitHub = false,
                             isGitHubConnected = true,
-                            gitHubToken = token
+                            isGitHubError = false,
+                            gitHubErrorMessage = null,
+                            gitHubToken = token,
+                            gitHubUsername = result.data.user.login,
+                            gitHubRepoCount = result.data.repoCount
+                        )
+                    }
+                    onConnected?.invoke()
+                }
+                is GitHubResult.NetworkError -> {
+                    _uiState.update {
+                        it.copy(
+                            isConnectingGitHub = false,
+                            isGitHubConnected = false,
+                            isGitHubError = true,
+                            gitHubErrorMessage = null
                         )
                     }
                 }
-                is com.nexcode.app.data.github.repository.GitHubResult.Error,
-                is com.nexcode.app.data.github.repository.GitHubResult.NetworkError -> {
-                    _uiState.update { it.copy(isGitHubError = true) }
+                is GitHubResult.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isConnectingGitHub = false,
+                            isGitHubConnected = false,
+                            isGitHubError = true,
+                            gitHubErrorMessage = result.message
+                        )
+                    }
                 }
             }
         }
+    }
+
+    fun retryGitHubConnection() {
+        connectWithToken()
+    }
+
+    fun showDeviceCodeNotice() {
+        _uiState.update {
+            it.copy(userNotice = "Utilisez un jeton d'accès personnel (PAT) avec les portées repo et workflow.")
+        }
+    }
+
+    fun dismissNotice() {
+        _uiState.update { it.copy(userNotice = null) }
     }
 
     fun showDisconnectModal(show: Boolean) {
@@ -98,8 +222,15 @@ class OnboardingViewModel(
             it.copy(
                 isGitHubConnected = false,
                 gitHubToken = "",
+                gitHubUsername = "",
+                gitHubRepoCount = 0,
+                isGitHubError = false,
+                gitHubErrorMessage = null,
                 showDisconnectDialog = false
             )
+        }
+        viewModelScope.launch {
+            gitService.clearGitSession()
         }
     }
 
@@ -140,8 +271,10 @@ class OnboardingViewModel(
     }
 
     suspend fun completeOnboardingSync() {
-        secureVault.saveApiKey(_uiState.value.apiKey)
-        if (_uiState.value.gitHubToken.isNotBlank()) {
+        if (_uiState.value.apiKey.isNotBlank()) {
+            secureVault.saveApiKey(_uiState.value.apiKey)
+        }
+        if (_uiState.value.gitHubToken.isNotBlank() && _uiState.value.isGitHubConnected) {
             secureVault.saveGitToken(_uiState.value.gitHubToken)
         }
         preferences.setOnboardingDone(true)

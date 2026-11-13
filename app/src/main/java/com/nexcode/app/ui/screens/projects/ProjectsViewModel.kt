@@ -1,214 +1,145 @@
 package com.nexcode.app.ui.screens.projects
 
 import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nexcode.app.data.git.GitOperationResult
+import com.nexcode.app.data.github.repository.GitHubRepositoryService
+import com.nexcode.app.data.github.repository.GitHubResult
 import com.nexcode.app.data.local.NexcodeDatabase
 import com.nexcode.app.data.local.entity.BuildEntity
 import com.nexcode.app.data.local.entity.ProjectEntity
+import com.nexcode.app.data.preferences.NexcodePreferences
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.util.Locale
+import java.util.zip.ZipInputStream
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ProjectsViewModel(
-    context: Context
+    private val context: Context,
+    private val gitService: GitHubRepositoryService = GitHubRepositoryService(context)
 ) : ViewModel() {
 
     private val database = NexcodeDatabase.getInstance(context)
     private val projectDao = database.projectDao()
     private val buildDao = database.buildDao()
+    private val preferences = NexcodePreferences(context)
 
-    private val initialSampleProjects = listOf(
-        ProjectItem(
-            id = 1L,
-            name = "Nimbus Météo",
-            packageName = "com.nimbus.meteo",
-            initials = "NM",
-            language = "Kotlin",
-            uiFramework = "Compose",
-            modifiedText = "modifié hier à 17:24",
-            buildStatus = ProjectBuildStatus.SUCCESS,
-            buildStatusLabel = "Build réussi",
-            version = "v1.2.0",
-            onGitHub = false,
-            tileBgHex = null,
-            tileTextHex = null,
-            fileCount = 34,
-            sizeText = "8,2 Mo",
-            buildCount = 12,
-            gitRepo = "github.com/nimbus-dev/meteo-android",
-            gitBranch = "main",
-            gitSyncText = "synchronisé il y a 12 min",
-            minSdk = 29
-        ),
-        ProjectItem(
-            id = 2L,
-            name = "TicketFlash",
-            packageName = "com.ticketflash.app",
-            initials = "TF",
-            language = "Kotlin",
-            uiFramework = "XML",
-            modifiedText = "modifié hier à 09:02",
-            buildStatus = ProjectBuildStatus.FAILED,
-            buildStatusLabel = "Build échoué",
-            version = "v0.9.2",
-            onGitHub = false,
-            tileBgHex = "#FF5C7A",
-            tileTextHex = "#2B0A12",
-            fileCount = 28,
-            sizeText = "14,5 Mo",
-            buildCount = 9,
-            gitRepo = "github.com/nimbus-dev/ticketflash-android",
-            gitBranch = "main",
-            gitSyncText = "synchronisé hier",
-            minSdk = 26
-        ),
-        ProjectItem(
-            id = 3L,
-            name = "SuiviFitness",
-            packageName = "com.suivifitness.app",
-            initials = "SF",
-            language = "Flutter",
-            uiFramework = "Dart",
-            modifiedText = "modifié hier à 08:15",
-            buildStatus = ProjectBuildStatus.RUNNING,
-            buildStatusLabel = "Compilation en cours",
-            version = null,
-            onGitHub = false,
-            tileBgHex = "#FFB84D",
-            tileTextHex = "#2B1D06",
-            fileCount = 42,
-            sizeText = "22,1 Mo",
-            buildCount = 15,
-            gitRepo = "github.com/nimbus-dev/suivifitness",
-            gitBranch = "main",
-            gitSyncText = "synchronisé hier",
-            minSdk = 24
-        ),
-        ProjectItem(
-            id = 4L,
-            name = "NotesSimples",
-            packageName = "com.notessimples.app",
-            initials = "NS",
-            language = "Java",
-            uiFramework = "XML",
-            modifiedText = "modifié le 3 nov.",
-            buildStatus = ProjectBuildStatus.SUCCESS,
-            buildStatusLabel = "Build réussi",
-            version = "v2.3.1",
-            onGitHub = false,
-            tileBgHex = "#2E7D32",
-            tileTextHex = "#E7F5E8",
-            fileCount = 19,
-            sizeText = "5,4 Mo",
-            buildCount = 8,
-            gitRepo = "github.com/nimbus-dev/notessimples",
-            gitBranch = "main",
-            gitSyncText = "synchronisé le 3 nov.",
-            minSdk = 26
-        ),
-        ProjectItem(
-            id = 5L,
-            name = "PortailClient",
-            packageName = "com.portailclient.app",
-            initials = "PC",
-            language = "Kotlin",
-            uiFramework = "Compose",
-            modifiedText = "modifié le 28 oct.",
-            buildStatus = ProjectBuildStatus.DRAFT,
-            buildStatusLabel = "Brouillon · jamais compilé",
-            version = null,
-            onGitHub = false,
-            tileBgHex = null,
-            tileTextHex = null,
-            fileCount = 12,
-            sizeText = "3,1 Mo",
-            buildCount = 0,
-            gitRepo = "github.com/nimbus-dev/portailclient",
-            gitBranch = "main",
-            gitSyncText = "non synchronisé",
-            minSdk = 29
-        ),
-        ProjectItem(
-            id = 6L,
-            name = "MarquesPages",
-            packageName = "com.marquespages.app",
-            initials = "MP",
-            language = "Kotlin",
-            uiFramework = "XML",
-            modifiedText = "modifié le 21 oct.",
-            buildStatus = ProjectBuildStatus.SUCCESS,
-            buildStatusLabel = "Build réussi",
-            version = null,
-            onGitHub = true,
-            tileBgHex = null,
-            tileTextHex = null,
-            fileCount = 22,
-            sizeText = "6,8 Mo",
-            buildCount = 6,
-            gitRepo = "github.com/nimbus-dev/marquespages",
-            gitBranch = "main",
-            gitSyncText = "synchronisé le 21 oct.",
-            minSdk = 26
-        )
-    )
-
-    private val sampleBuilds = listOf(
-        ProjectBuildItem(
-            id = 1L,
-            versionText = "v1.2.0 (12) · release",
-            dateAndSizeText = "Il y a 2 h · 8,1 Mo · signé",
-            isSuccess = true
-        ),
-        ProjectBuildItem(
-            id = 2L,
-            versionText = "v1.1.9 (11) · debug",
-            dateAndSizeText = "Hier · 12,4 Mo",
-            isSuccess = true
-        ),
-        ProjectBuildItem(
-            id = 3L,
-            versionText = "v1.1.8 (10) · release",
-            dateAndSizeText = "Le 3 nov. · 2 erreurs",
-            isSuccess = false,
-            hasLogsChip = true,
-            errorText = "2 erreurs"
-        )
-    )
-
-    private val _uiState = MutableStateFlow(
-        ProjectsUiState(
-            projects = initialSampleProjects,
-            filteredProjects = initialSampleProjects,
-            selectedProject = initialSampleProjects.first(),
-            recentBuilds = sampleBuilds
-        )
-    )
+    private val _uiState = MutableStateFlow(ProjectsUiState())
     val uiState: StateFlow<ProjectsUiState> = _uiState.asStateFlow()
 
     init {
-        loadProjectsFromDb()
+        observeProjectsFromDb()
+        observeSelectedProjectBuilds()
+        loadUserRepositories()
     }
 
-    private fun loadProjectsFromDb() {
+    private fun projectsRootDir(): File {
+        return File(context.filesDir, "projects").apply { mkdirs() }
+    }
+
+    private fun observeProjectsFromDb() {
         viewModelScope.launch {
-            // Initialisation en base si vide
-            val existing = projectDao.getProjectById(1L)
-            if (existing == null) {
-                initialSampleProjects.forEach { sample ->
-                    projectDao.insertProject(
-                        ProjectEntity(
-                            id = sample.id,
-                            name = sample.name,
-                            packageName = sample.packageName,
-                            path = "/storage/emulated/0/NEXCODE/${sample.name}",
-                            minSdk = sample.minSdk,
-                            targetSdk = 35,
-                            gitBranch = sample.gitBranch
-                        )
+            projectDao.getAllProjects().collect { entities ->
+                val savedActiveId = runCatching { preferences.activeProjectIdFlow.first() }.getOrNull()
+                var totalBytes = 0L
+                val mappedItems = entities.map { entity ->
+                    val projectDir = File(entity.path)
+                    val stats = withContext(Dispatchers.IO) { inspectDirectoryStats(projectDir) }
+                    totalBytes += stats.totalBytes
+                    val builds = runCatching { buildDao.getBuildsByProject(entity.id).first() }.getOrDefault(emptyList())
+                    mapEntityToItem(entity, stats, builds)
+                }
+
+                _uiState.update { current ->
+                    val currentSelectedId = current.selectedProject?.id ?: savedActiveId
+                    val newSelected = mappedItems.firstOrNull { it.id == currentSelectedId }
+                        ?: mappedItems.firstOrNull()
+                    val filtered = filterProjectList(mappedItems, current.searchQuery, current.selectedFilter)
+                    current.copy(
+                        projects = mappedItems,
+                        filteredProjects = filtered,
+                        totalProjectCount = mappedItems.size,
+                        totalSizeText = formatFrenchSize(totalBytes),
+                        selectedProject = newSelected,
+                        viewMode = if (mappedItems.isEmpty()) ProjectsViewMode.EMPTY else ProjectsViewMode.DEFAULT
                     )
+                }
+            }
+        }
+    }
+
+    private fun observeSelectedProjectBuilds() {
+        viewModelScope.launch {
+            _uiState
+                .map { it.selectedProject?.id }
+                .distinctUntilChanged()
+                .flatMapLatest { projectId ->
+                    if (projectId == null) flowOf(emptyList())
+                    else buildDao.getBuildsByProject(projectId)
+                }
+                .collect { buildEntities ->
+                    val mappedBuilds = buildEntities.take(10).map { entity ->
+                        val isSuccess = entity.status == "SUCCESS"
+                        val isRunning = entity.status == "RUNNING"
+                        val runPart = if (entity.runNumber > 0) " (${entity.runNumber})" else ""
+                        val sizePart = if (entity.apkSize > 0) " · ${formatFrenchSize(entity.apkSize)}" else ""
+                        val statusPart = when {
+                            isRunning -> " · en cours"
+                            !isSuccess && entity.errorCount > 0 -> " · ${entity.errorCount} erreur(s)"
+                            !isSuccess -> " · échec"
+                            else -> sizePart
+                        }
+                        ProjectBuildItem(
+                            id = entity.id,
+                            versionText = "v${entity.versionName}$runPart · ${entity.buildType}",
+                            dateAndSizeText = "${formatRelativeTime(entity.startTime)}$statusPart",
+                            isSuccess = isSuccess,
+                            hasLogsChip = !isSuccess && !isRunning,
+                            errorText = entity.errorSummary
+                        )
+                    }
+                    _uiState.update { it.copy(recentBuilds = mappedBuilds) }
+                }
+        }
+    }
+
+    fun loadUserRepositories() {
+        if (!gitService.hasSavedToken()) {
+            _uiState.update { it.copy(userRepositories = emptyList(), isLoadingUserRepos = false) }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingUserRepos = true) }
+            when (val res = gitService.getUserRepositories()) {
+                is GitHubResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            userRepositories = res.data,
+                            isLoadingUserRepos = false
+                        )
+                    }
+                }
+                else -> {
+                    _uiState.update { it.copy(isLoadingUserRepos = false) }
                 }
             }
         }
@@ -245,12 +176,15 @@ class ProjectsViewModel(
 
     fun selectProject(project: ProjectItem) {
         _uiState.update { it.copy(selectedProject = project) }
+        viewModelScope.launch {
+            preferences.setActiveProjectId(project.id)
+        }
     }
 
     fun selectProjectById(id: Long) {
         val found = _uiState.value.projects.firstOrNull { it.id == id }
         if (found != null) {
-            _uiState.update { it.copy(selectedProject = found) }
+            selectProject(found)
         }
     }
 
@@ -264,7 +198,17 @@ class ProjectsViewModel(
 
     suspend fun confirmDeleteProjectSync() {
         val target = _uiState.value.projectToDelete ?: return
+        val entity = projectDao.getProjectById(target.id)
         projectDao.deleteProjectById(target.id)
+        withContext(Dispatchers.IO) {
+            val localPath = entity?.path ?: target.localPath
+            if (localPath.isNotBlank()) {
+                val dir = File(localPath)
+                if (dir.exists()) {
+                    dir.deleteRecursively()
+                }
+            }
+        }
         _uiState.update { current ->
             val updatedList = current.projects.filter { it.id != target.id }
             val filtered = filterProjectList(updatedList, current.searchQuery, current.selectedFilter)
@@ -294,7 +238,8 @@ class ProjectsViewModel(
 
     // Écran 7 : Assistant de création
     fun updateNewAppName(name: String) {
-        val autoPackage = "com." + name.lowercase().replace(" ", "").replace("[^a-z0-9]".toRegex(), "") + ".app"
+        val slug = name.lowercase().replace(" ", "").replace("[^a-z0-9]".toRegex(), "")
+        val autoPackage = if (slug.isNotBlank()) "com.$slug.app" else ""
         _uiState.update { it.copy(newAppName = name, newPackageName = autoPackage) }
     }
 
@@ -312,54 +257,57 @@ class ProjectsViewModel(
 
     suspend fun createProjectSync(): Long {
         val state = _uiState.value
+        val appName = state.newAppName.trim().ifEmpty { "NouveauProjet" }
+        val slug = appName.lowercase()
+            .replace("[^a-z0-9]+".toRegex(), "-")
+            .trim('-')
+            .ifEmpty { "projet-${System.currentTimeMillis()}" }
+        val pkgName = state.newPackageName.trim().ifEmpty {
+            "com.${slug.replace("-", "")}.app"
+        }
+        val projectDir = uniqueTargetDir(slug)
+
+        val language = when (state.selectedTemplate) {
+            ProjectTemplateType.COMPOSE, ProjectTemplateType.XML, ProjectTemplateType.EMPTY -> "Kotlin"
+            ProjectTemplateType.JAVA -> "Java"
+            ProjectTemplateType.FLUTTER -> "Flutter"
+        }
+        val uiFramework = when (state.selectedTemplate) {
+            ProjectTemplateType.COMPOSE -> "Compose"
+            ProjectTemplateType.XML, ProjectTemplateType.JAVA -> "XML"
+            ProjectTemplateType.FLUTTER -> "Dart"
+            ProjectTemplateType.EMPTY -> "Gradle"
+        }
+
+        val stats = withContext(Dispatchers.IO) {
+            writeStarterFiles(
+                projectDir = projectDir,
+                appName = appName,
+                packageName = pkgName,
+                minSdk = state.selectedMinSdk,
+                template = state.selectedTemplate
+            )
+            inspectDirectoryStats(projectDir)
+        }
+
         val entity = ProjectEntity(
-            name = state.newAppName,
-            packageName = state.newPackageName,
-            path = "/storage/emulated/0/NEXCODE/${state.newAppName}",
+            name = appName,
+            packageName = pkgName,
+            path = projectDir.absolutePath,
             minSdk = state.selectedMinSdk,
             targetSdk = 35,
-            gitBranch = "main"
+            gitBranch = "main",
+            gitRepo = "",
+            language = language,
+            uiFramework = uiFramework,
+            onGitHub = false
         )
         val newId = projectDao.insertProject(entity)
+        preferences.setActiveProjectId(newId)
 
-        val initials = state.newAppName.split(" ")
-            .mapNotNull { it.firstOrNull()?.uppercase() }
-            .take(2)
-            .joinToString("")
-            .ifEmpty { "NX" }
-
-        val newProjectItem = ProjectItem(
-            id = newId,
-            name = state.newAppName,
-            packageName = state.newPackageName,
-            initials = initials,
-            language = when (state.selectedTemplate) {
-                ProjectTemplateType.COMPOSE, ProjectTemplateType.XML -> "Kotlin"
-                ProjectTemplateType.JAVA -> "Java"
-                ProjectTemplateType.FLUTTER -> "Flutter"
-                ProjectTemplateType.EMPTY -> "Kotlin"
-            },
-            uiFramework = when (state.selectedTemplate) {
-                ProjectTemplateType.COMPOSE -> "Compose"
-                ProjectTemplateType.XML, ProjectTemplateType.JAVA -> "XML"
-                ProjectTemplateType.FLUTTER -> "Dart"
-                ProjectTemplateType.EMPTY -> "Gradle"
-            },
-            modifiedText = "modifié à l'instant",
-            buildStatus = ProjectBuildStatus.DRAFT,
-            buildStatusLabel = "Brouillon · jamais compilé",
-            version = "v0.1.0",
-            fileCount = 14,
-            sizeText = "1,8 Mo",
-            buildCount = 0,
-            gitRepo = "github.com/nimbus-dev/${state.newAppName.lowercase().replace(' ', '-')}",
-            gitBranch = "main",
-            gitSyncText = "non synchronisé",
-            minSdk = state.selectedMinSdk
-        )
-
+        val newProjectItem = mapEntityToItem(entity.copy(id = newId), stats, emptyList())
         _uiState.update { current ->
-            val updated = listOf(newProjectItem) + current.projects
+            val updated = listOf(newProjectItem) + current.projects.filter { it.id != newId }
             val filtered = filterProjectList(updated, current.searchQuery, current.selectedFilter)
             current.copy(
                 projects = updated,
@@ -381,110 +329,473 @@ class ProjectsViewModel(
 
     // Écran 9 : Importer
     fun setImportTab(tabIndex: Int) {
-        _uiState.update { it.copy(importTabIndex = tabIndex) }
+        _uiState.update { it.copy(importTabIndex = tabIndex, importError = null) }
+        if (tabIndex == 1 && _uiState.value.userRepositories.isEmpty() && gitService.hasSavedToken()) {
+            loadUserRepositories()
+        }
     }
 
     fun updateImportGitUrl(url: String) {
-        _uiState.update { it.copy(importGitUrl = url) }
+        _uiState.update { it.copy(importGitUrl = url, importError = null) }
     }
 
     fun updateImportGitBranch(branch: String) {
-        _uiState.update { it.copy(importGitBranch = branch) }
+        _uiState.update { it.copy(importGitBranch = branch, importError = null) }
     }
 
-    fun importZip(onSuccess: () -> Unit) {
-        // Ajout d'un projet importé
-        val imported = ProjectItem(
-            id = System.currentTimeMillis(),
-            name = "Météo Android",
-            packageName = "com.nimbus.meteo",
-            initials = "MA",
-            language = "Kotlin",
-            uiFramework = "Compose",
-            modifiedText = "modifié il y a 5 min",
-            buildStatus = ProjectBuildStatus.SUCCESS,
-            buildStatusLabel = "Build réussi",
-            version = "v1.0.0",
-            fileCount = 38,
-            sizeText = "46,3 Mo",
-            buildCount = 1,
-            minSdk = 29
-        )
-        _uiState.update { current ->
-            val updated = listOf(imported) + current.projects
-            val filtered = filterProjectList(updated, current.searchQuery, current.selectedFilter)
-            current.copy(
-                projects = updated,
-                filteredProjects = filtered,
-                totalProjectCount = updated.size,
-                selectedProject = imported,
-                viewMode = ProjectsViewMode.DEFAULT
+    fun selectUserRepository(fullName: String, defaultBranch: String) {
+        _uiState.update {
+            it.copy(
+                importGitUrl = "github.com/$fullName",
+                importGitBranch = defaultBranch.ifBlank { "main" },
+                importError = null
             )
         }
-        onSuccess()
     }
 
-    fun importGit(onSuccess: () -> Unit) {
+    fun importZipFromUri(uri: Uri, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isImporting = true, importError = null) }
+            val displayName = resolveUriFileName(uri) ?: "archive.zip"
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    val stream = context.contentResolver.openInputStream(uri)
+                        ?: throw IllegalStateException("Impossible d'ouvrir le fichier sélectionné.")
+                    stream.use { importZipStream(it, displayName) }
+                }
+            }
+            result.fold(
+                onSuccess = { imported ->
+                    _uiState.update { current ->
+                        val updated = listOf(imported) + current.projects.filter { it.id != imported.id }
+                        val filtered = filterProjectList(updated, current.searchQuery, current.selectedFilter)
+                        current.copy(
+                            projects = updated,
+                            filteredProjects = filtered,
+                            totalProjectCount = updated.size,
+                            selectedProject = imported,
+                            viewMode = ProjectsViewMode.DEFAULT,
+                            isImporting = false,
+                            importError = null,
+                            recentZipImportName = displayName,
+                            recentZipImportDesc = "${imported.sizeText} · importé à l'instant"
+                        )
+                    }
+                    onSuccess()
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            isImporting = false,
+                            importError = error.message ?: "Échec de l'extraction de l'archive .zip."
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    suspend fun importZipFileSync(zipFile: File): ProjectItem {
+        return withContext(Dispatchers.IO) {
+            FileInputStream(zipFile).use { fis ->
+                importZipStream(fis, zipFile.name)
+            }
+        }
+    }
+
+    private suspend fun importZipStream(inputStream: InputStream, archiveName: String): ProjectItem {
+        val baseName = archiveName.removeSuffix(".zip").ifBlank { "Projet-Importe" }
+        val targetDir = uniqueTargetDir(baseName)
+        val canonicalTarget = targetDir.canonicalPath
+        var extractedBytes = 0L
+        val maxBytes = 200L * 1024L * 1024L
+
+        ZipInputStream(inputStream).use { zis ->
+            var entry = zis.nextEntry
+            while (entry != null) {
+                val outFile = File(targetDir, entry.name)
+                if (!outFile.canonicalPath.startsWith(canonicalTarget + File.separator) &&
+                    outFile.canonicalPath != canonicalTarget
+                ) {
+                    throw SecurityException("Chemin d'archive non sécurisé : ${entry.name}")
+                }
+                if (entry.isDirectory) {
+                    outFile.mkdirs()
+                } else {
+                    outFile.parentFile?.mkdirs()
+                    FileOutputStream(outFile).use { fos ->
+                        val buffer = ByteArray(8192)
+                        var len = zis.read(buffer)
+                        while (len > 0) {
+                            extractedBytes += len
+                            if (extractedBytes > maxBytes) {
+                                throw IllegalStateException("L'archive dépasse la limite de 200 Mo.")
+                            }
+                            fos.write(buffer, 0, len)
+                            len = zis.read(buffer)
+                        }
+                    }
+                }
+                entry = zis.nextEntry
+            }
+        }
+
+        // Si l'archive contient un seul dossier racine, descendre dedans pour inspecter
+        val rootChildren = targetDir.listFiles()?.toList().orEmpty()
+        val effectiveDir = if (rootChildren.size == 1 && rootChildren.first().isDirectory) {
+            rootChildren.first()
+        } else {
+            targetDir
+        }
+
+        val detected = detectProjectMetadata(effectiveDir, baseName)
+        val stats = inspectDirectoryStats(effectiveDir)
+        val entity = ProjectEntity(
+            name = detected.name,
+            packageName = detected.packageName,
+            path = effectiveDir.absolutePath,
+            minSdk = detected.minSdk,
+            targetSdk = 35,
+            gitBranch = "main",
+            gitRepo = "",
+            language = detected.language,
+            uiFramework = detected.uiFramework,
+            onGitHub = false
+        )
+        val newId = projectDao.insertProject(entity)
+        preferences.setActiveProjectId(newId)
+        return mapEntityToItem(entity.copy(id = newId), stats, emptyList())
+    }
+
+    suspend fun importGitSync(): ProjectItem? {
         val state = _uiState.value
         val repoUrl = state.importGitUrl.trim()
         val branch = state.importGitBranch.trim().ifEmpty { "main" }
+
+        if (repoUrl.isBlank()) {
+            _uiState.update { it.copy(importError = "Veuillez saisir l'URL ou le nom du dépôt (ex: utilisateur/depot).") }
+            return null
+        }
+
+        _uiState.update { it.copy(isImporting = true, importError = null) }
+
         val repoName = repoUrl.substringAfterLast("/").removeSuffix(".git").ifEmpty { "Repo-Git" }
-        val targetDir = java.io.File("/storage/emulated/0/NEXCODE/$repoName")
+        val targetDir = uniqueTargetDir(repoName)
 
-        viewModelScope.launch {
-            val gitService = com.nexcode.app.data.github.repository.GitHubRepositoryService(context)
-            gitService.cloneRepository(
-                cloneUrl = repoUrl,
-                targetDir = targetDir,
-                branch = branch
-            )
+        return when (val cloneRes = gitService.cloneRepository(repoUrl, targetDir, branch)) {
+            is GitOperationResult.Success -> {
+                val detected = withContext(Dispatchers.IO) { detectProjectMetadata(targetDir, repoName) }
+                val stats = withContext(Dispatchers.IO) { inspectDirectoryStats(targetDir) }
+                val branchStatus = gitService.getBranchStatus(targetDir, fetchRemote = false)
+                val actualBranch = (branchStatus as? GitOperationResult.Success)?.data?.currentBranch ?: branch
+                val parsedPair = GitHubRepositoryService.parseOwnerAndRepo(repoUrl)
+                val normalizedGitRepo = parsedPair?.let { "${it.first}/${it.second}" } ?: repoUrl
 
-            val initials = repoName.take(2).uppercase()
-            val imported = ProjectItem(
-                id = System.currentTimeMillis(),
-                name = repoName,
-                packageName = "com.git.${repoName.lowercase().replace("-", "").replace(".", "")}",
-                initials = initials,
-                language = "Kotlin",
-                uiFramework = "Compose",
-                modifiedText = "modifié à l'instant",
-                buildStatus = ProjectBuildStatus.SUCCESS,
-                buildStatusLabel = "Build réussi",
-                version = "v1.0.0",
-                onGitHub = true,
-                fileCount = 34,
-                sizeText = "8,2 Mo",
-                buildCount = 1,
-                gitRepo = state.importGitUrl,
-                gitBranch = branch,
-                gitSyncText = "synchronisé à l'instant",
-                minSdk = 29
-            )
-
-            projectDao.insertProject(
-                ProjectEntity(
-                    id = imported.id,
-                    name = imported.name,
-                    packageName = imported.packageName,
+                val entity = ProjectEntity(
+                    name = detected.name,
+                    packageName = detected.packageName,
                     path = targetDir.absolutePath,
-                    minSdk = imported.minSdk,
+                    minSdk = detected.minSdk,
                     targetSdk = 35,
-                    gitBranch = branch
+                    gitBranch = actualBranch,
+                    gitRepo = normalizedGitRepo,
+                    language = detected.language,
+                    uiFramework = detected.uiFramework,
+                    onGitHub = true
                 )
-            )
+                val newId = projectDao.insertProject(entity)
+                preferences.setActiveProjectId(newId)
 
-            _uiState.update { current ->
-                val updated = listOf(imported) + current.projects
-                val filtered = filterProjectList(updated, current.searchQuery, current.selectedFilter)
-                current.copy(
-                    projects = updated,
-                    filteredProjects = filtered,
-                    totalProjectCount = updated.size,
-                    selectedProject = imported,
-                    viewMode = ProjectsViewMode.DEFAULT
-                )
+                val importedItem = mapEntityToItem(entity.copy(id = newId), stats, emptyList())
+                _uiState.update { current ->
+                    val updated = listOf(importedItem) + current.projects.filter { it.id != newId }
+                    val filtered = filterProjectList(updated, current.searchQuery, current.selectedFilter)
+                    current.copy(
+                        projects = updated,
+                        filteredProjects = filtered,
+                        totalProjectCount = updated.size,
+                        selectedProject = importedItem,
+                        viewMode = ProjectsViewMode.DEFAULT,
+                        isImporting = false,
+                        importError = null
+                    )
+                }
+                importedItem
             }
-            onSuccess()
+            is GitOperationResult.Error -> {
+                withContext(Dispatchers.IO) {
+                    if (targetDir.exists()) targetDir.deleteRecursively()
+                }
+                _uiState.update {
+                    it.copy(
+                        isImporting = false,
+                        importError = cloneRes.message
+                    )
+                }
+                null
+            }
+            is GitOperationResult.Conflict -> {
+                _uiState.update {
+                    it.copy(
+                        isImporting = false,
+                        importError = "Conflit détecté lors du clonage."
+                    )
+                }
+                null
+            }
+        }
+    }
+
+    fun importGit(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            val imported = importGitSync()
+            if (imported != null) {
+                onSuccess()
+            }
+        }
+    }
+
+    private fun resolveUriFileName(uri: Uri): String? {
+        if (uri.scheme == "content") {
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (nameIndex >= 0 && cursor.moveToFirst()) {
+                    return cursor.getString(nameIndex)
+                }
+            }
+        }
+        return uri.lastPathSegment?.substringAfterLast('/')
+    }
+
+    private fun uniqueTargetDir(baseSlug: String): File {
+        val safe = baseSlug.lowercase().replace("[^a-z0-9_-]".toRegex(), "-").trim('-').ifEmpty { "project" }
+        var candidate = File(projectsRootDir(), safe)
+        var counter = 2
+        while (candidate.exists()) {
+            candidate = File(projectsRootDir(), "${safe}_$counter")
+            counter++
+        }
+        return candidate
+    }
+
+    private data class DirStats(val fileCount: Int, val totalBytes: Long)
+
+    private data class DetectedMetadata(
+        val name: String,
+        val packageName: String,
+        val language: String,
+        val uiFramework: String,
+        val minSdk: Int
+    )
+
+    private fun inspectDirectoryStats(dir: File): DirStats {
+        if (!dir.exists()) return DirStats(0, 0L)
+        var count = 0
+        var bytes = 0L
+        dir.walkTopDown()
+            .onEnter { it.name != ".git" && it.name != "build" && it.name != ".gradle" }
+            .forEach { file ->
+                if (file.isFile) {
+                    count++
+                    bytes += file.length()
+                }
+            }
+        return DirStats(count, bytes)
+    }
+
+    private fun detectProjectMetadata(dir: File, fallbackName: String): DetectedMetadata {
+        var detectedPackage = "com.${fallbackName.lowercase().replace("[^a-z0-9]".toRegex(), "").ifEmpty { "nexcode" }}.app"
+        var detectedMinSdk = 26
+        var hasFlutter = File(dir, "pubspec.yaml").exists()
+        var hasCompose = false
+        var hasJava = false
+        var hasKotlin = false
+
+        val appGradleKts = File(dir, "app/build.gradle.kts")
+        val appGradleGroovy = File(dir, "app/build.gradle")
+        val gradleText = when {
+            appGradleKts.isFile -> runCatching { appGradleKts.readText() }.getOrDefault("")
+            appGradleGroovy.isFile -> runCatching { appGradleGroovy.readText() }.getOrDefault("")
+            else -> ""
+        }
+        if (gradleText.isNotBlank()) {
+            Regex("""applicationId\s*=?\s*["']([^"']+)["']""").find(gradleText)?.let {
+                detectedPackage = it.groupValues[1]
+            }
+            Regex("""minSdk\s*=?\s*(\d+)""").find(gradleText)?.let {
+                detectedMinSdk = it.groupValues[1].toIntOrNull() ?: 26
+            }
+            if (gradleText.contains("compose", ignoreCase = true)) {
+                hasCompose = true
+            }
+        }
+
+        val manifest = File(dir, "app/src/main/AndroidManifest.xml")
+        if (manifest.isFile) {
+            val manifestText = runCatching { manifest.readText() }.getOrDefault("")
+            Regex("""package=["']([^"']+)["']""").find(manifestText)?.let {
+                if (detectedPackage.startsWith("com.") && gradleText.isBlank()) {
+                    detectedPackage = it.groupValues[1]
+                }
+            }
+        }
+
+        dir.walkTopDown()
+            .onEnter { it.name != ".git" && it.name != "build" }
+            .take(200)
+            .forEach { file ->
+                when (file.extension.lowercase()) {
+                    "kt", "kts" -> hasKotlin = true
+                    "java" -> hasJava = true
+                    "dart" -> hasFlutter = true
+                }
+            }
+
+        val language = when {
+            hasFlutter -> "Flutter"
+            hasKotlin -> "Kotlin"
+            hasJava -> "Java"
+            else -> "Kotlin"
+        }
+        val uiFramework = when {
+            hasFlutter -> "Dart"
+            hasCompose -> "Compose"
+            else -> "XML"
+        }
+
+        return DetectedMetadata(
+            name = fallbackName,
+            packageName = detectedPackage,
+            language = language,
+            uiFramework = uiFramework,
+            minSdk = detectedMinSdk
+        )
+    }
+
+    private fun writeStarterFiles(
+        projectDir: File,
+        appName: String,
+        packageName: String,
+        minSdk: Int,
+        template: ProjectTemplateType
+    ) {
+        projectDir.mkdirs()
+        val packagePath = packageName.replace('.', '/')
+        val srcDir = File(projectDir, "app/src/main/java/$packagePath").apply { mkdirs() }
+        val resValuesDir = File(projectDir, "app/src/main/res/values").apply { mkdirs() }
+
+        File(projectDir, "settings.gradle.kts").writeText(
+            "rootProject.name = \"$appName\"\ninclude(\":app\")\n"
+        )
+        File(projectDir, "app/build.gradle.kts").writeText(
+            """
+            plugins {
+                id("com.android.application")
+                id("org.jetbrains.kotlin.android")
+            }
+
+            android {
+                namespace = "$packageName"
+                compileSdk = 35
+                defaultConfig {
+                    applicationId = "$packageName"
+                    minSdk = $minSdk
+                    targetSdk = 35
+                    versionCode = 1
+                    versionName = "0.1.0"
+                }
+            }
+            """.trimIndent()
+        )
+        File(projectDir, "app/src/main/AndroidManifest.xml").writeText(
+            """
+            <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+                <application android:label="$appName" />
+            </manifest>
+            """.trimIndent()
+        )
+        File(resValuesDir, "strings.xml").writeText(
+            "<resources>\n    <string name=\"app_name\">$appName</string>\n</resources>\n"
+        )
+        if (template == ProjectTemplateType.JAVA) {
+            File(srcDir, "MainActivity.java").writeText(
+                "package $packageName;\n\nimport android.app.Activity;\n\npublic class MainActivity extends Activity {}\n"
+            )
+        } else {
+            File(srcDir, "MainActivity.kt").writeText(
+                "package $packageName\n\nimport android.app.Activity\n\nclass MainActivity : Activity()\n"
+            )
+        }
+    }
+
+    private fun mapEntityToItem(
+        entity: ProjectEntity,
+        stats: DirStats,
+        builds: List<BuildEntity>
+    ): ProjectItem {
+        val initials = entity.name.split(" ", "-", "_")
+            .mapNotNull { it.firstOrNull()?.uppercase() }
+            .take(2)
+            .joinToString("")
+            .ifEmpty { "NX" }
+
+        val latestBuild = builds.maxByOrNull { it.startTime }
+        val (buildStatus, buildStatusLabel) = when (latestBuild?.status) {
+            "SUCCESS" -> ProjectBuildStatus.SUCCESS to "Build réussi"
+            "FAILED" -> ProjectBuildStatus.FAILED to "Build échoué"
+            "RUNNING" -> ProjectBuildStatus.RUNNING to "Compilation en cours"
+            else -> ProjectBuildStatus.DRAFT to "Brouillon · jamais compilé"
+        }
+
+        val syncText = if (entity.onGitHub || entity.gitRepo.isNotBlank()) {
+            "branche ${entity.gitBranch} · ${formatRelativeTime(entity.updatedAt)}"
+        } else {
+            "non synchronisé"
+        }
+
+        return ProjectItem(
+            id = entity.id,
+            name = entity.name,
+            packageName = entity.packageName,
+            initials = initials,
+            language = entity.language,
+            uiFramework = entity.uiFramework,
+            modifiedText = "modifié ${formatRelativeTime(entity.updatedAt)}",
+            buildStatus = buildStatus,
+            buildStatusLabel = buildStatusLabel,
+            version = latestBuild?.versionName?.let { "v$it" },
+            onGitHub = entity.onGitHub || entity.gitRepo.isNotBlank(),
+            fileCount = stats.fileCount,
+            sizeText = formatFrenchSize(stats.totalBytes),
+            buildCount = builds.size,
+            gitRepo = entity.gitRepo,
+            gitBranch = entity.gitBranch,
+            gitSyncText = syncText,
+            minSdk = entity.minSdk,
+            localPath = entity.path
+        )
+    }
+
+    private fun formatRelativeTime(timestampMs: Long): String {
+        val diffSec = ((System.currentTimeMillis() - timestampMs) / 1000L).coerceAtLeast(0L)
+        return when {
+            diffSec < 60L -> "à l'instant"
+            diffSec < 3600L -> "il y a ${diffSec / 60L} min"
+            diffSec < 86400L -> "il y a ${diffSec / 3600L} h"
+            diffSec < 172800L -> "hier"
+            else -> "il y a ${diffSec / 86400L} j"
+        }
+    }
+
+    private fun formatFrenchSize(bytes: Long): String {
+        if (bytes <= 0L) return "0 Mo"
+        val kb = bytes / 1024.0
+        val mb = kb / 1024.0
+        val gb = mb / 1024.0
+        return when {
+            gb >= 1.0 -> String.format(Locale.FRANCE, "%.1f Go", gb)
+            mb >= 0.1 -> String.format(Locale.FRANCE, "%.1f Mo", mb)
+            else -> String.format(Locale.FRANCE, "%.0f Ko", kb.coerceAtLeast(1.0))
         }
     }
 
@@ -495,8 +806,8 @@ class ProjectsViewModel(
     ): List<ProjectItem> {
         return list.filter { item ->
             val matchesQuery = query.isBlank() ||
-                    item.name.contains(query, ignoreCase = true) ||
-                    item.packageName.contains(query, ignoreCase = true)
+                item.name.contains(query, ignoreCase = true) ||
+                item.packageName.contains(query, ignoreCase = true)
 
             val matchesFilter = when (filter) {
                 ProjectFilter.ALL -> true

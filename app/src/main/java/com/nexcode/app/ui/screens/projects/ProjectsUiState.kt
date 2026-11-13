@@ -1,5 +1,7 @@
 package com.nexcode.app.ui.screens.projects
 
+import com.nexcode.app.data.github.model.GitHubRepository
+
 enum class ProjectFilter(val label: String) {
     ALL("Tous"),
     KOTLIN("Kotlin"),
@@ -34,13 +36,14 @@ data class ProjectItem(
     val onGitHub: Boolean = false,
     val tileBgHex: String? = null,
     val tileTextHex: String? = null,
-    val fileCount: Int = 34,
-    val sizeText: String = "8,2 Mo",
-    val buildCount: Int = 12,
-    val gitRepo: String = "github.com/nimbus-dev/meteo-android",
+    val fileCount: Int = 0,
+    val sizeText: String = "0 Mo",
+    val buildCount: Int = 0,
+    val gitRepo: String = "",
     val gitBranch: String = "main",
-    val gitSyncText: String = "synchronisé il y a 12 min",
-    val minSdk: Int = 29
+    val gitSyncText: String = "non synchronisé",
+    val minSdk: Int = 26,
+    val localPath: String = ""
 )
 
 enum class ProjectTemplateType(
@@ -69,9 +72,9 @@ data class ProjectsUiState(
     val filteredProjects: List<ProjectItem> = emptyList(),
     val searchQuery: String = "",
     val selectedFilter: ProjectFilter = ProjectFilter.ALL,
-    val viewMode: ProjectsViewMode = ProjectsViewMode.DEFAULT,
-    val totalProjectCount: Int = 6,
-    val totalSizeText: String = "1,2 Go",
+    val viewMode: ProjectsViewMode = ProjectsViewMode.EMPTY,
+    val totalProjectCount: Int = 0,
+    val totalSizeText: String = "0 Mo",
     val selectedProject: ProjectItem? = null,
     val projectToDelete: ProjectItem? = null,
     val showDeleteDialog: Boolean = false,
@@ -80,8 +83,8 @@ data class ProjectsUiState(
     val selectedTemplate: ProjectTemplateType = ProjectTemplateType.COMPOSE,
 
     // Écran 7 : Assistant de création
-    val newAppName: String = "Nimbus Météo",
-    val newPackageName: String = "com.nimbus.meteo",
+    val newAppName: String = "",
+    val newPackageName: String = "",
     val selectedMinSdk: Int = 29,
     val isAiScaffoldEnabled: Boolean = true,
 
@@ -90,6 +93,12 @@ data class ProjectsUiState(
 
     // Écran 9 : Importer
     val importTabIndex: Int = 0, // 0 = Zip, 1 = Git
-    val importGitUrl: String = "github.com/nimbus-dev/meteo-android",
-    val importGitBranch: String = "main"
+    val importGitUrl: String = "",
+    val importGitBranch: String = "main",
+    val isImporting: Boolean = false,
+    val importError: String? = null,
+    val recentZipImportName: String? = null,
+    val recentZipImportDesc: String? = null,
+    val userRepositories: List<GitHubRepository> = emptyList(),
+    val isLoadingUserRepos: Boolean = false
 )

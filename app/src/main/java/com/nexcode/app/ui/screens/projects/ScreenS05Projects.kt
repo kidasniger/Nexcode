@@ -73,7 +73,7 @@ fun ScreenS05Projects(
         val target = uiState.projectToDelete!!
         com.nexcode.app.ui.components.modals.ModalDeleteProject(
             projectName = target.name,
-            githubRepo = "nimbus-dev/meteo-android",
+            githubRepo = target.gitRepo.ifBlank { "dépôt local" },
             onDismiss = { viewModel.dismissDeleteDialog() },
             onConfirm = { viewModel.confirmDeleteProject() }
         )

@@ -28,5 +28,9 @@ data class BuildEntity(
     val apkPath: String? = null,
     val apkSize: Long = 0,
     val logOutput: String? = null,
-    val errorCount: Int = 0
+    val errorCount: Int = 0,
+    val githubRunId: Long? = null,
+    val runNumber: Int = 0,
+    val versionName: String = "1.0.0",
+    val errorSummary: String? = null
 )

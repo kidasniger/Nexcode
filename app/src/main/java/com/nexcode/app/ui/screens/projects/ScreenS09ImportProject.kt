@@ -1,8 +1,10 @@
 package com.nexcode.app.ui.screens.projects
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,10 +15,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +39,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.nexcode.app.ui.components.NexcodeBanner
+import com.nexcode.app.ui.components.NexcodeBannerVariant
 import com.nexcode.app.ui.components.NexcodeButton
 import com.nexcode.app.ui.components.NexcodeButtonVariant
 import com.nexcode.app.ui.components.NexcodeCard
@@ -58,6 +62,15 @@ fun ScreenS09ImportProject(
     val uiState by viewModel.uiState.collectAsState()
     val colors = NexcodeTheme.colors
     val scrollState = rememberScrollState()
+    val repoChipScroll = rememberScrollState()
+
+    val zipPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.importZipFromUri(uri) { onNavigateBack() }
+        }
+    }
 
     Box(
         modifier = modifier
@@ -66,14 +79,13 @@ fun ScreenS09ImportProject(
             .background(colors.bg)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // TopBar avec bouton retour et titre
             NexcodeTopBar(
                 title = stringResource(id = R.string.s09_title),
                 navigationIcon = painterResource(id = R.drawable.ic_back),
                 onNavigationClick = onNavigateBack
             )
 
-            // Barre d'onglets personnalisée (.tabbar avec Fichier .zip et Dépôt GitHub)
+            // Barre d'onglets (.tabbar avec Fichier .zip et Dépôt GitHub)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -105,6 +117,18 @@ fun ScreenS09ImportProject(
                     .verticalScroll(scrollState)
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
+                uiState.importError?.let { errMsg ->
+                    NexcodeBanner(
+                        text = errMsg,
+                        icon = painterResource(id = R.drawable.ic_alert),
+                        variant = NexcodeBannerVariant.ERROR,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                        testTag = "s09_error_banner"
+                    )
+                }
+
                 if (uiState.importTabIndex == 0) {
                     // ============ VOLET 1 : FICHIER .ZIP ============
                     val borderColor = colors.border
@@ -123,25 +147,35 @@ fun ScreenS09ImportProject(
                                     cornerRadius = CornerRadius(14.dp.toPx(), 14.dp.toPx())
                                 )
                             }
-                            .clickable {
-                                viewModel.importZip { onNavigateBack() }
+                            .clickable(enabled = !uiState.isImporting) {
+                                zipPickerLauncher.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream"))
                             }
                             .padding(vertical = 34.dp, horizontal = 20.dp)
                             .testTag("s09_zip_drop_card"),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_download),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .padding(bottom = 8.dp),
-                                tint = colors.accent
-                            )
+                            if (uiState.isImporting) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                        .padding(bottom = 8.dp),
+                                    color = colors.accent,
+                                    strokeWidth = 2.5.dp
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_download),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .padding(bottom = 8.dp),
+                                    tint = colors.accent
+                                )
+                            }
 
                             Text(
-                                text = stringResource(id = R.string.s09_choose_zip_title),
+                                text = if (uiState.isImporting) "Extraction en cours…" else stringResource(id = R.string.s09_choose_zip_title),
                                 fontFamily = InterFontFamily,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
@@ -160,65 +194,95 @@ fun ScreenS09ImportProject(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    if (uiState.recentZipImportName != null) {
+                        Spacer(modifier = Modifier.height(14.dp))
 
-                    // Carte d'importation récente
-                    NexcodeCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("s09_recent_zip_card")
-                    ) {
-                        Row(
+                        NexcodeCard(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                .testTag("s09_recent_zip_card")
                         ) {
-                            Box(
+                            Row(
                                 modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(ShapeRadius12)
-                                    .background(colors.surface2),
-                                contentAlignment = Alignment.Center
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_file),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                    tint = colors.accent
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(ShapeRadius12)
+                                        .background(colors.surface2),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_file),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = colors.accent
+                                    )
+                                }
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = uiState.recentZipImportName!!,
+                                        fontFamily = InterFontFamily,
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.txt
+                                    )
+                                    Text(
+                                        text = uiState.recentZipImportDesc.orEmpty(),
+                                        fontFamily = InterFontFamily,
+                                        fontSize = 11.5.sp,
+                                        color = colors.txt2,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                }
+
+                                NexcodeChip(
+                                    text = stringResource(id = R.string.s09_success_chip),
+                                    variant = NexcodeChipVariant.SUCCESS
                                 )
                             }
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(id = R.string.s09_recent_zip_name),
-                                    fontFamily = InterFontFamily,
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.txt
-                                )
-                                Text(
-                                    text = stringResource(id = R.string.s09_recent_zip_desc),
-                                    fontFamily = InterFontFamily,
-                                    fontSize = 11.5.sp,
-                                    color = colors.txt2,
-                                    modifier = Modifier.padding(top = 2.dp)
-                                )
-                            }
-
-                            NexcodeChip(
-                                text = stringResource(id = R.string.s09_success_chip),
-                                variant = NexcodeChipVariant.SUCCESS
-                            )
                         }
                     }
                 } else {
                     // ============ VOLET 2 : DÉPÔT GITHUB ============
+                    if (uiState.userRepositories.isNotEmpty()) {
+                        Text(
+                            text = "Vos dépôts GitHub",
+                            fontFamily = InterFontFamily,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.txt2,
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(repoChipScroll)
+                                .padding(bottom = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            uiState.userRepositories.take(15).forEach { repo ->
+                                val isChosen = uiState.importGitUrl.contains(repo.fullName, ignoreCase = true)
+                                NexcodeChip(
+                                    text = repo.fullName,
+                                    variant = if (isChosen) NexcodeChipVariant.ACCENT else NexcodeChipVariant.OUTLINE,
+                                    onClick = { viewModel.selectUserRepository(repo.fullName, repo.defaultBranch) },
+                                    testTag = "s09_repo_chip_${repo.name}"
+                                )
+                            }
+                        }
+                    }
+
                     NexcodeTextField(
                         value = uiState.importGitUrl,
                         onValueChange = { viewModel.updateImportGitUrl(it) },
                         label = stringResource(id = R.string.s09_repo_url_label),
+                        placeholder = "utilisateur/depot ou https://github.com/...",
                         isMono = true,
                         testTag = "s09_git_url_input"
                     )
@@ -229,6 +293,7 @@ fun ScreenS09ImportProject(
                         value = uiState.importGitBranch,
                         onValueChange = { viewModel.updateImportGitBranch(it) },
                         label = stringResource(id = R.string.s09_branch_label),
+                        placeholder = "main",
                         isMono = true,
                         testTag = "s09_git_branch_input"
                     )
@@ -236,10 +301,11 @@ fun ScreenS09ImportProject(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     NexcodeButton(
-                        text = stringResource(id = R.string.s09_import_repo_btn),
+                        text = if (uiState.isImporting) "Clonage en cours…" else stringResource(id = R.string.s09_import_repo_btn),
                         onClick = { viewModel.importGit { onNavigateBack() } },
                         variant = NexcodeButtonVariant.PRIMARY,
                         icon = painterResource(id = R.drawable.ic_pull),
+                        enabled = !uiState.isImporting,
                         fullWidth = true,
                         testTag = "s09_import_git_btn"
                     )

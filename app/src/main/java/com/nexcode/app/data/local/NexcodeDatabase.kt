@@ -20,7 +20,7 @@ import com.nexcode.app.data.local.entity.ProjectEntity
         ConversationEntity::class,
         BuildEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class NexcodeDatabase : RoomDatabase() {
