@@ -17,6 +17,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -58,7 +59,7 @@ class ProjectsViewModel(
 
     private fun observeProjectsFromDb() {
         viewModelScope.launch {
-            projectDao.getAllProjects().collect { entities ->
+            projectDao.getAllProjects().collectLatest { entities ->
                 val savedActiveId = runCatching { preferences.activeProjectIdFlow.first() }.getOrNull()
                 var totalBytes = 0L
                 val mappedItems = entities.map { entity ->
@@ -396,11 +397,23 @@ class ProjectsViewModel(
     }
 
     suspend fun importZipFileSync(zipFile: File): ProjectItem {
-        return withContext(Dispatchers.IO) {
+        val imported = withContext(Dispatchers.IO) {
             FileInputStream(zipFile).use { fis ->
                 importZipStream(fis, zipFile.name)
             }
         }
+        _uiState.update { current ->
+            val updated = listOf(imported) + current.projects.filter { it.id != imported.id }
+            val filtered = filterProjectList(updated, current.searchQuery, current.selectedFilter)
+            current.copy(
+                projects = updated,
+                filteredProjects = filtered,
+                totalProjectCount = updated.size,
+                selectedProject = imported,
+                viewMode = ProjectsViewMode.DEFAULT
+            )
+        }
+        return imported
     }
 
     private suspend fun importZipStream(inputStream: InputStream, archiveName: String): ProjectItem {
@@ -479,7 +492,7 @@ class ProjectsViewModel(
 
         _uiState.update { it.copy(isImporting = true, importError = null) }
 
-        val repoName = repoUrl.substringAfterLast("/").removeSuffix(".git").ifEmpty { "Repo-Git" }
+        val repoName = repoUrl.trimEnd('/').substringAfterLast("/").removeSuffix(".git").ifEmpty { "Repo-Git" }
         val targetDir = uniqueTargetDir(repoName)
 
         return when (val cloneRes = gitService.cloneRepository(repoUrl, targetDir, branch)) {

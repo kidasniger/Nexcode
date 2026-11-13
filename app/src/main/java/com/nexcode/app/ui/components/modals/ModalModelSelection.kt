@@ -39,10 +39,12 @@ data class AiModelItem(
 )
 
 val DEFAULT_AI_MODELS = listOf(
-    AiModelItem("claude-sonnet-4.5", "claude-sonnet-4.5", "Recommandé · équilibré, rapide"),
-    AiModelItem("claude-opus-4.1", "claude-opus-4.1", "Le plus capable · refactorisations lourdes"),
-    AiModelItem("claude-haiku-4.5", "claude-haiku-4.5", "Rapide · économique, petites retouches"),
-    AiModelItem("gpt-4o-mini", "gpt-4o-mini", "OpenAI · via clé personnelle")
+    AiModelItem("claude-sonnet-4.5", "claude-sonnet-4.5", "Anthropic · équilibré, rapide"),
+    AiModelItem("claude-opus-4.1", "claude-opus-4.1", "Anthropic · refactorisations lourdes"),
+    AiModelItem("claude-haiku-4.5", "claude-haiku-4.5", "Anthropic · rapide, économique"),
+    AiModelItem("gpt-4o", "gpt-4o", "OpenAI · raisonnement et code"),
+    AiModelItem("gpt-4o-mini", "gpt-4o-mini", "OpenAI · rapide via clé personnelle"),
+    AiModelItem("qwen2.5-coder:7b", "qwen2.5-coder:7b", "Serveur personnalisé · local Ollama")
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

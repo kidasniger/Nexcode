@@ -34,12 +34,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.nexcode.app.ui.components.NexcodeBanner
 import com.nexcode.app.ui.components.NexcodeBannerVariant
-import com.nexcode.app.ui.components.NexcodeBottomSheet
 import com.nexcode.app.ui.components.NexcodeButton
 import com.nexcode.app.ui.components.NexcodeButtonVariant
 import com.nexcode.app.ui.components.NexcodeCard
@@ -50,8 +51,6 @@ import com.nexcode.app.ui.theme.InterFontFamily
 import com.nexcode.app.ui.theme.JetBrainsMonoFontFamily
 import com.nexcode.app.ui.theme.NexcodeTheme
 import com.nexcode.app.ui.theme.PillShape
-import com.nexcode.app.ui.theme.ShapeRadius12
-import com.nexcode.app.ui.theme.ShapeRadius14
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,16 +63,6 @@ fun ScreenS04AiConfig(
     val uiState by viewModel.uiState.collectAsState()
     val colors = NexcodeTheme.colors
     val scrollState = rememberScrollState()
-
-    val availableModels = listOf(
-        "claude-sonnet-4.5",
-        "claude-3-7-sonnet",
-        "claude-3-5-haiku",
-        "gpt-4o",
-        "gpt-4o-mini",
-        "gemini-1.5-pro",
-        "qwen2.5-coder:7b"
-    )
 
     // Feuille modale basse pour le choix du modèle (.sheet m-model)
     if (uiState.showModelSheet) {
@@ -152,6 +141,19 @@ fun ScreenS04AiConfig(
                     )
                 }
 
+                if (uiState.selectedProvider == "Serveur personnalisé") {
+                    NexcodeTextField(
+                        value = uiState.customBaseUrl,
+                        onValueChange = { viewModel.updateCustomBaseUrl(it) },
+                        label = "URL de l'endpoint (OpenAI / Ollama)",
+                        placeholder = "http://localhost:11434/v1",
+                        hint = "Adresse de base compatible /v1/chat/completions.",
+                        isMono = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                        testTag = "s04_custom_url_input"
+                    )
+                }
+
                 // Champ Clé API
                 NexcodeTextField(
                     value = uiState.apiKey,
@@ -159,6 +161,11 @@ fun ScreenS04AiConfig(
                     label = stringResource(id = R.string.s04_key_label),
                     hint = stringResource(id = R.string.s04_key_hint),
                     isMono = true,
+                    visualTransformation = if (uiState.isApiKeyVisible) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
                     trailingContent = {
                         NexcodeIconButton(
                             icon = painterResource(id = R.drawable.ic_eye),
@@ -238,7 +245,7 @@ fun ScreenS04AiConfig(
                 } else if (uiState.aiTestSuccess == true) {
                     Box(modifier = Modifier.padding(top = 12.dp)) {
                         NexcodeBanner(
-                            text = stringResource(id = R.string.s04_test_success),
+                            text = uiState.aiTestMessage ?: stringResource(id = R.string.s04_test_success),
                             icon = painterResource(id = R.drawable.ic_check_c),
                             variant = NexcodeBannerVariant.SUCCESS,
                             testTag = "s04_test_success_banner"
@@ -247,7 +254,7 @@ fun ScreenS04AiConfig(
                 } else if (uiState.aiTestSuccess == false) {
                     Box(modifier = Modifier.padding(top = 12.dp)) {
                         NexcodeBanner(
-                            text = stringResource(id = R.string.s04_test_error),
+                            text = uiState.aiTestMessage ?: stringResource(id = R.string.s04_test_error),
                             icon = painterResource(id = R.drawable.ic_alert),
                             variant = NexcodeBannerVariant.ERROR,
                             testTag = "s04_test_error_banner"

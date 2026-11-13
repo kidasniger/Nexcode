@@ -21,6 +21,8 @@ class NexcodePreferences(private val context: Context) {
         val KEY_EDITOR_WORD_WRAP = booleanPreferencesKey("editor_word_wrap")
         val KEY_EDITOR_SHOW_LINE_NUMBERS = booleanPreferencesKey("editor_show_line_numbers")
         val KEY_AI_MODEL = stringPreferencesKey("ai_model")
+        val KEY_AI_PROVIDER = stringPreferencesKey("ai_provider")
+        val KEY_AI_CUSTOM_URL = stringPreferencesKey("ai_custom_url")
         val KEY_AI_AUTO_SUGGEST = booleanPreferencesKey("ai_auto_suggest")
         val KEY_BUILD_AUTO_INSTALL = booleanPreferencesKey("build_auto_install")
         val KEY_GIT_USER_NAME = stringPreferencesKey("git_user_name")
@@ -36,7 +38,9 @@ class NexcodePreferences(private val context: Context) {
         const val DEFAULT_FONT_SIZE = 13
         const val DEFAULT_WORD_WRAP = true
         const val DEFAULT_LINE_NUMBERS = true
-        const val DEFAULT_AI_MODEL = "gemini-1.5-pro"
+        const val DEFAULT_AI_MODEL = "claude-sonnet-4.5"
+        const val DEFAULT_AI_PROVIDER = "Anthropic"
+        const val DEFAULT_AI_CUSTOM_URL = ""
         const val DEFAULT_AUTO_SUGGEST = true
         const val DEFAULT_AUTO_INSTALL = false
     }
@@ -59,6 +63,14 @@ class NexcodePreferences(private val context: Context) {
 
     val aiModelFlow: Flow<String> = context.dataStore.data.map { prefs ->
         prefs[KEY_AI_MODEL] ?: DEFAULT_AI_MODEL
+    }
+
+    val aiProviderFlow: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_AI_PROVIDER] ?: DEFAULT_AI_PROVIDER
+    }
+
+    val aiCustomUrlFlow: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_AI_CUSTOM_URL] ?: DEFAULT_AI_CUSTOM_URL
     }
 
     val aiAutoSuggestFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
@@ -115,6 +127,14 @@ class NexcodePreferences(private val context: Context) {
 
     suspend fun setAiModel(model: String) {
         context.dataStore.edit { it[KEY_AI_MODEL] = model }
+    }
+
+    suspend fun setAiProvider(provider: String) {
+        context.dataStore.edit { it[KEY_AI_PROVIDER] = provider }
+    }
+
+    suspend fun setAiCustomUrl(url: String) {
+        context.dataStore.edit { it[KEY_AI_CUSTOM_URL] = url }
     }
 
     suspend fun setAiAutoSuggest(autoSuggest: Boolean) {

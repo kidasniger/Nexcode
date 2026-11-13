@@ -3,11 +3,13 @@ package com.nexcode.app.ui.screens.onboarding
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nexcode.app.data.ai.AiEndpointConfig
+import com.nexcode.app.data.ai.AiProviderType
+import com.nexcode.app.data.ai.AiRepositoryService
 import com.nexcode.app.data.github.repository.GitHubRepositoryService
 import com.nexcode.app.data.github.repository.GitHubResult
 import com.nexcode.app.data.preferences.NexcodePreferences
 import com.nexcode.app.data.preferences.NexcodeSecureVault
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,15 +37,18 @@ data class OnboardingUiState(
     val selectedProvider: String = "Anthropic",
     val apiKey: String = "",
     val isApiKeyVisible: Boolean = false,
+    val customBaseUrl: String = "",
     val selectedModel: String = "claude-sonnet-4.5",
     val showModelSheet: Boolean = false,
     val isTestingAi: Boolean = false,
-    val aiTestSuccess: Boolean? = null
+    val aiTestSuccess: Boolean? = null,
+    val aiTestMessage: String? = null
 )
 
 class OnboardingViewModel(
     private val context: Context,
-    private val gitService: GitHubRepositoryService = GitHubRepositoryService(context)
+    private val gitService: GitHubRepositoryService = GitHubRepositoryService(context),
+    private val aiService: AiRepositoryService = AiRepositoryService(context)
 ) : ViewModel() {
 
     private val secureVault = NexcodeSecureVault(context)
@@ -62,10 +67,33 @@ class OnboardingViewModel(
 
     init {
         loadSavedGitHubSession()
+        loadSavedAiConfig()
     }
 
     fun refreshSessionFromStorage() {
         loadSavedGitHubSession()
+        loadSavedAiConfig()
+    }
+
+    private fun loadSavedAiConfig() {
+        viewModelScope.launch {
+            val savedProvider = runCatching { preferences.aiProviderFlow.first() }
+                .getOrDefault(NexcodePreferences.DEFAULT_AI_PROVIDER)
+            val savedModel = runCatching { preferences.aiModelFlow.first() }
+                .getOrDefault(NexcodePreferences.DEFAULT_AI_MODEL)
+            val savedCustomUrl = runCatching { preferences.aiCustomUrlFlow.first() }
+                .getOrDefault(NexcodePreferences.DEFAULT_AI_CUSTOM_URL)
+            val savedKey = secureVault.getApiKey().orEmpty()
+
+            _uiState.update {
+                it.copy(
+                    selectedProvider = savedProvider.ifBlank { NexcodePreferences.DEFAULT_AI_PROVIDER },
+                    selectedModel = savedModel.ifBlank { NexcodePreferences.DEFAULT_AI_MODEL },
+                    customBaseUrl = savedCustomUrl,
+                    apiKey = savedKey
+                )
+            }
+        }
     }
 
     private fun loadSavedGitHubSession() {
@@ -235,11 +263,31 @@ class OnboardingViewModel(
     }
 
     fun selectAiProvider(provider: String) {
-        _uiState.update { it.copy(selectedProvider = provider) }
+        _uiState.update { current ->
+            val suggestedModel = when (AiProviderType.fromDisplayName(provider)) {
+                AiProviderType.OPENAI -> if (current.selectedModel.startsWith("claude", ignoreCase = true)) "gpt-4o" else current.selectedModel
+                AiProviderType.ANTHROPIC -> if (current.selectedModel.startsWith("gpt", ignoreCase = true)) "claude-sonnet-4.5" else current.selectedModel
+                AiProviderType.CUSTOM -> if (current.selectedModel.startsWith("claude", ignoreCase = true)) "qwen2.5-coder:7b" else current.selectedModel
+            }
+            current.copy(
+                selectedProvider = provider,
+                selectedModel = suggestedModel,
+                aiTestSuccess = null,
+                aiTestMessage = null
+            )
+        }
+        viewModelScope.launch {
+            preferences.setAiProvider(provider)
+            preferences.setAiModel(_uiState.value.selectedModel)
+        }
     }
 
     fun updateApiKey(key: String) {
-        _uiState.update { it.copy(apiKey = key) }
+        _uiState.update { it.copy(apiKey = key, aiTestSuccess = null, aiTestMessage = null) }
+    }
+
+    fun updateCustomBaseUrl(url: String) {
+        _uiState.update { it.copy(customBaseUrl = url, aiTestSuccess = null, aiTestMessage = null) }
     }
 
     fun toggleApiKeyVisibility() {
@@ -251,7 +299,14 @@ class OnboardingViewModel(
     }
 
     suspend fun selectModelSync(model: String) {
-        _uiState.update { it.copy(selectedModel = model, showModelSheet = false) }
+        _uiState.update {
+            it.copy(
+                selectedModel = model,
+                showModelSheet = false,
+                aiTestSuccess = null,
+                aiTestMessage = null
+            )
+        }
         preferences.setAiModel(model)
     }
 
@@ -261,21 +316,50 @@ class OnboardingViewModel(
         }
     }
 
+    suspend fun testAiConnectionSync(): Boolean {
+        val state = _uiState.value
+        _uiState.update { it.copy(isTestingAi = true, aiTestSuccess = null, aiTestMessage = null) }
+        val config = AiEndpointConfig(
+            provider = AiProviderType.fromDisplayName(state.selectedProvider),
+            model = state.selectedModel,
+            apiKey = state.apiKey.trim(),
+            customBaseUrl = state.customBaseUrl.trim()
+        )
+        val result = aiService.testConnection(config)
+        if (result.success) {
+            aiService.saveConfig(
+                providerName = state.selectedProvider,
+                model = state.selectedModel,
+                apiKey = state.apiKey.trim(),
+                customBaseUrl = state.customBaseUrl.trim()
+            )
+        }
+        _uiState.update {
+            it.copy(
+                isTestingAi = false,
+                aiTestSuccess = result.success,
+                aiTestMessage = result.message
+            )
+        }
+        return result.success
+    }
+
     fun testAiConnection() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isTestingAi = true, aiTestSuccess = null) }
-            delay(412) // Simulation des 412 ms de la maquette
-            val success = _uiState.value.apiKey.isNotBlank()
-            _uiState.update { it.copy(isTestingAi = false, aiTestSuccess = success) }
+            testAiConnectionSync()
         }
     }
 
     suspend fun completeOnboardingSync() {
-        if (_uiState.value.apiKey.isNotBlank()) {
-            secureVault.saveApiKey(_uiState.value.apiKey)
-        }
-        if (_uiState.value.gitHubToken.isNotBlank() && _uiState.value.isGitHubConnected) {
-            secureVault.saveGitToken(_uiState.value.gitHubToken)
+        val state = _uiState.value
+        aiService.saveConfig(
+            providerName = state.selectedProvider,
+            model = state.selectedModel,
+            apiKey = state.apiKey.trim().takeIf { it.isNotEmpty() },
+            customBaseUrl = state.customBaseUrl.trim()
+        )
+        if (state.gitHubToken.isNotBlank() && state.isGitHubConnected) {
+            secureVault.saveGitToken(state.gitHubToken)
         }
         preferences.setOnboardingDone(true)
     }

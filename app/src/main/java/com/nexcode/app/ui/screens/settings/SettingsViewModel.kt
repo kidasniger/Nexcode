@@ -40,10 +40,11 @@ class SettingsViewModel(
                 prefs.gitLoginFlow,
                 prefs.gitPlanFlow,
                 prefs.aiModelFlow,
+                prefs.aiProviderFlow,
                 prefs.themeModeFlow
-            ) { login, plan, aiModel, themeMode ->
-                Quad(login, plan, aiModel, themeMode)
-            }.collect { (login, plan, aiModel, themeMode) ->
+            ) { login, plan, aiModel, aiProvider, themeMode ->
+                PrefsSnapshot(login, plan, aiModel, aiProvider, themeMode)
+            }.collect { (login, plan, aiModel, aiProvider, themeMode) ->
                 val hasToken = gitService?.hasSavedToken() == true
                 val connected = hasToken && login.isNotBlank()
                 val uiTheme = when (themeMode.uppercase(Locale.ROOT)) {
@@ -57,7 +58,7 @@ class SettingsViewModel(
                         accountUsername = if (connected) login else "Non connecté",
                         accountInitials = if (connected) computeInitials(login) else "?",
                         accountPlan = if (connected) "github.com/$login · $plan" else "Aucun compte associé",
-                        aiModelSummary = aiModel,
+                        aiModelSummary = "$aiModel · $aiProvider",
                         uiTheme = uiTheme
                     )
                 }
@@ -245,10 +246,11 @@ class SettingsViewModel(
         _uiState.update { it.copy(userNotice = null) }
     }
 
-    private data class Quad(
+    private data class PrefsSnapshot(
         val login: String,
         val plan: String,
         val aiModel: String,
+        val aiProvider: String,
         val themeMode: String
     )
 

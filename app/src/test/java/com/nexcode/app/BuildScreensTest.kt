@@ -35,32 +35,43 @@ class BuildScreensTest {
     private lateinit var gitService: GitHubRepositoryService
     private lateinit var viewModel: BuildViewModel
 
-    private val sampleProject = ProjectItem(
-        id = 10L,
-        name = "SampleAndroid",
-        packageName = "com.octo.sample",
-        initials = "SA",
-        language = "Kotlin",
-        uiFramework = "Compose",
-        modifiedText = "Aujourd'hui",
-        buildStatus = ProjectBuildStatus.DRAFT,
-        buildStatusLabel = "Brouillon",
-        version = "1.4.0",
-        onGitHub = true,
-        gitRepo = "https://github.com/octo-dev/sample-android",
-        gitBranch = "main",
-        buildCount = 4
-    )
+    private lateinit var sampleProject: ProjectItem
 
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
         fakeApi = FakeGitHubApiService()
         gitService = GitHubRepositoryService(context, api = fakeApi)
-        runBlocking {
+        val insertedId = runBlocking {
             gitService.clearGitSession()
             gitService.verifyAndSaveToken("ghp_build_test_token")
+            val db = com.nexcode.app.data.local.NexcodeDatabase.getInstance(context)
+            db.projectDao().insertProject(
+                com.nexcode.app.data.local.entity.ProjectEntity(
+                    name = "SampleAndroid",
+                    packageName = "com.octo.sample",
+                    path = File(context.filesDir, "projects/SampleAndroid").absolutePath,
+                    gitRepo = "https://github.com/octo-dev/sample-android",
+                    gitBranch = "main"
+                )
+            )
         }
+        sampleProject = ProjectItem(
+            id = insertedId,
+            name = "SampleAndroid",
+            packageName = "com.octo.sample",
+            initials = "SA",
+            language = "Kotlin",
+            uiFramework = "Compose",
+            modifiedText = "Aujourd'hui",
+            buildStatus = ProjectBuildStatus.DRAFT,
+            buildStatusLabel = "Brouillon",
+            version = "1.4.0",
+            onGitHub = true,
+            gitRepo = "https://github.com/octo-dev/sample-android",
+            gitBranch = "main",
+            buildCount = 4
+        )
         viewModel = BuildViewModel(context, gitService)
     }
 
@@ -86,7 +97,7 @@ class BuildScreensTest {
     }
 
     @Test
-    fun testTriggerGitHubActionsPollStepsLogsAndDownloadApk() = runBlocking {
+    fun testTriggerGitHubActionsPollStepsLogsAndDownloadApk(): Unit = runBlocking {
         viewModel.bindProject(sampleProject)
         assertEquals("octo-dev", viewModel.uiState.value.owner)
         assertEquals("sample-android", viewModel.uiState.value.repo)

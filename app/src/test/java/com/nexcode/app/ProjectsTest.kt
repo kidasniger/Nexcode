@@ -1,6 +1,7 @@
 package com.nexcode.app
 
 import android.content.Context
+import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import com.nexcode.app.data.github.repository.GitHubRepositoryService
 import com.nexcode.app.ui.screens.projects.ProjectFilter
@@ -10,6 +11,7 @@ import com.nexcode.app.ui.screens.projects.ProjectsViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.transport.URIish
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -18,6 +20,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import java.io.File
 import java.nio.file.Files
@@ -35,9 +38,23 @@ class ProjectsTest {
         viewModel = ProjectsViewModel(context, GitHubRepositoryService(context, api = FakeGitHubApiService()))
     }
 
+    private suspend fun awaitProjectsCondition(
+        timeoutMs: Long = 3000L,
+        predicate: () -> Boolean
+    ) {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (true) {
+            Shadows.shadowOf(Looper.getMainLooper()).idle()
+            if (predicate() || System.currentTimeMillis() >= deadline) {
+                break
+            }
+            delay(25)
+        }
+    }
+
     @Test
-    fun testInitialProjectsStateStartsEmpty() = runBlocking {
-        delay(50)
+    fun testInitialProjectsStateStartsEmpty(): Unit = runBlocking {
+        awaitProjectsCondition { true }
         val state = viewModel.uiState.value
         assertEquals(0, state.projects.size)
         assertEquals(ProjectsViewMode.EMPTY, state.viewMode)
@@ -45,7 +62,7 @@ class ProjectsTest {
     }
 
     @Test
-    fun testCreateSearchFilterAndDeleteProject() = runBlocking {
+    fun testCreateSearchFilterAndDeleteProject(): Unit = runBlocking {
         viewModel.selectTemplate(ProjectTemplateType.COMPOSE)
         viewModel.updateNewAppName("Mon Super App")
         assertEquals("com.monsuperapp.app", viewModel.uiState.value.newPackageName)
@@ -57,7 +74,7 @@ class ProjectsTest {
         viewModel.updateNewAppName("NotesJava")
         viewModel.createProjectSync()
 
-        delay(100)
+        awaitProjectsCondition { viewModel.uiState.value.projects.size == 2 }
         var state = viewModel.uiState.value
         assertEquals(2, state.projects.size)
         assertEquals(ProjectsViewMode.DEFAULT, state.viewMode)
@@ -79,7 +96,7 @@ class ProjectsTest {
         assertTrue(viewModel.uiState.value.showDeleteDialog)
         viewModel.confirmDeleteProjectSync()
 
-        delay(100)
+        awaitProjectsCondition { !viewModel.uiState.value.projects.any { it.id == createdId } }
         state = viewModel.uiState.value
         assertFalse(state.showDeleteDialog)
         assertFalse(state.projects.any { it.id == createdId })
@@ -87,7 +104,7 @@ class ProjectsTest {
     }
 
     @Test
-    fun testImportRealZipAndLocalBareGitClone() = runBlocking {
+    fun testImportRealZipAndLocalBareGitClone(): Unit = runBlocking {
         // 1. Test real .zip extraction
         val tempDir = Files.createTempDirectory("nexcode_zip_test").toFile()
         val zipFile = File(tempDir, "archive-demo.zip")
@@ -99,18 +116,19 @@ class ProjectsTest {
 
         val zipImported = viewModel.importZipFileSync(zipFile)
         assertNotNull(zipImported)
-        delay(100)
+        awaitProjectsCondition { viewModel.uiState.value.projects.any { it.name == "archive-demo" } }
         assertTrue(viewModel.uiState.value.projects.any { it.name == "archive-demo" })
 
         // 2. Test real JGit clone from local bare repo
         val bareDir = File(tempDir, "remote-app.git")
-        Git.init().setBare(true).setDirectory(bareDir).call().close()
+        Git.init().setBare(true).setInitialBranch("main").setDirectory(bareDir).call().close()
         val workDir = File(tempDir, "seed")
-        Git.cloneRepository().setURI(bareDir.toURI().toString()).setDirectory(workDir).call().use { git ->
+        Git.init().setInitialBranch("main").setDirectory(workDir).call().use { git ->
             File(workDir, "README.md").writeText("# Remote App")
             git.add().addFilepattern(".").call()
             git.commit().setMessage("init").setAuthor("Test", "t@e.com").call()
-            git.push().call()
+            git.remoteAdd().setName("origin").setUri(URIish(bareDir.toURI().toString())).call()
+            git.push().setRemote("origin").call()
         }
 
         viewModel.setImportTab(1)
@@ -120,7 +138,7 @@ class ProjectsTest {
 
         val clonedItem = viewModel.importGitSync()
         assertNotNull(clonedItem)
-        delay(100)
+        awaitProjectsCondition { viewModel.uiState.value.projects.any { it.name.contains("remote-app") } }
         val clonedProject = viewModel.uiState.value.projects.firstOrNull { it.name.contains("remote-app") }
         assertNotNull(clonedProject)
         assertTrue(File(clonedProject!!.localPath, ".git").exists())

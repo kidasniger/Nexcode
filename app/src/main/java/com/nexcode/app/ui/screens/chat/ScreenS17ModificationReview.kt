@@ -32,7 +32,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import com.example.R
+import com.nexcode.app.ui.components.NexcodeBanner
+import com.nexcode.app.ui.components.NexcodeBannerVariant
 import com.nexcode.app.ui.components.NexcodeButton
 import com.nexcode.app.ui.components.NexcodeButtonSize
 import com.nexcode.app.ui.components.NexcodeButtonVariant
@@ -59,10 +64,13 @@ fun ScreenS17ModificationReview(
             .fillMaxSize()
             .background(colors.bg)
     ) {
-        // En-tete : TopBar Revue des modifications / Proposees il y a 2 min · claude-sonnet-4.5
         NexcodeTopBar(
             title = stringResource(id = R.string.s17_title),
-            subtitle = stringResource(id = R.string.s17_sub_format, uiState.modelName),
+            subtitle = if (uiState.projectName.isNotBlank()) {
+                "${uiState.projectName} · ${uiState.modelName}"
+            } else {
+                uiState.modelName
+            },
             navigationIcon = painterResource(id = R.drawable.ic_back),
             onNavigationClick = onNavigateBack
         )
@@ -76,6 +84,19 @@ fun ScreenS17ModificationReview(
         ) {
             item {
                 Spacer(modifier = Modifier.height(2.dp))
+
+                uiState.reviewNotice?.let { notice ->
+                    NexcodeBanner(
+                        text = notice,
+                        icon = painterResource(id = R.drawable.ic_info),
+                        variant = NexcodeBannerVariant.SUCCESS,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 10.dp)
+                            .clickable { viewModel.dismissNotice() }
+                            .testTag("s17_notice_banner")
+                    )
+                }
 
                 // Carte recapitulative (.card .card-p : padding 14px 16px, margin-bottom: 10px)
                 Row(
@@ -105,63 +126,101 @@ fun ScreenS17ModificationReview(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(id = R.string.s17_summary_title),
+                            text = "${uiState.totalModificationsCount} modification(s) · ${uiState.totalFilesCount} fichier(s)",
                             fontFamily = InterFontFamily,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.1.sp,
-                            color = colors.txt
+                            color = colors.txt,
+                            modifier = Modifier.testTag("s17_summary_title")
                         )
                         Text(
-                            text = stringResource(id = R.string.s17_summary_sub),
+                            text = "+${uiState.totalAdditions} lignes ajoutées · −${uiState.totalDeletions} supprimées",
                             fontFamily = InterFontFamily,
                             fontSize = 12.sp,
                             lineHeight = 18.sp,
                             color = colors.txt2,
-                            modifier = Modifier.padding(top = 3.dp)
+                            modifier = Modifier
+                                .padding(top = 3.dp)
+                                .testTag("s17_summary_sub")
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Boutons d'action globale : Tout accepter / Tout refuser (gap: 8px, margin-bottom: 14px)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    NexcodeButton(
-                        text = stringResource(id = R.string.s17_btn_accept_all),
-                        icon = painterResource(id = R.drawable.ic_check),
-                        variant = NexcodeButtonVariant.PRIMARY,
-                        size = NexcodeButtonSize.SMALL,
-                        onClick = { viewModel.acceptAllDiffs() },
-                        modifier = Modifier.weight(1f),
-                        testTag = "s17_btn_accept_all"
-                    )
+                if (uiState.diffItems.isNotEmpty()) {
+                    // Boutons d'action globale : Tout accepter / Tout refuser (gap: 8px, margin-bottom: 14px)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        NexcodeButton(
+                            text = stringResource(id = R.string.s17_btn_accept_all),
+                            icon = painterResource(id = R.drawable.ic_check),
+                            variant = NexcodeButtonVariant.PRIMARY,
+                            size = NexcodeButtonSize.SMALL,
+                            onClick = { viewModel.acceptAllDiffs() },
+                            modifier = Modifier.weight(1f),
+                            testTag = "s17_btn_accept_all"
+                        )
 
-                    NexcodeButton(
-                        text = stringResource(id = R.string.s17_btn_reject_all),
-                        icon = painterResource(id = R.drawable.ic_close),
-                        variant = NexcodeButtonVariant.DANGER,
-                        size = NexcodeButtonSize.SMALL,
-                        onClick = { viewModel.rejectAllDiffs() },
-                        modifier = Modifier.weight(1f),
-                        testTag = "s17_btn_reject_all"
-                    )
+                        NexcodeButton(
+                            text = stringResource(id = R.string.s17_btn_reject_all),
+                            icon = painterResource(id = R.drawable.ic_close),
+                            variant = NexcodeButtonVariant.DANGER,
+                            size = NexcodeButtonSize.SMALL,
+                            onClick = { viewModel.rejectAllDiffs() },
+                            modifier = Modifier.weight(1f),
+                            testTag = "s17_btn_reject_all"
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
                 }
-
-                Spacer(modifier = Modifier.height(14.dp))
             }
 
-            // Cartes de diff par fichier (.card style="margin-bottom:10px;overflow:hidden")
-            items(uiState.diffItems) { diffItem ->
-                DiffFileCard(
-                    diffItem = diffItem,
-                    onAccept = { viewModel.acceptDiffItem(diffItem.fileName) },
-                    onReject = { viewModel.rejectDiffItem(diffItem.fileName) }
-                )
-                Spacer(modifier = Modifier.height(10.dp))
+            if (uiState.diffItems.isEmpty()) {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(ShapeRadius12)
+                            .background(colors.surface)
+                            .border(1.dp, colors.border, ShapeRadius12)
+                            .padding(16.dp)
+                            .testTag("s17_empty_card")
+                    ) {
+                        Text(
+                            text = "Aucune modification en attente de revue.",
+                            fontFamily = InterFontFamily,
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.txt
+                        )
+                        Text(
+                            text = "Demandez une modification à l'assistant IA dans le chat puis touchez « Appliquer au projet » pour inspecter les diffs ici avant toute écriture.",
+                            fontFamily = InterFontFamily,
+                            fontSize = 12.sp,
+                            lineHeight = 18.sp,
+                            color = colors.txt2,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            } else {
+                // Cartes de diff par fichier (.card style="margin-bottom:10px;overflow:hidden")
+                items(
+                    items = uiState.diffItems,
+                    key = { it.relativePath.ifBlank { it.fileName } }
+                ) { diffItem ->
+                    DiffFileCard(
+                        diffItem = diffItem,
+                        onAccept = { viewModel.acceptDiffItem(diffItem.fileName) },
+                        onReject = { viewModel.rejectDiffItem(diffItem.fileName) }
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
             }
 
             item {
@@ -237,10 +296,12 @@ private fun DiffFileCard(
         HorizontalDivider(thickness = 0.5.dp, color = colors.border)
 
         // Conteneur de diff (.diff font-family: JetBrains Mono, font-size: 11px, line-height: 1.6, background: var(--codebg))
+        val hScroll = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(colors.codeBg)
+                .horizontalScroll(hScroll)
         ) {
             diffItem.lines.forEach { line ->
                 val (lineBg, lineTextColor, sign, signColor) = when (line.type) {

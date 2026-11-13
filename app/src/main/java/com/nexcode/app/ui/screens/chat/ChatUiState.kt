@@ -1,8 +1,10 @@
 package com.nexcode.app.ui.screens.chat
 
+import com.nexcode.app.data.ai.ParsedCodeBlock
+
 enum class ChatScreenState {
-    DEFAULT,   // stv="def" : message avec code généré et conseil de revue
-    ANALYZING  // stv="cours" : indicateur de frappe, spinner et bouton Stop
+    DEFAULT,
+    ANALYZING
 }
 
 enum class MessageAuthor {
@@ -13,10 +15,13 @@ enum class MessageAuthor {
 data class ChatMessage(
     val id: String,
     val author: MessageAuthor,
+    val authorLabel: String = if (author == MessageAuthor.USER) "VOUS" else "IA",
     val timeString: String,
     val text: String,
-    val codeHeader: String? = null,
-    val codeContent: String? = null,
+    val codeBlocks: List<ParsedCodeBlock> = emptyList(),
+    val codeHeader: String? = codeBlocks.firstOrNull()?.headerLabel,
+    val codeContent: String? = codeBlocks.firstOrNull()?.content,
+    val isStreaming: Boolean = false,
     val showApplyActions: Boolean = false,
     val adviceText: String? = null
 )
@@ -30,18 +35,21 @@ data class ConversationItem(
 )
 
 enum class ConversationChipVariant {
-    ACCENT,  // .chip-acc (3 modifs)
-    SUCCESS, // .chip-ok (Appliqué)
-    OUTLINED // .chip-out (Annulée)
+    ACCENT,
+    SUCCESS,
+    OUTLINED
 }
 
 data class DiffItem(
     val fileName: String,
+    val relativePath: String = fileName,
     val additionsCount: Int,
     val deletionsCount: Int,
     val statusText: String,
     val statusVariant: DiffStatusVariant,
-    val lines: List<DiffLine>
+    val lines: List<DiffLine>,
+    val proposedContent: String = "",
+    val isNewFile: Boolean = false
 )
 
 data class DiffLine(
@@ -56,29 +64,41 @@ enum class DiffLineType {
 }
 
 enum class DiffStatusVariant {
-    SUCCESS, // .chip-ok (Nouveau, Modifié)
-    WARNING  // .chip-warn (En attente)
+    SUCCESS,
+    WARNING
 }
 
 data class ChatUiState(
+    val projectId: Long? = null,
+    val projectName: String = "",
+    val projectLocalPath: String = "",
+    val providerName: String = "Anthropic",
+    val providerAuthorLabel: String = "CLAUDE",
     val modelName: String = "claude-sonnet-4.5",
-    val contextFiles: List<String> = listOf("MainActivity.kt", "Theme.kt", "strings.xml"),
+    val hasConfiguredAi: Boolean = false,
+    val contextFiles: List<String> = emptyList(),
+    val availableProjectFiles: List<String> = emptyList(),
+    val showFilePickerSheet: Boolean = false,
     val chatState: ChatScreenState = ChatScreenState.DEFAULT,
     val inputMessage: String = "",
-    val defaultMessages: List<ChatMessage> = emptyList(),
-    val analyzingUserPrompt: String = "Refactorise CityRepository pour utiliser kotlinx-serialization.",
-    val analyzingFile: String = "CityRepository.kt",
-    val analyzingLinesCount: Int = 148,
+    val messages: List<ChatMessage> = emptyList(),
+    val analyzingUserPrompt: String = "",
+    val analyzingFile: String = "",
+    val analyzingLinesCount: Int = 0,
+    val chatError: String? = null,
+    val isMissingApiKey: Boolean = false,
+    val userNotice: String? = null,
     // S16 : Historique
     val searchQuery: String = "",
     val conversations: List<ConversationItem> = emptyList(),
-    val totalConversationsCount: Int = 18,
+    val totalConversationsCount: Int = 0,
     // S17 : Revue des modifications
     val diffItems: List<DiffItem> = emptyList(),
-    val totalAdditions: Int = 27,
-    val totalDeletions: Int = 5,
-    val totalModificationsCount: Int = 3,
-    val totalFilesCount: Int = 2,
+    val totalAdditions: Int = 0,
+    val totalDeletions: Int = 0,
+    val totalModificationsCount: Int = 0,
+    val totalFilesCount: Int = 0,
+    val reviewNotice: String? = null,
     // Modales
     val showModelSelector: Boolean = false
 )

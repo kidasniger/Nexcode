@@ -104,6 +104,7 @@ fun NexcodeNavHost(
             gitViewModel.bindProject("", "", "")
         }
         buildViewModel.bindProject(selected)
+        chatViewModel.bindProject(selected)
     }
 
     LaunchedEffect(onboardingState.isGitHubConnected) {
@@ -121,6 +122,12 @@ fun NexcodeNavHost(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val currentScreen = NexcodeScreen.fromRoute(currentRoute)
+
+    LaunchedEffect(currentRoute) {
+        if (currentRoute == NexcodeScreen.S15.route) {
+            chatViewModel.refreshAiConfigStateSync()
+        }
+    }
 
     val currentTab = currentScreen.tab ?: NexcodeNavTab.PROJECTS
 
@@ -246,8 +253,12 @@ fun NexcodeNavHost(
                     viewModel = onboardingViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onFinish = {
-                        navController.navigate(NexcodeScreen.S05.route) {
-                            popUpTo(NexcodeScreen.S01.route) { inclusive = true }
+                        val returnedToCaller = navController.popBackStack(NexcodeScreen.S15.route, inclusive = false) ||
+                            navController.popBackStack(NexcodeScreen.S28.route, inclusive = false)
+                        if (!returnedToCaller) {
+                            navController.navigate(NexcodeScreen.S05.route) {
+                                popUpTo(NexcodeScreen.S01.route) { inclusive = true }
+                            }
                         }
                     }
                 )
@@ -431,7 +442,8 @@ fun NexcodeNavHost(
                     viewModel = chatViewModel,
                     onNavigateBack = { handleBackNavigation(navController, NexcodeScreen.S15) },
                     onNavigateHistory = { navController.navigate(NexcodeScreen.S16.route) },
-                    onNavigateReview = { navController.navigate(NexcodeScreen.S17.route) }
+                    onNavigateReview = { navController.navigate(NexcodeScreen.S17.route) },
+                    onNavigateAiConfig = { navController.navigate(NexcodeScreen.S04.route) }
                 )
             }
 
@@ -539,6 +551,8 @@ fun NexcodeNavHost(
                     viewModel = buildViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateAiChat = {
+                        val (prompt, hints) = buildViewModel.buildAiFixPrompt()
+                        chatViewModel.sendErrorFixRequest(prompt, hints)
                         navController.navigate(NexcodeScreen.S15.route)
                     },
                     onNavigateBuildConfig = {

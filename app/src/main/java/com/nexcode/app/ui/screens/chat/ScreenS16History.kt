@@ -133,6 +133,15 @@ fun ScreenS16History(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Carte contenant la liste des conversations (.card margin-bottom: 10px)
+                val filteredConversations = if (uiState.searchQuery.isBlank()) {
+                    uiState.conversations
+                } else {
+                    uiState.conversations.filter {
+                        it.title.contains(uiState.searchQuery, ignoreCase = true) ||
+                        it.subtitle.contains(uiState.searchQuery, ignoreCase = true)
+                    }
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -140,83 +149,89 @@ fun ScreenS16History(
                         .background(colors.surface)
                         .border(1.dp, colors.border, ShapeRadius12)
                 ) {
-                    val filteredConversations = if (uiState.searchQuery.isBlank()) {
-                        uiState.conversations
-                    } else {
-                        uiState.conversations.filter {
-                            it.title.contains(uiState.searchQuery, ignoreCase = true) ||
-                            it.subtitle.contains(uiState.searchQuery, ignoreCase = true)
-                        }
-                    }
-
-                    filteredConversations.forEachIndexed { index, convo ->
-                        if (index > 0) {
-                            HorizontalDivider(thickness = 0.5.dp, color = colors.border)
-                        }
-
-                        val isFirstItem = convo.id == "c1"
-                        Row(
+                    if (filteredConversations.isEmpty()) {
+                        Text(
+                            text = if (uiState.conversations.isEmpty()) {
+                                "Aucune conversation enregistrée pour ce projet."
+                            } else {
+                                "Aucune conversation ne correspond à « ${uiState.searchQuery} »."
+                            },
+                            fontFamily = InterFontFamily,
+                            fontSize = 12.5.sp,
+                            color = colors.txt2,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    if (isFirstItem) {
+                                .padding(horizontal = 14.dp, vertical = 16.dp)
+                                .testTag("s16_empty_list")
+                        )
+                    } else {
+                        filteredConversations.forEachIndexed { index, convo ->
+                            if (index > 0) {
+                                HorizontalDivider(thickness = 0.5.dp, color = colors.border)
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        viewModel.selectConversationFromHistory(convo.id)
                                         onNavigateChat()
                                     }
-                                }
-                                .padding(horizontal = 14.dp, vertical = 13.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Icone li-ic (acc si conversation active)
-                            val isAccent = convo.chipVariant == ConversationChipVariant.ACCENT
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(if (isAccent) colors.accent.copy(alpha = 0.15f) else colors.surface2),
-                                contentAlignment = Alignment.Center
+                                    .padding(horizontal = 14.dp, vertical = 13.dp)
+                                    .testTag("s16_item_${convo.id}"),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_spark),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                    tint = if (isAccent) colors.accent else colors.txt2
+                                // Icone li-ic (acc si conversation active)
+                                val isAccent = convo.chipVariant == ConversationChipVariant.ACCENT
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (isAccent) colors.accent.copy(alpha = 0.15f) else colors.surface2),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_spark),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                        tint = if (isAccent) colors.accent else colors.txt2
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                // Titre et sous-titre
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = convo.title,
+                                        fontFamily = InterFontFamily,
+                                        fontSize = 13.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.txt
+                                    )
+                                    Text(
+                                        text = convo.subtitle,
+                                        fontFamily = InterFontFamily,
+                                        fontSize = 11.5.sp,
+                                        color = colors.txt2,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                // Puce de statut
+                                val chipVariant = when (convo.chipVariant) {
+                                    ConversationChipVariant.ACCENT -> NexcodeChipVariant.ACCENT
+                                    ConversationChipVariant.SUCCESS -> NexcodeChipVariant.SUCCESS
+                                    ConversationChipVariant.OUTLINED -> NexcodeChipVariant.OUTLINED
+                                }
+
+                                NexcodeChip(
+                                    text = convo.chipText,
+                                    variant = chipVariant,
+                                    testTag = "s16_chip_${convo.id}"
                                 )
                             }
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            // Titre et sous-titre
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = convo.title,
-                                    fontFamily = InterFontFamily,
-                                    fontSize = 13.5.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.txt
-                                )
-                                Text(
-                                    text = convo.subtitle,
-                                    fontFamily = InterFontFamily,
-                                    fontSize = 11.5.sp,
-                                    color = colors.txt2,
-                                    modifier = Modifier.padding(top = 2.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            // Puce de statut
-                            val chipVariant = when (convo.chipVariant) {
-                                ConversationChipVariant.ACCENT -> NexcodeChipVariant.ACCENT
-                                ConversationChipVariant.SUCCESS -> NexcodeChipVariant.SUCCESS
-                                ConversationChipVariant.OUTLINED -> NexcodeChipVariant.OUTLINED
-                            }
-
-                            NexcodeChip(
-                                text = convo.chipText,
-                                variant = chipVariant,
-                                testTag = "s16_chip_${convo.id}"
-                            )
                         }
                     }
                 }
@@ -229,7 +244,10 @@ fun ScreenS16History(
                     icon = painterResource(id = R.drawable.ic_plus),
                     variant = NexcodeButtonVariant.PRIMARY,
                     size = NexcodeButtonSize.DEFAULT,
-                    onClick = onNavigateChat,
+                    onClick = {
+                        viewModel.startNewConversation()
+                        onNavigateChat()
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     testTag = "s16_btn_new_conversation"
                 )

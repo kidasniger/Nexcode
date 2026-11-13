@@ -73,7 +73,7 @@ class JGitManager {
         val trimmed = rawUrl.trim()
         if (trimmed.isBlank()) return ""
         val withScheme = when {
-            trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("file://") -> trimmed
+            trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("file:/") -> trimmed
             trimmed.startsWith("github.com/") -> "https://$trimmed"
             trimmed.contains("/") && !trimmed.contains("://") && !trimmed.startsWith("/") -> "https://github.com/$trimmed"
             else -> trimmed

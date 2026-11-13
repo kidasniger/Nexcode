@@ -44,15 +44,21 @@ class GitScreensTest {
 
         Git.init().setBare(true).setInitialBranch("main").setDirectory(bareRepoDir).call().close()
 
-        // Seed initial commit via peer
-        Git.cloneRepository().setURI(bareRepoDir.toURI().toString()).setDirectory(peerRepoDir).call().use { git ->
-            File(peerRepoDir, "MainActivity.kt").writeText("line1\nval title = \"v1\"\nline3\n")
+        // Seed initial commit on main before cloning peer and local repos
+        val seedRepoDir = File(tempRoot, "seed")
+        Git.init().setInitialBranch("main").setDirectory(seedRepoDir).call().use { git ->
+            File(seedRepoDir, "MainActivity.kt").writeText("line1\nval title = \"v1\"\nline3\n")
             git.add().addFilepattern(".").call()
             git.commit().setMessage("chore: initial commit").setAuthor("Seed", "seed@test.com").call()
-            git.push().call()
+            git.remoteAdd()
+                .setName("origin")
+                .setUri(org.eclipse.jgit.transport.URIish(bareRepoDir.toURI().toString()))
+                .call()
+            git.push().setRemote("origin").call()
         }
 
-        // Clone into localRepoDir
+        // Clone peer and local from seeded bareRepoDir so both track origin/main
+        Git.cloneRepository().setURI(bareRepoDir.toURI().toString()).setDirectory(peerRepoDir).call().close()
         Git.cloneRepository().setURI(bareRepoDir.toURI().toString()).setDirectory(localRepoDir).call().close()
 
         gitService = GitHubRepositoryService(context, api = FakeGitHubApiService())
@@ -65,7 +71,7 @@ class GitScreensTest {
     }
 
     @Test
-    fun testRealGitStatusDiffCommitAndPush() = runBlocking {
+    fun testRealGitStatusDiffCommitAndPush(): Unit = runBlocking {
         viewModel.bindProjectAndRefreshSync("meteo-android", "octo-dev/meteo-android", localRepoDir.absolutePath)
         var state = viewModel.uiState.value
         assertEquals("octo-dev / meteo-android", state.repoFullName)
@@ -94,7 +100,7 @@ class GitScreensTest {
     }
 
     @Test
-    fun testRealMergeConflictDetectionResolutionAndAbort() = runBlocking {
+    fun testRealMergeConflictDetectionResolutionAndAbort(): Unit = runBlocking {
         // 1. Peer modifies and pushes MainActivity.kt
         Git.open(peerRepoDir).use { peer ->
             File(peerRepoDir, "MainActivity.kt").writeText("line1\nval title = \"remote\"\nline3\n")
