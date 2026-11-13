@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -37,10 +39,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.nexcode.app.ui.components.NexcodeBanner
+import com.nexcode.app.ui.components.NexcodeBannerVariant
 import com.nexcode.app.ui.components.NexcodeButton
 import com.nexcode.app.ui.components.NexcodeButtonSize
 import com.nexcode.app.ui.components.NexcodeButtonVariant
 import com.nexcode.app.ui.components.NexcodeIconButton
+import com.nexcode.app.ui.components.NexcodeSwitch
 import com.nexcode.app.ui.components.NexcodeTopBar
 import com.nexcode.app.ui.theme.InterFontFamily
 import com.nexcode.app.ui.theme.JetBrainsMonoFontFamily
@@ -134,23 +139,11 @@ fun ScreenS19Properties(
                         )
                     }
 
-                    // Interrupteur toggle (.switch .on)
-                    Box(
-                        modifier = Modifier
-                            .size(width = 44.dp, height = 26.dp)
-                            .clip(CircleShape)
-                            .background(if (uiState.isComponentEnabled) colors.accent else colors.border)
-                            .clickable { viewModel.toggleComponentEnabled() }
-                            .padding(3.dp),
-                        contentAlignment = if (uiState.isComponentEnabled) Alignment.CenterEnd else Alignment.CenterStart
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clip(CircleShape)
-                                .background(if (uiState.isComponentEnabled) colors.onAccent else Color.White)
-                        )
-                    }
+                    NexcodeSwitch(
+                        checked = uiState.isComponentEnabled,
+                        onCheckedChange = { viewModel.toggleComponentEnabled() },
+                        testTag = "s19_switch_enabled"
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -198,11 +191,11 @@ fun ScreenS19Properties(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(44.dp)
+                                .heightIn(min = 48.dp)
                                 .clip(ShapeRadius12)
                                 .background(colors.surface2)
                                 .border(1.dp, colors.border, ShapeRadius12)
-                                .clickable { /* Menu Largeur */ }
+                                .clickable { viewModel.cycleWidthMode() }
                                 .padding(horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -396,11 +389,13 @@ fun ScreenS19Properties(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp)
+                        .defaultMinSize(minHeight = 48.dp)
                         .clip(ShapeRadius12)
                         .background(colors.surface2)
                         .border(1.dp, colors.border, ShapeRadius12)
                         .padding(3.dp),
-                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     val icons = listOf(R.drawable.ic_lr, R.drawable.ic_list, R.drawable.ic_move)
                     icons.forEachIndexed { index, iconRes ->
@@ -408,7 +403,7 @@ fun ScreenS19Properties(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(36.dp)
+                                .defaultMinSize(minHeight = 42.dp)
                                 .clip(RoundedCornerShape(9.dp))
                                 .background(if (isSelected) colors.surface else Color.Transparent)
                                 .clickable { viewModel.setAlignment(index) },
@@ -416,7 +411,7 @@ fun ScreenS19Properties(
                         ) {
                             Icon(
                                 painter = painterResource(id = iconRes),
-                                contentDescription = null,
+                                contentDescription = "Alignement ${index + 1}",
                                 modifier = Modifier.size(16.dp),
                                 tint = if (isSelected) colors.txt else colors.txt2
                             )
@@ -464,6 +459,15 @@ fun ScreenS19Properties(
                     testTag = "s19_btn_generate"
                 )
 
+                if (uiState.isCodeGenerated) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    NexcodeBanner(
+                        text = "Code Compose généré pour ${uiState.componentName} (${uiState.widthMode}, rayon ${uiState.cornerRadius} dp).",
+                        icon = painterResource(id = R.drawable.ic_check),
+                        variant = NexcodeBannerVariant.SUCCESS
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
@@ -504,7 +508,7 @@ private fun PropertyInputField(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(44.dp)
+                .heightIn(min = 48.dp)
                 .clip(ShapeRadius12)
                 .background(colors.surface2)
                 .border(1.dp, colors.border, ShapeRadius12)

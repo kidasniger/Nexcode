@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -135,6 +136,7 @@ private fun PopMenuItem(
         modifier = modifier
             .testTag(testTag)
             .fillMaxWidth()
+            .defaultMinSize(minHeight = 48.dp)
             .clip(RoundedCornerShape(9.dp))
             .clickable { onClick() }
             .padding(horizontal = 12.dp, vertical = 10.dp),

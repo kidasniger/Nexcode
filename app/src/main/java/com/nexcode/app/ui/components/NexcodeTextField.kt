@@ -5,11 +5,14 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -22,6 +25,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
+import com.nexcode.app.ui.theme.DarkBg
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -162,7 +167,7 @@ fun NexcodeTextField(
     }
 }
 
-// Contrôle segmenté (.seg : rayon 12 dp, boutons 36 dp rayon 9 dp)
+// Contrôle segmenté (.seg : rayon 12 dp, cible tactile >= 48 dp)
 @Composable
 fun NexcodeSegmentedControl(
     options: List<String>,
@@ -177,11 +182,13 @@ fun NexcodeSegmentedControl(
         modifier = modifier
             .testTag(testTag)
             .fillMaxWidth()
+            .defaultMinSize(minHeight = 48.dp)
             .clip(ShapeRadius12)
             .background(colors.surface2)
             .border(1.dp, colors.border, ShapeRadius12)
             .padding(3.dp),
-        horizontalArrangement = Arrangement.spacedBy(3.dp)
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         options.forEachIndexed { index, title ->
             val isSelected = index == selectedIndex
@@ -191,7 +198,7 @@ fun NexcodeSegmentedControl(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(36.dp)
+                    .defaultMinSize(minHeight = 42.dp)
                     .clip(RoundedCornerShape(9.dp))
                     .background(bg)
                     .clickable { onOptionSelected(index) },
@@ -208,7 +215,7 @@ fun NexcodeSegmentedControl(
     }
 }
 
-// Interrupteur à bascule (.switch : 44x26 dp, pastille 20 dp)
+// Interrupteur à bascule (.switch : 44x26 dp visuel, zone tactile >= 48 dp)
 @Composable
 fun NexcodeSwitch(
     checked: Boolean,
@@ -218,8 +225,10 @@ fun NexcodeSwitch(
     testTag: String = "nexcode_switch"
 ) {
     val colors = NexcodeTheme.colors
+    val isDark = colors.bg == DarkBg
+    val uncheckedTrack = if (isDark) colors.border else Color(0xFF8C9BB0)
     val bgColor by animateColorAsState(
-        targetValue = if (checked) colors.accent else colors.border,
+        targetValue = if (checked) colors.accent else uncheckedTrack,
         label = "switch_bg"
     )
     val thumbOffset by animateDpAsState(
@@ -230,21 +239,33 @@ fun NexcodeSwitch(
     Box(
         modifier = modifier
             .testTag(testTag)
-            .size(width = 44.dp, height = 26.dp)
-            .clip(PillShape)
-            .background(if (enabled) bgColor else bgColor.copy(alpha = 0.4f))
-            .clickable(
+            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+            .toggleable(
+                value = checked,
+                onValueChange = onCheckedChange,
                 enabled = enabled,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) { onCheckedChange(!checked) }
+                role = Role.Switch
+            ),
+        contentAlignment = Alignment.Center
     ) {
         Box(
             modifier = Modifier
-                .offset(x = thumbOffset, y = 3.dp)
-                .size(20.dp)
-                .clip(CircleShape)
-                .background(androidx.compose.ui.graphics.Color.White)
-        )
+                .size(width = 44.dp, height = 26.dp)
+                .clip(PillShape)
+                .background(if (enabled) bgColor else bgColor.copy(alpha = 0.4f))
+        ) {
+            Box(
+                modifier = Modifier
+                    .offset(x = thumbOffset, y = 3.dp)
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .border(
+                        width = 1.dp,
+                        color = if (checked) colors.accent else colors.txt2.copy(alpha = 0.45f),
+                        shape = CircleShape
+                    )
+            )
+        }
     }
 }

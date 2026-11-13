@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,8 +16,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,15 +43,19 @@ import com.nexcode.app.ui.components.NexcodeButtonSize
 import com.nexcode.app.ui.components.NexcodeButtonVariant
 import com.nexcode.app.ui.components.NexcodeIconButton
 import com.nexcode.app.ui.components.NexcodeTopBar
+import com.nexcode.app.ui.theme.DarkAccent
 import com.nexcode.app.ui.theme.DarkBg
 import com.nexcode.app.ui.theme.DarkBorder
+import com.nexcode.app.ui.theme.DarkOnAccent
 import com.nexcode.app.ui.theme.DarkSurface
 import com.nexcode.app.ui.theme.DarkSurface2
 import com.nexcode.app.ui.theme.DarkTxt
 import com.nexcode.app.ui.theme.DarkTxt2
 import com.nexcode.app.ui.theme.InterFontFamily
+import com.nexcode.app.ui.theme.LightAccent
 import com.nexcode.app.ui.theme.LightBg
 import com.nexcode.app.ui.theme.LightBorder
+import com.nexcode.app.ui.theme.LightOnAccent
 import com.nexcode.app.ui.theme.LightSurface
 import com.nexcode.app.ui.theme.LightSurface2
 import com.nexcode.app.ui.theme.LightTxt
@@ -73,6 +80,8 @@ fun ScreenS20Preview(
     val phoneBorder = if (uiState.isDarkPreview) DarkBorder else LightBorder
     val phoneTxt = if (uiState.isDarkPreview) DarkTxt else LightTxt
     val phoneTxt2 = if (uiState.isDarkPreview) DarkTxt2 else LightTxt2
+    val phoneAccent = if (uiState.isDarkPreview) DarkAccent else LightAccent
+    val phoneOnAccent = if (uiState.isDarkPreview) DarkOnAccent else LightOnAccent
 
     Column(
         modifier = modifier
@@ -106,21 +115,23 @@ fun ScreenS20Preview(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Selecteur segmenté Sombre / Clair (.seg : width 220px, margin-bottom 16px)
+                // Selecteur segmenté Sombre / Clair (.seg : cible tactile >= 48 dp)
                 Row(
                     modifier = Modifier
                         .width(220.dp)
+                        .defaultMinSize(minHeight = 48.dp)
                         .clip(ShapeRadius12)
                         .background(colors.surface2)
                         .border(1.dp, colors.border, ShapeRadius12)
                         .padding(3.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Bouton theme sombre (lune)
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .height(34.dp)
+                            .defaultMinSize(minHeight = 42.dp)
                             .clip(RoundedCornerShape(9.dp))
                             .background(if (uiState.isDarkPreview) colors.surface else androidx.compose.ui.graphics.Color.Transparent)
                             .clickable { viewModel.togglePreviewTheme(true) },
@@ -129,7 +140,7 @@ fun ScreenS20Preview(
                         Icon(
                             painter = painterResource(id = R.drawable.ic_moon),
                             contentDescription = "Thème sombre",
-                            modifier = Modifier.size(14.dp),
+                            modifier = Modifier.size(16.dp),
                             tint = if (uiState.isDarkPreview) colors.txt else colors.txt2
                         )
                     }
@@ -138,7 +149,7 @@ fun ScreenS20Preview(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .height(34.dp)
+                            .defaultMinSize(minHeight = 42.dp)
                             .clip(RoundedCornerShape(9.dp))
                             .background(if (!uiState.isDarkPreview) colors.surface else androidx.compose.ui.graphics.Color.Transparent)
                             .clickable { viewModel.togglePreviewTheme(false) },
@@ -147,7 +158,7 @@ fun ScreenS20Preview(
                         Icon(
                             painter = painterResource(id = R.drawable.ic_sun),
                             contentDescription = "Thème clair",
-                            modifier = Modifier.size(14.dp),
+                            modifier = Modifier.size(16.dp),
                             tint = if (!uiState.isDarkPreview) colors.txt else colors.txt2
                         )
                     }
@@ -155,11 +166,13 @@ fun ScreenS20Preview(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Boitier smartphone (.mphone : width 246px, height 520px, radius 26px)
+                // Boitier smartphone (s'adapte a portrait/paysage)
+                val phoneWidth = if (uiState.isLandscape) 316.dp else 246.dp
+                val phoneHeight = if (uiState.isLandscape) 260.dp else 520.dp
                 Box(
                     modifier = Modifier
-                        .width(246.dp)
-                        .height(520.dp)
+                        .width(phoneWidth)
+                        .height(phoneHeight)
                         .clip(RoundedCornerShape(26.dp))
                         .background(phoneBg)
                         .border(1.dp, phoneBorder, RoundedCornerShape(26.dp))
@@ -187,6 +200,7 @@ fun ScreenS20Preview(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxWidth()
+                                .verticalScroll(rememberScrollState())
                                 .padding(horizontal = 14.dp)
                         ) {
                             // En-tete : Mes villes + icone plus
@@ -259,7 +273,7 @@ fun ScreenS20Preview(
                                     .fillMaxWidth()
                                     .height(42.dp)
                                     .clip(CircleShape)
-                                    .background(colors.accent),
+                                    .background(phoneAccent),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
@@ -267,7 +281,7 @@ fun ScreenS20Preview(
                                     fontFamily = InterFontFamily,
                                     fontSize = 12.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = colors.onAccent
+                                    color = phoneOnAccent
                                 )
                             }
 
@@ -360,7 +374,7 @@ fun ScreenS20Preview(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
-                        Icon(painter = painterResource(id = R.drawable.ic_folder), contentDescription = null, modifier = Modifier.size(18.dp), tint = colors.accent)
+                        Icon(painter = painterResource(id = R.drawable.ic_folder), contentDescription = null, modifier = Modifier.size(18.dp), tint = phoneAccent)
                         Icon(painter = painterResource(id = R.drawable.ic_code), contentDescription = null, modifier = Modifier.size(18.dp), tint = phoneTxt2)
                         Icon(painter = painterResource(id = R.drawable.ic_spark), contentDescription = null, modifier = Modifier.size(18.dp), tint = phoneTxt2)
                         Icon(painter = painterResource(id = R.drawable.ic_wrench), contentDescription = null, modifier = Modifier.size(18.dp), tint = phoneTxt2)

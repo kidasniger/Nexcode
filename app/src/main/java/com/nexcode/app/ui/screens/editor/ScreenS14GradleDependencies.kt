@@ -9,10 +9,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -88,6 +88,7 @@ fun ScreenS14GradleDependencies(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(min = 48.dp)
                                 .padding(horizontal = 14.dp, vertical = 11.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -125,30 +126,38 @@ fun ScreenS14GradleDependencies(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Bannière avertissement conflit kotlin-stdlib
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(ShapeRadius12)
-                        .background(colors.warn.copy(alpha = 0.1f))
-                        .border(1.dp, colors.warn.copy(alpha = 0.25f), ShapeRadius12)
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_alert),
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp).padding(top = 1.dp),
-                        tint = colors.warn
+                if (uiState.gradleSyncSuccess) {
+                    NexcodeBanner(
+                        text = "Gradle synchronisé — versions alignées dans build.gradle.kts.",
+                        icon = painterResource(id = R.drawable.ic_check),
+                        variant = NexcodeBannerVariant.SUCCESS
                     )
+                } else {
+                    // Bannière avertissement conflit kotlin-stdlib
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(ShapeRadius12)
+                            .background(colors.warn.copy(alpha = 0.1f))
+                            .border(1.dp, colors.warn.copy(alpha = 0.25f), ShapeRadius12)
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_alert),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp).padding(top = 1.dp),
+                            tint = colors.warn
+                        )
 
-                    Text(
-                        text = stringResource(id = R.string.s14_warn_kotlin_conflict),
-                        fontSize = 12.sp,
-                        lineHeight = 17.sp,
-                        color = colors.warn
-                    )
+                        Text(
+                            text = stringResource(id = R.string.s14_warn_kotlin_conflict),
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
+                            color = colors.warn
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -173,7 +182,7 @@ fun ScreenS14GradleDependencies(
                     icon = painterResource(id = R.drawable.ic_refresh),
                     variant = NexcodeButtonVariant.PRIMARY,
                     size = NexcodeButtonSize.DEFAULT,
-                    onClick = { /* Synchro Gradle */ },
+                    onClick = { viewModel.syncGradleDependencies() },
                     modifier = Modifier.fillMaxWidth(),
                     testTag = "s14_btn_sync"
                 )

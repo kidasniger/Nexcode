@@ -11,18 +11,23 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,8 +44,8 @@ import com.nexcode.app.ui.components.NexcodeBannerVariant
 import com.nexcode.app.ui.components.NexcodeButton
 import com.nexcode.app.ui.components.NexcodeButtonSize
 import com.nexcode.app.ui.components.NexcodeButtonVariant
-import com.nexcode.app.ui.components.NexcodeCard
 import com.nexcode.app.ui.components.NexcodeIconButton
+import com.nexcode.app.ui.components.NexcodeTextField
 import com.nexcode.app.ui.components.NexcodeTopBar
 import com.nexcode.app.ui.theme.JetBrainsMonoFontFamily
 import com.nexcode.app.ui.theme.NexcodeTheme
@@ -72,19 +77,19 @@ fun ScreenS13Resources(
                 NexcodeIconButton(
                     icon = painterResource(id = R.drawable.ic_plus),
                     contentDescription = "Ajouter une ressource",
-                    onClick = { /* Ajouter */ },
+                    onClick = { viewModel.openAddResourceDialog() },
                     testTag = "s13_btn_add"
                 )
             }
         )
 
-        // Barre d'onglets (tabbar : Chaînes, Couleurs, Dimensions, Thèmes)
+        // Barre d'onglets .tabbar (Chaînes, Couleurs, Dimensions, Thèmes)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(colors.bg)
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(horizontal = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             ResourceTabButton(
                 title = stringResource(id = R.string.s13_tab_strings),
@@ -114,17 +119,131 @@ fun ScreenS13Resources(
                 modifier = Modifier.weight(1f)
             )
         }
+        HorizontalDivider(thickness = 1.dp, color = colors.border)
 
         // Volet actif selon l'onglet
         when (uiState.activeResourceTab) {
             ResourceTab.STRINGS -> StringsResourcePane(
                 uiState = uiState,
-                onCorrectClick = onNavigateCorrectInSearch
+                onEditString = { viewModel.startEditingString(it) },
+                onCorrectClick = onNavigateCorrectInSearch,
+                onCompleteTranslations = { viewModel.completeTranslations() }
             )
-            ResourceTab.COLORS -> ColorsResourcePane(uiState = uiState)
+            ResourceTab.COLORS -> ColorsResourcePane(
+                uiState = uiState,
+                onAddColor = { viewModel.openAddResourceDialog() }
+            )
             ResourceTab.DIMENSIONS -> DimensionsResourcePane(uiState = uiState)
-            ResourceTab.THEMES -> ThemesResourcePane()
+            ResourceTab.THEMES -> ThemesResourcePane(
+                onOpenThemesFile = { viewModel.toggleThemesPreviewDialog(true) }
+            )
         }
+    }
+
+    if (uiState.showAddResourceDialog) {
+        val isColorMode = uiState.activeResourceTab == ResourceTab.COLORS
+        var keyInput by remember(isColorMode) {
+            mutableStateOf(if (isColorMode) "surface_card" else "unit_pressure")
+        }
+        var valueInput by remember(isColorMode) {
+            mutableStateOf(if (isColorMode) "#1C2438" else "Pression")
+        }
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissAddResourceDialog() },
+            containerColor = colors.surface,
+            titleContentColor = colors.txt,
+            textContentColor = colors.txt2,
+            title = {
+                Text(
+                    text = if (isColorMode) "Nouvelle couleur" else "Nouvelle chaîne",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column {
+                    NexcodeTextField(
+                        value = keyInput,
+                        onValueChange = { keyInput = it },
+                        label = "Clé XML",
+                        isMono = true
+                    )
+                    NexcodeTextField(
+                        value = valueInput,
+                        onValueChange = { valueInput = it },
+                        label = if (isColorMode) "Code hexadécimal" else "Valeur",
+                        isMono = isColorMode
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (isColorMode) viewModel.addColorResource(keyInput, valueInput)
+                        else viewModel.addStringResource(keyInput, valueInput)
+                    }
+                ) {
+                    Text("Ajouter", color = colors.accent, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissAddResourceDialog() }) {
+                    Text("Annuler", color = colors.txt2)
+                }
+            }
+        )
+    }
+
+    val editing = uiState.editingStringResource
+    if (editing != null) {
+        var updatedValue by remember(editing.key) { mutableStateOf(editing.value) }
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissEditingString() },
+            containerColor = colors.surface,
+            titleContentColor = colors.txt,
+            textContentColor = colors.txt2,
+            title = { Text(editing.key, fontFamily = JetBrainsMonoFontFamily, fontSize = 15.sp, fontWeight = FontWeight.Bold) },
+            text = {
+                NexcodeTextField(
+                    value = updatedValue,
+                    onValueChange = { updatedValue = it },
+                    label = "Traduction française"
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.saveEditedString(editing.key, updatedValue) }) {
+                    Text("Enregistrer", color = colors.accent, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissEditingString() }) {
+                    Text("Annuler", color = colors.txt2)
+                }
+            }
+        )
+    }
+
+    if (uiState.showThemesPreviewDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.toggleThemesPreviewDialog(false) },
+            containerColor = colors.surface,
+            titleContentColor = colors.txt,
+            textContentColor = colors.txt2,
+            title = { Text("themes.xml", fontFamily = JetBrainsMonoFontFamily, fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    text = "<style name=\"Theme.NimbusMeteo\" parent=\"Theme.Material3.DayNight.NoActionBar\">\n    <item name=\"colorPrimary\">@color/accent_primary</item>\n    <item name=\"colorSecondary\">@color/accent_secondary</item>\n</style>",
+                    fontFamily = JetBrainsMonoFontFamily,
+                    fontSize = 11.5.sp,
+                    lineHeight = 17.sp,
+                    color = colors.txt
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.toggleThemesPreviewDialog(false) }) {
+                    Text("Fermer", color = colors.accent, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
     }
 }
 
@@ -136,24 +255,34 @@ private fun ResourceTabButton(
     modifier: Modifier = Modifier
 ) {
     val colors = NexcodeTheme.colors
-    val bg = if (isSelected) colors.surface else Color.Transparent
-    val border = if (isSelected) colors.border else Color.Transparent
-    val textColor = if (isSelected) colors.txt else colors.txt2
+    val textColor = if (isSelected) colors.accent else colors.txt2
 
-    Box(
+    Column(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(bg)
-            .border(1.dp, border, RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 7.dp),
-        contentAlignment = Alignment.Center
+            .heightIn(min = 48.dp)
+            .clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = title,
-            fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-            color = textColor
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = title,
+                fontSize = 12.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = textColor,
+                maxLines = 1
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .height(2.dp)
+                .background(if (isSelected) colors.accent else Color.Transparent)
         )
     }
 }
@@ -161,7 +290,9 @@ private fun ResourceTabButton(
 @Composable
 private fun StringsResourcePane(
     uiState: EditorUiState,
-    onCorrectClick: () -> Unit
+    onEditString: (ResourceStringItem) -> Unit,
+    onCorrectClick: () -> Unit,
+    onCompleteTranslations: () -> Unit
 ) {
     val colors = NexcodeTheme.colors
 
@@ -186,7 +317,8 @@ private fun StringsResourcePane(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                            .heightIn(min = 48.dp)
+                            .padding(start = 14.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
@@ -207,9 +339,8 @@ private fun StringsResourcePane(
 
                         NexcodeIconButton(
                             icon = painterResource(id = R.drawable.ic_edit),
-                            contentDescription = "Modifier",
-                            onClick = { /* Editer */ },
-                            modifier = Modifier.size(34.dp)
+                            contentDescription = "Modifier ${strItem.key}",
+                            onClick = { onEditString(strItem) }
                         )
                     }
                 }
@@ -248,7 +379,6 @@ private fun StringsResourcePane(
                     variant = NexcodeButtonVariant.GHOST,
                     size = NexcodeButtonSize.SMALL,
                     onClick = onCorrectClick,
-                    modifier = Modifier.height(28.dp),
                     testTag = "s13_btn_correct"
                 )
             }
@@ -280,13 +410,21 @@ private fun StringsResourcePane(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                NexcodeButton(
-                    text = stringResource(id = R.string.s13_btn_complete_ai),
-                    variant = NexcodeButtonVariant.SECONDARY,
-                    size = NexcodeButtonSize.SMALL,
-                    onClick = { /* IA */ },
-                    testTag = "s13_btn_translate_ai"
-                )
+                if (uiState.showTranslationsSyncedBanner) {
+                    NexcodeBanner(
+                        text = "Traductions EN/ES complétées pour les chaînes manquantes.",
+                        icon = painterResource(id = R.drawable.ic_check),
+                        variant = NexcodeBannerVariant.SUCCESS
+                    )
+                } else {
+                    NexcodeButton(
+                        text = stringResource(id = R.string.s13_btn_complete_ai),
+                        variant = NexcodeButtonVariant.SECONDARY,
+                        size = NexcodeButtonSize.SMALL,
+                        onClick = onCompleteTranslations,
+                        testTag = "s13_btn_translate_ai"
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -295,7 +433,10 @@ private fun StringsResourcePane(
 }
 
 @Composable
-private fun ColorsResourcePane(uiState: EditorUiState) {
+private fun ColorsResourcePane(
+    uiState: EditorUiState,
+    onAddColor: () -> Unit
+) {
     val colors = NexcodeTheme.colors
 
     LazyColumn(
@@ -318,6 +459,7 @@ private fun ColorsResourcePane(uiState: EditorUiState) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .padding(horizontal = 14.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -361,7 +503,7 @@ private fun ColorsResourcePane(uiState: EditorUiState) {
                 icon = painterResource(id = R.drawable.ic_plus),
                 variant = NexcodeButtonVariant.SECONDARY,
                 size = NexcodeButtonSize.DEFAULT,
-                onClick = { /* Nouvelle couleur */ },
+                onClick = onAddColor,
                 modifier = Modifier.fillMaxWidth(),
                 testTag = "s13_btn_new_color"
             )
@@ -393,6 +535,7 @@ private fun DimensionsResourcePane(uiState: EditorUiState) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .padding(horizontal = 14.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -418,7 +561,9 @@ private fun DimensionsResourcePane(uiState: EditorUiState) {
 }
 
 @Composable
-private fun ThemesResourcePane() {
+private fun ThemesResourcePane(
+    onOpenThemesFile: () -> Unit
+) {
     val colors = NexcodeTheme.colors
 
     Column(
@@ -454,7 +599,7 @@ private fun ThemesResourcePane() {
                 text = stringResource(id = R.string.s13_btn_open_file),
                 variant = NexcodeButtonVariant.SECONDARY,
                 size = NexcodeButtonSize.SMALL,
-                onClick = { /* Ouvrir */ },
+                onClick = onOpenThemesFile,
                 testTag = "s13_btn_open_themes"
             )
         }

@@ -8,11 +8,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -21,8 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -32,6 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,6 +42,7 @@ import com.example.R
 import com.nexcode.app.ui.components.NexcodeCard
 import com.nexcode.app.ui.components.NexcodeChip
 import com.nexcode.app.ui.components.NexcodeChipVariant
+import com.nexcode.app.ui.components.NexcodeSwitch
 import com.nexcode.app.ui.theme.JetBrainsMonoFontFamily
 import com.nexcode.app.ui.theme.NexcodeTheme
 
@@ -63,7 +67,8 @@ fun ScreenS29AppearanceEditor(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .heightIn(min = 56.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
@@ -106,11 +111,13 @@ fun ScreenS29AppearanceEditor(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .defaultMinSize(minHeight = 48.dp)
                     .padding(bottom = 12.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .background(colors.surface2)
                     .padding(3.dp)
-                    .testTag("s29_seg_ui_theme")
+                    .testTag("s29_seg_ui_theme"),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 val themes = listOf(
                     UiThemePreference.SYSTEM to "Système",
@@ -122,6 +129,7 @@ fun ScreenS29AppearanceEditor(
                     Box(
                         modifier = Modifier
                             .weight(1f)
+                            .defaultMinSize(minHeight = 42.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(if (isSelected) colors.accent else colors.surface2)
                             .clickable { viewModel.setUiTheme(theme) }
@@ -151,7 +159,8 @@ fun ScreenS29AppearanceEditor(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 12.dp)
-                    .testTag("s29_card_font_size")
+                    .testTag("s29_card_font_size"),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
                     Row(
@@ -168,23 +177,31 @@ fun ScreenS29AppearanceEditor(
 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(32.dp)
-                                    .border(1.dp, colors.border, RoundedCornerShape(9.dp))
-                                    .clip(RoundedCornerShape(9.dp))
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(12.dp))
                                     .clickable { viewModel.decreaseFontSize() }
+                                    .semantics { contentDescription = "Diminuer la taille de police" }
                                     .testTag("s29_btn_font_decrease"),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = "A",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.txt
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .border(1.dp, colors.border, RoundedCornerShape(9.dp))
+                                        .clip(RoundedCornerShape(9.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "A-",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.txt
+                                    )
+                                }
                             }
 
                             Text(
@@ -192,24 +209,34 @@ fun ScreenS29AppearanceEditor(
                                 fontFamily = JetBrainsMonoFontFamily,
                                 fontSize = 12.sp,
                                 color = colors.txt,
-                                modifier = Modifier.testTag("s29_text_font_size")
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                                    .testTag("s29_text_font_size")
                             )
 
                             Box(
                                 modifier = Modifier
-                                    .size(32.dp)
-                                    .border(1.dp, colors.border, RoundedCornerShape(9.dp))
-                                    .clip(RoundedCornerShape(9.dp))
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(12.dp))
                                     .clickable { viewModel.increaseFontSize() }
+                                    .semantics { contentDescription = "Augmenter la taille de police" }
                                     .testTag("s29_btn_font_increase"),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = "A",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.txt
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .border(1.dp, colors.border, RoundedCornerShape(9.dp))
+                                        .clip(RoundedCornerShape(9.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "A+",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.txt
+                                    )
+                                }
                             }
                         }
                     }
@@ -281,10 +308,12 @@ fun ScreenS29AppearanceEditor(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .background(colors.surface2)
                         .padding(3.dp)
-                        .testTag("s29_seg_indentation")
+                        .testTag("s29_seg_indentation"),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     val indents = listOf(
                         IndentationPreference.SPACES_2 to "2 espaces",
@@ -296,6 +325,7 @@ fun ScreenS29AppearanceEditor(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
+                                .defaultMinSize(minHeight = 42.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(if (isSelected) colors.accent else colors.surface2)
                                 .clickable { viewModel.setIndentation(ind) }
@@ -319,14 +349,17 @@ fun ScreenS29AppearanceEditor(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp)
-                    .testTag("s29_card_editor_options")
+                    .testTag("s29_card_editor_options"),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Column {
                     // Option 1 : Retour à la ligne auto
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(14.dp),
+                            .heightIn(min = 52.dp)
+                            .clickable { viewModel.toggleWordWrap(!state.wordWrap) }
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
@@ -343,14 +376,10 @@ fun ScreenS29AppearanceEditor(
                                 modifier = Modifier.padding(top = 2.dp)
                             )
                         }
-                        Switch(
+                        NexcodeSwitch(
                             checked = state.wordWrap,
                             onCheckedChange = { viewModel.toggleWordWrap(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = colors.bg,
-                                checkedTrackColor = colors.accent
-                            ),
-                            modifier = Modifier.testTag("s29_switch_word_wrap")
+                            testTag = "s29_switch_word_wrap"
                         )
                     }
 
@@ -360,7 +389,9 @@ fun ScreenS29AppearanceEditor(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(14.dp),
+                            .heightIn(min = 52.dp)
+                            .clickable { viewModel.toggleLineNumbers(!state.lineNumbers) }
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -370,14 +401,10 @@ fun ScreenS29AppearanceEditor(
                             color = colors.txt,
                             modifier = Modifier.weight(1f)
                         )
-                        Switch(
+                        NexcodeSwitch(
                             checked = state.lineNumbers,
                             onCheckedChange = { viewModel.toggleLineNumbers(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = colors.bg,
-                                checkedTrackColor = colors.accent
-                            ),
-                            modifier = Modifier.testTag("s29_switch_line_numbers")
+                            testTag = "s29_switch_line_numbers"
                         )
                     }
 
@@ -387,7 +414,9 @@ fun ScreenS29AppearanceEditor(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(14.dp),
+                            .heightIn(min = 52.dp)
+                            .clickable { viewModel.toggleAutoCloseBrackets(!state.autoCloseBrackets) }
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -397,14 +426,10 @@ fun ScreenS29AppearanceEditor(
                             color = colors.txt,
                             modifier = Modifier.weight(1f)
                         )
-                        Switch(
+                        NexcodeSwitch(
                             checked = state.autoCloseBrackets,
                             onCheckedChange = { viewModel.toggleAutoCloseBrackets(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = colors.bg,
-                                checkedTrackColor = colors.accent
-                            ),
-                            modifier = Modifier.testTag("s29_switch_auto_brackets")
+                            testTag = "s29_switch_auto_brackets"
                         )
                     }
                 }

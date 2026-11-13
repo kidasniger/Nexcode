@@ -7,25 +7,23 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,10 +39,12 @@ import com.example.R
 import com.nexcode.app.ui.components.NexcodeBanner
 import com.nexcode.app.ui.components.NexcodeBannerVariant
 import com.nexcode.app.ui.components.NexcodeButton
+import com.nexcode.app.ui.components.NexcodeButtonSize
 import com.nexcode.app.ui.components.NexcodeButtonVariant
 import com.nexcode.app.ui.components.NexcodeCard
 import com.nexcode.app.ui.components.NexcodeChip
 import com.nexcode.app.ui.components.NexcodeChipVariant
+import com.nexcode.app.ui.components.NexcodeSwitch
 import com.nexcode.app.ui.theme.NexcodeTheme
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -79,7 +79,8 @@ fun ScreenS28Settings(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .heightIn(min = 56.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
@@ -134,13 +135,15 @@ fun ScreenS28Settings(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 10.dp)
-                    .testTag("s28_card_account")
+                    .testTag("s28_card_account"),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Column {
                     // Ligne utilisateur
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 52.dp)
                             .padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -180,9 +183,8 @@ fun ScreenS28Settings(
                             text = if (state.isSignedOut) "Connecter" else "Gérer",
                             onClick = onNavigateGitHub,
                             variant = NexcodeButtonVariant.SECONDARY,
-                            modifier = Modifier
-                                .height(30.dp)
-                                .testTag("s28_btn_manage_account")
+                            size = NexcodeButtonSize.SMALL,
+                            testTag = "s28_btn_manage_account"
                         )
                     }
 
@@ -193,6 +195,7 @@ fun ScreenS28Settings(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(min = 48.dp)
                                 .clickable { viewModel.setSignOutDialogVisible(true) }
                                 .padding(horizontal = 14.dp, vertical = 12.dp)
                                 .testTag("s28_btn_signout"),
@@ -239,13 +242,15 @@ fun ScreenS28Settings(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 10.dp)
-                    .testTag("s28_card_preferences")
+                    .testTag("s28_card_preferences"),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Column {
                     // Apparence et éditeur -> S29
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .clickable { onNavigateAppearance() }
                             .padding(horizontal = 14.dp, vertical = 12.dp)
                             .testTag("s28_btn_go_appearance"),
@@ -302,6 +307,7 @@ fun ScreenS28Settings(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .padding(horizontal = 14.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -343,6 +349,7 @@ fun ScreenS28Settings(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .clickable { onNavigateAiConfig() }
                             .padding(horizontal = 14.dp, vertical = 12.dp)
                             .testTag("s28_btn_go_ai_config"),
@@ -402,7 +409,8 @@ fun ScreenS28Settings(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 10.dp)
-                    .testTag("s28_card_storage")
+                    .testTag("s28_card_storage"),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
                     Row(
@@ -488,14 +496,17 @@ fun ScreenS28Settings(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 10.dp)
-                    .testTag("s28_card_notifications")
+                    .testTag("s28_card_notifications"),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Column {
                     // Notification 1 : Compilation terminée
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(14.dp),
+                            .heightIn(min = 52.dp)
+                            .clickable { viewModel.toggleNotifyBuildCompleted(!state.notifyBuildCompleted) }
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
@@ -512,14 +523,10 @@ fun ScreenS28Settings(
                                 modifier = Modifier.padding(top = 2.dp)
                             )
                         }
-                        Switch(
+                        NexcodeSwitch(
                             checked = state.notifyBuildCompleted,
                             onCheckedChange = { viewModel.toggleNotifyBuildCompleted(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = colors.bg,
-                                checkedTrackColor = colors.accent
-                            ),
-                            modifier = Modifier.testTag("s28_switch_build_completed")
+                            testTag = "s28_switch_build_completed"
                         )
                     }
 
@@ -529,7 +536,9 @@ fun ScreenS28Settings(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(14.dp),
+                            .heightIn(min = 52.dp)
+                            .clickable { viewModel.toggleNotifyBuildErrors(!state.notifyBuildErrors) }
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
@@ -546,14 +555,10 @@ fun ScreenS28Settings(
                                 modifier = Modifier.padding(top = 2.dp)
                             )
                         }
-                        Switch(
+                        NexcodeSwitch(
                             checked = state.notifyBuildErrors,
                             onCheckedChange = { viewModel.toggleNotifyBuildErrors(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = colors.bg,
-                                checkedTrackColor = colors.accent
-                            ),
-                            modifier = Modifier.testTag("s28_switch_build_errors")
+                            testTag = "s28_switch_build_errors"
                         )
                     }
 
@@ -563,7 +568,9 @@ fun ScreenS28Settings(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(14.dp),
+                            .heightIn(min = 52.dp)
+                            .clickable { viewModel.toggleNotifyDependencyUpdates(!state.notifyDependencyUpdates) }
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
@@ -580,14 +587,10 @@ fun ScreenS28Settings(
                                 modifier = Modifier.padding(top = 2.dp)
                             )
                         }
-                        Switch(
+                        NexcodeSwitch(
                             checked = state.notifyDependencyUpdates,
                             onCheckedChange = { viewModel.toggleNotifyDependencyUpdates(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = colors.bg,
-                                checkedTrackColor = colors.accent
-                            ),
-                            modifier = Modifier.testTag("s28_switch_deps_updates")
+                            testTag = "s28_switch_deps_updates"
                         )
                     }
                 }
@@ -605,11 +608,13 @@ fun ScreenS28Settings(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp)
-                    .testTag("s28_card_application")
+                    .testTag("s28_card_application"),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(min = 52.dp)
                         .clickable { onNavigateBackupAbout() }
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                         .testTag("s28_btn_go_backup_about"),

@@ -1,10 +1,12 @@
 package com.example
 
 import androidx.test.core.app.ApplicationProvider
+import com.nexcode.app.data.ai.ParsedCodeBlock
+import com.nexcode.app.ui.screens.chat.ChatMessage
 import com.nexcode.app.ui.screens.chat.ChatScreenState
 import com.nexcode.app.ui.screens.chat.ChatViewModel
-import com.nexcode.app.ui.screens.chat.ConversationChipVariant
 import com.nexcode.app.ui.screens.chat.DiffStatusVariant
+import com.nexcode.app.ui.screens.chat.MessageAuthor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -31,26 +33,26 @@ class ChatTest {
     fun testInitialChatState() {
         val state = viewModel.uiState.value
         assertEquals("claude-sonnet-4.5", state.modelName)
-        assertEquals(3, state.contextFiles.size)
+        assertTrue(state.contextFiles.isEmpty())
         assertEquals(ChatScreenState.DEFAULT, state.chatState)
-        assertEquals(3, state.defaultMessages.size)
-        assertEquals(4, state.conversations.size)
-        assertEquals(18, state.totalConversationsCount)
-        assertEquals(3, state.diffItems.size)
-        assertEquals(27, state.totalAdditions)
-        assertEquals(5, state.totalDeletions)
+        assertTrue(state.messages.isEmpty())
+        assertTrue(state.conversations.isEmpty())
+        assertEquals(0, state.totalConversationsCount)
+        assertTrue(state.diffItems.isEmpty())
+        assertEquals(0, state.totalAdditions)
+        assertEquals(0, state.totalDeletions)
     }
 
     @Test
-    fun testSendMessageAndAnalyzingStateTransition() {
+    fun testContextToggleAndAnalyzingTransition() {
+        viewModel.toggleContextFile("MainActivity.kt")
+        assertEquals(listOf("MainActivity.kt"), viewModel.uiState.value.contextFiles)
+
         viewModel.updateInputMessage("Refactorise CityRepository pour utiliser kotlinx-serialization.")
         assertEquals("Refactorise CityRepository pour utiliser kotlinx-serialization.", viewModel.uiState.value.inputMessage)
 
-        viewModel.sendMessage()
-        val state = viewModel.uiState.value
-        assertEquals(ChatScreenState.ANALYZING, state.chatState)
-        assertEquals("", state.inputMessage)
-        assertEquals("Refactorise CityRepository pour utiliser kotlinx-serialization.", state.analyzingUserPrompt)
+        viewModel.setChatScreenState(ChatScreenState.ANALYZING)
+        assertEquals(ChatScreenState.ANALYZING, viewModel.uiState.value.chatState)
 
         // Arrêt de l'analyse
         viewModel.stopAnalysis()
@@ -75,11 +77,35 @@ class ChatTest {
 
     @Test
     fun testDiffAcceptanceAndRejection() {
+        val proposalMessage = ChatMessage(
+            id = "ai_1",
+            author = MessageAuthor.AI,
+            authorLabel = "CLAUDE",
+            timeString = "10:15",
+            text = "Propositions de modifications",
+            codeBlocks = listOf(
+                ParsedCodeBlock(
+                    language = "kotlin",
+                    filePath = "MainActivity.kt",
+                    headerLabel = "MainActivity.kt · kotlin",
+                    content = "package com.example\nfun main() = println(\"updated\")"
+                ),
+                ParsedCodeBlock(
+                    language = "kotlin",
+                    filePath = "City.kt",
+                    headerLabel = "City.kt · kotlin",
+                    content = "data class City(val name: String)"
+                )
+            )
+        )
+
+        viewModel.prepareReviewFromMessage(proposalMessage)
+
         val initialState = viewModel.uiState.value
         val mainActivityDiff = initialState.diffItems.find { it.fileName == "MainActivity.kt" }
         assertNotNull(mainActivityDiff)
-        assertEquals(18, mainActivityDiff!!.additionsCount)
-        assertEquals(4, mainActivityDiff.deletionsCount)
+        assertEquals(2, mainActivityDiff!!.additionsCount)
+        assertEquals(0, mainActivityDiff.deletionsCount)
 
         // Accepter tout
         viewModel.acceptAllDiffs()

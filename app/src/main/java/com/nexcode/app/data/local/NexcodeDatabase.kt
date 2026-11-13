@@ -33,15 +33,30 @@ abstract class NexcodeDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: NexcodeDatabase? = null
 
+        @Volatile
+        private var INSTANCE_CTX_HASH: Int = 0
+
         fun getInstance(context: Context): NexcodeDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    NexcodeDatabase::class.java,
-                    "nexcode.db"
-                ).fallbackToDestructiveMigration(dropAllTables = true).build()
-                INSTANCE = instance
-                instance
+            val appCtx = context.applicationContext
+            val ctxHash = System.identityHashCode(appCtx)
+            val current = INSTANCE
+            if (current != null && INSTANCE_CTX_HASH == ctxHash) {
+                return current
+            }
+            return synchronized(this) {
+                val again = INSTANCE
+                if (again != null && INSTANCE_CTX_HASH == ctxHash) {
+                    again
+                } else {
+                    val instance = Room.databaseBuilder(
+                        appCtx,
+                        NexcodeDatabase::class.java,
+                        "nexcode.db"
+                    ).fallbackToDestructiveMigration(dropAllTables = true).build()
+                    INSTANCE = instance
+                    INSTANCE_CTX_HASH = ctxHash
+                    instance
+                }
             }
         }
     }

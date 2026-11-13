@@ -45,6 +45,12 @@ class DesignerViewModel(
         _uiState.update { it.copy(heightVal = h) }
     }
 
+    fun cycleWidthMode() {
+        val modes = listOf("Remplir", "Ajuster", "160 dp", "240 dp")
+        val next = modes[(modes.indexOf(_uiState.value.widthMode) + 1) % modes.size]
+        _uiState.update { it.copy(widthMode = next) }
+    }
+
     fun setCornerRadiusProgress(progress: Float) {
         val radius = (progress * 25).toInt()
         _uiState.update {

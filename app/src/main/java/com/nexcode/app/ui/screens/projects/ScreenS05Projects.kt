@@ -7,6 +7,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,7 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +46,7 @@ import com.nexcode.app.ui.components.NexcodeCard
 import com.nexcode.app.ui.components.NexcodeChip
 import com.nexcode.app.ui.components.NexcodeChipVariant
 import com.nexcode.app.ui.components.NexcodeDialog
+import com.nexcode.app.ui.components.NexcodeFab
 import com.nexcode.app.ui.components.NexcodeIconButton
 import com.nexcode.app.ui.components.NexcodeTextField
 import com.nexcode.app.ui.components.NexcodeTopBar
@@ -278,41 +279,18 @@ fun ScreenS05Projects(
             }
         }
 
-        // Bouton flottant d'action (FAB "+ Nouveau") conforme à .fab de la maquette
+        // Bouton flottant d'action (FAB "+ Nouveau") conforme à .fab de la maquette (52dp)
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 16.dp, bottom = 18.dp)
         ) {
-            FloatingActionButton(
+            NexcodeFab(
+                text = stringResource(id = R.string.s05_new_fab),
+                icon = painterResource(id = R.drawable.ic_plus),
                 onClick = onNavigateNewProject,
-                containerColor = colors.accent,
-                contentColor = colors.onAccent,
-                shape = PillShape,
-                modifier = Modifier
-                    .height(44.dp)
-                    .testTag("s05_fab_new_project")
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_plus),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = colors.onAccent
-                    )
-                    Text(
-                        text = stringResource(id = R.string.s05_new_fab),
-                        fontFamily = InterFontFamily,
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onAccent
-                    )
-                }
-            }
+                testTag = "s05_fab_new_project"
+            )
         }
     }
 }
@@ -341,23 +319,22 @@ private fun ProjectCardItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .testTag("s05_project_card_${project.id}")
+            .testTag("s05_project_card_${project.id}"),
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 13.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 13.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Tuile d'initiales (.tile) 40x40 dp, rayon 12 dp
+            // Tuile d'initiales (.tile) 52x52 dp, rayon 14 dp
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(ShapeRadius12)
+                    .size(52.dp)
+                    .clip(ShapeRadius14)
                     .background(tileBg)
                     .then(
                         if (project.tileBgHex == null && project.initials != "NM") {
-                            Modifier.border(1.dp, colors.border, ShapeRadius12)
+                            Modifier.border(1.dp, colors.border, ShapeRadius14)
                         } else Modifier
                     ),
                 contentAlignment = Alignment.Center
@@ -365,8 +342,8 @@ private fun ProjectCardItem(
                 Text(
                     text = project.initials,
                     fontFamily = JetBrainsMonoFontFamily,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = tileTextColor
                 )
             }

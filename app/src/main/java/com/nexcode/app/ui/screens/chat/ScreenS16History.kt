@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -82,7 +83,7 @@ fun ScreenS16History(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(44.dp)
+                        .heightIn(min = 48.dp)
                         .clip(ShapeRadius12)
                         .background(colors.surface2)
                         .border(1.dp, colors.border, ShapeRadius12)
@@ -172,6 +173,7 @@ fun ScreenS16History(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
                                     .clickable {
                                         viewModel.selectConversationFromHistory(convo.id)
                                         onNavigateChat()

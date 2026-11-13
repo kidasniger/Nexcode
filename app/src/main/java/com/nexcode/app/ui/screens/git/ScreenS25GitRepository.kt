@@ -6,11 +6,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,6 +29,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,11 +40,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
@@ -101,6 +107,7 @@ fun ScreenS25GitRepository(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .defaultMinSize(minHeight = 48.dp)
                                 .clip(ShapeRadius12)
                                 .background(if (isCurrent) colors.accent.copy(alpha = 0.12f) else colors.surface2)
                                 .clickable {
@@ -151,7 +158,7 @@ fun ScreenS25GitRepository(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .heightIn(min = 56.dp)
                     .background(colors.bg)
                     .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -181,18 +188,25 @@ fun ScreenS25GitRepository(
                 Box(
                     modifier = Modifier
                         .testTag("s25_toggle_mode")
+                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                         .clip(PillShape)
-                        .background(colors.surface2)
-                        .border(1.dp, colors.border, PillShape)
-                        .clickable { viewModel.toggleViewMode() }
-                        .padding(horizontal = 9.dp, vertical = 4.dp)
+                        .clickable { viewModel.toggleViewMode() },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = if (uiState.viewMode == GitViewMode.DEFAULT) "Défaut" else "Erreur",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (uiState.viewMode == GitViewMode.DEFAULT) colors.txt else colors.err
-                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(PillShape)
+                            .background(colors.surface2)
+                            .border(1.dp, colors.border, PillShape)
+                            .padding(horizontal = 9.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = if (uiState.viewMode == GitViewMode.DEFAULT) "Défaut" else "Erreur",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (uiState.viewMode == GitViewMode.DEFAULT) colors.txt else colors.err
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(4.dp))
@@ -316,7 +330,8 @@ fun ScreenS25GitRepository(
                     NexcodeCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 10.dp)
+                            .padding(bottom = 10.dp),
+                        contentPadding = PaddingValues(0.dp)
                     ) {
                         if (uiState.modifiedFiles.isEmpty()) {
                             Text(
@@ -326,45 +341,50 @@ fun ScreenS25GitRepository(
                                     "Importez un dépôt GitHub pour activer le suivi des modifications."
                                 },
                                 fontSize = 12.sp,
-                                color = colors.txt2
+                                color = colors.txt2,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
                             )
                         } else {
                             uiState.modifiedFiles.forEachIndexed { index, file ->
                                 if (index > 0) {
                                     HorizontalDivider(
                                         color = colors.border,
-                                        thickness = 1.dp,
-                                        modifier = Modifier.padding(vertical = 8.dp)
+                                        thickness = 1.dp
                                     )
                                 }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = file.name,
-                                        fontFamily = JetBrainsMonoFontFamily,
-                                        fontSize = 12.sp,
-                                        color = colors.txt,
-                                        modifier = Modifier.weight(1f)
-                                    )
+                                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                                     Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(min = 48.dp)
+                                            .padding(horizontal = 16.dp, vertical = 10.dp),
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(
-                                            text = "+${file.added}",
+                                            text = file.name,
+                                            fontFamily = JetBrainsMonoFontFamily,
                                             fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = colors.ok
+                                            color = colors.txt,
+                                            modifier = Modifier.weight(1f)
                                         )
-                                        Text(
-                                            text = "−${file.removed}",
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = colors.err
-                                        )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Text(
+                                                text = "+${file.added}",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = colors.ok
+                                            )
+                                            Text(
+                                                text = "−${file.removed}",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = colors.err
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -384,38 +404,40 @@ fun ScreenS25GitRepository(
                             color = colors.txt2,
                             modifier = Modifier.padding(bottom = 6.dp)
                         )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(44.dp)
-                                .clip(ShapeRadius12)
-                                .background(colors.surface)
-                                .border(1.dp, colors.border, ShapeRadius12)
-                                .padding(horizontal = 12.dp),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            if (uiState.commitMessage.isEmpty()) {
-                                Text(
-                                    text = "feat: décrivez vos modifications…",
-                                    fontFamily = JetBrainsMonoFontFamily,
-                                    fontSize = 13.5.sp,
-                                    color = colors.txt2.copy(alpha = 0.6f)
+                        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .clip(ShapeRadius12)
+                                    .background(colors.surface)
+                                    .border(1.dp, colors.border, ShapeRadius12)
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                if (uiState.commitMessage.isEmpty()) {
+                                    Text(
+                                        text = "feat: décrivez vos modifications…",
+                                        fontFamily = JetBrainsMonoFontFamily,
+                                        fontSize = 13.5.sp,
+                                        color = colors.txt2.copy(alpha = 0.7f)
+                                    )
+                                }
+                                BasicTextField(
+                                    value = uiState.commitMessage,
+                                    onValueChange = { viewModel.updateCommitMessage(it) },
+                                    modifier = Modifier
+                                        .testTag("s25_input_commit_msg")
+                                        .fillMaxWidth(),
+                                    textStyle = TextStyle(
+                                        fontFamily = JetBrainsMonoFontFamily,
+                                        fontSize = 13.5.sp,
+                                        color = colors.txt
+                                    ),
+                                    cursorBrush = SolidColor(colors.accent),
+                                    singleLine = true
                                 )
                             }
-                            BasicTextField(
-                                value = uiState.commitMessage,
-                                onValueChange = { viewModel.updateCommitMessage(it) },
-                                modifier = Modifier
-                                    .testTag("s25_input_commit_msg")
-                                    .fillMaxWidth(),
-                                textStyle = TextStyle(
-                                    fontFamily = JetBrainsMonoFontFamily,
-                                    fontSize = 13.5.sp,
-                                    color = colors.txt
-                                ),
-                                cursorBrush = SolidColor(colors.accent),
-                                singleLine = true
-                            )
                         }
                         val convMatch = Regex("^(feat|fix|chore|docs|style|refactor|test)(\\([^)]+\\))?:").find(uiState.commitMessage.trim())
                         if (convMatch != null) {
@@ -473,25 +495,29 @@ fun ScreenS25GitRepository(
                     NexcodeCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 12.dp)
+                            .padding(bottom = 12.dp),
+                        contentPadding = PaddingValues(0.dp)
                     ) {
                         if (uiState.unpushedCommits.isEmpty()) {
                             Text(
                                 text = "Aucun commit local en attente de push.",
                                 fontSize = 12.sp,
-                                color = colors.txt2
+                                color = colors.txt2,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
                             )
                         } else {
                             uiState.unpushedCommits.forEachIndexed { index, commit ->
                                 if (index > 0) {
                                     HorizontalDivider(
                                         color = colors.border,
-                                        thickness = 1.dp,
-                                        modifier = Modifier.padding(vertical = 8.dp)
+                                        thickness = 1.dp
                                     )
                                 }
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 48.dp)
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {

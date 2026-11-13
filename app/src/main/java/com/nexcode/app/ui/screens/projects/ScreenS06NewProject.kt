@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -157,12 +158,11 @@ private fun TemplateCard(
                     Modifier.border(1.5.dp, colors.accent, ShapeRadius14)
                 } else Modifier
             )
-            .testTag("s06_template_${template.name.lowercase()}")
+            .testTag("s06_template_${template.name.lowercase()}"),
+        contentPadding = PaddingValues(14.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Tuile .tile.c.sm ou .tile.p.sm (rayon 11dp, icone 20x20dp)

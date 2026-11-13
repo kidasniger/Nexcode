@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -32,6 +33,7 @@ import com.nexcode.app.ui.theme.ShapeRadius14
 fun NexcodeCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
     testTag: String = "nexcode_card",
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -51,7 +53,7 @@ fun NexcodeCard(
             .background(colors.surface)
             .border(1.dp, colors.border, ShapeRadius14)
             .then(clickModifier)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(contentPadding),
         content = content
     )
 }
@@ -75,7 +77,7 @@ fun NexcodeTile(
     val colors = NexcodeTheme.colors
 
     val (bg, contentColor, border) = when (variant) {
-        NexcodeTileVariant.ACCENT2 -> Triple(colors.accent2, colors.onAccent, null)
+        NexcodeTileVariant.ACCENT2 -> Triple(colors.accent2, Color.White, null)
         NexcodeTileVariant.ACCENT -> Triple(colors.accent, colors.onAccent, null)
         NexcodeTileVariant.SURFACE -> Triple(colors.surface2, colors.accent, colors.border)
     }

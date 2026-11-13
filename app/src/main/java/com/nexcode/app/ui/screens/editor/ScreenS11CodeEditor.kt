@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,12 +25,14 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -37,6 +41,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
@@ -46,11 +51,9 @@ import com.nexcode.app.ui.components.NexcodeButtonVariant
 import com.nexcode.app.ui.components.NexcodeChip
 import com.nexcode.app.ui.components.NexcodeChipVariant
 import com.nexcode.app.ui.components.NexcodeIconButton
-import com.nexcode.app.ui.theme.DarkCodeColors
 import com.nexcode.app.ui.theme.JetBrainsMonoFontFamily
 import com.nexcode.app.ui.theme.NexcodeTheme
 import com.nexcode.app.ui.theme.ShapeRadius12
-import com.nexcode.app.ui.theme.ShapeRadius14
 
 @Composable
 fun ScreenS11CodeEditor(
@@ -73,22 +76,20 @@ fun ScreenS11CodeEditor(
             .fillMaxSize()
             .background(colors.bg)
     ) {
-        // TopBar S11 personnalisée (height: 50dp, border-bottom: 1px solid var(--border))
+        // TopBar S11 (hauteur >= 54 dp, boutons icônes >= 48 dp)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
+                .heightIn(min = 54.dp)
                 .background(colors.surface)
-                .border(width = 0.5.dp, color = colors.border)
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             NexcodeIconButton(
                 icon = painterResource(id = R.drawable.ic_back),
                 contentDescription = "Retour",
                 onClick = onNavigateBack,
-                testTag = "s11_btn_back",
-                modifier = Modifier.size(34.dp)
+                testTag = "s11_btn_back"
             )
 
             Spacer(modifier = Modifier.width(4.dp))
@@ -100,43 +101,44 @@ fun ScreenS11CodeEditor(
             ) {
                 Text(
                     text = uiState.activeTab,
-                    fontSize = 12.5.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.txt,
                     maxLines = 1
                 )
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .clip(CircleShape)
-                        .background(colors.warn)
-                )
+                if (uiState.errorCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(colors.warn)
+                    )
+                }
             }
 
             NexcodeIconButton(
                 icon = painterResource(id = R.drawable.ic_search),
                 contentDescription = "Rechercher",
                 onClick = onNavigateSearch,
-                testTag = "s11_btn_search",
-                modifier = Modifier.size(34.dp)
+                testTag = "s11_btn_search"
             )
 
             NexcodeIconButton(
                 icon = painterResource(id = R.drawable.ic_sliders),
                 contentDescription = "Ressources / Réglages",
                 onClick = onNavigateSettings,
-                testTag = "s11_btn_sliders",
-                modifier = Modifier.size(34.dp)
+                testTag = "s11_btn_sliders"
             )
         }
+        HorizontalDivider(thickness = 1.dp, color = colors.border)
 
-        // Barre d'onglets (tabbar)
+        // Barre d'onglets (cible >= 48 dp)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
                 .background(colors.bg)
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
@@ -145,23 +147,23 @@ fun ScreenS11CodeEditor(
                 EditorTabItem(
                     title = tabName,
                     isActive = isActive,
-                    hasDot = tabName == "MainActivity.kt",
+                    hasDot = tabName == "MainActivity.kt" && uiState.errorCount > 0,
                     onClick = { viewModel.openTab(tabName) }
                 )
             }
 
-            // Bouton + d'onglet
+            // Bouton + d'onglet (cible >= 48 dp)
             Box(
                 modifier = Modifier
+                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable { /* Nouvel onglet */ }
-                    .padding(8.dp),
+                    .clickable { viewModel.addScratchTab() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_plus),
-                    contentDescription = null,
-                    modifier = Modifier.size(13.dp),
+                    contentDescription = "Nouvel onglet",
+                    modifier = Modifier.size(14.dp),
                     tint = colors.txt2
                 )
             }
@@ -174,57 +176,59 @@ fun ScreenS11CodeEditor(
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 12.dp)
         ) {
-            // Carte de code (Sora Editor / Jetpack Compose representation)
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                    .clip(ShapeRadius12)
-                    .background(colors.codeBg)
-                    .border(1.dp, colors.border, ShapeRadius12)
-            ) {
-                // Header de la boîte de code : 3 petits points + nom du fichier + puce d'erreur
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(colors.surface2)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFFF5C7A)))
-                        Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFFFB020)))
-                        Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF2ECC71)))
-                    }
-
-                    Spacer(modifier = Modifier.width(10.dp))
-
-                    Text(
-                        text = uiState.codeHeaderTitle,
-                        fontSize = 11.sp,
-                        color = colors.txt2,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    if (uiState.errorCount > 0) {
-                        NexcodeChip(
-                            text = stringResource(id = R.string.s11_error_count_format, uiState.errorCount),
-                            variant = NexcodeChipVariant.ERROR,
-                            testTag = "s11_chip_error"
-                        )
-                    }
-                }
-
-                HorizontalDivider(thickness = 0.5.dp, color = colors.border)
-
-                // Lignes de code avec coloration syntaxique complète
+            // Carte de code (forcée LTR en RTL)
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .clip(ShapeRadius12)
+                        .background(colors.codeBg)
+                        .border(1.dp, colors.border, ShapeRadius12)
                 ) {
-                    uiState.codeLines.forEach { line ->
-                        CodeLineRow(line = line, codeColors = codeColors)
+                    // Header de la boîte de code : 3 petits points + nom du fichier + puce d'erreur
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(colors.surface2)
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(colors.err))
+                            Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(colors.warn))
+                            Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(colors.ok))
+                        }
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        Text(
+                            text = uiState.codeHeaderTitle,
+                            fontSize = 11.sp,
+                            color = colors.txt2,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        if (uiState.errorCount > 0) {
+                            NexcodeChip(
+                                text = stringResource(id = R.string.s11_error_count_format, uiState.errorCount),
+                                variant = NexcodeChipVariant.ERROR,
+                                testTag = "s11_chip_error"
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(thickness = 0.5.dp, color = colors.border)
+
+                    // Lignes de code avec coloration syntaxique complète
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                    ) {
+                        uiState.codeLines.forEach { line ->
+                            CodeLineRow(line = line, codeColors = codeColors)
+                        }
                     }
                 }
             }
@@ -290,14 +294,14 @@ fun ScreenS11CodeEditor(
             }
         }
 
-        // Barre de symboles (tab, { }, ( ), < >, ", $, =, :, ;, _)
+        // Barre de symboles (cibles >= 48 dp en hauteur, largeur min 44 dp)
+        HorizontalDivider(thickness = 0.5.dp, color = colors.border)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(colors.surface)
-                .border(width = 0.5.dp, color = colors.border)
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 10.dp, vertical = 6.dp),
+                .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -305,48 +309,55 @@ fun ScreenS11CodeEditor(
             symbols.forEach { sym ->
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(colors.surface2)
-                        .border(1.dp, colors.border, RoundedCornerShape(8.dp))
-                        .clickable { viewModel.insertSymbol(sym) }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .defaultMinSize(minWidth = 44.dp, minHeight = 48.dp)
+                        .clickable { viewModel.insertSymbol(sym) },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = sym,
-                        fontFamily = JetBrainsMonoFontFamily,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = colors.txt
-                    )
+                    Box(
+                        modifier = Modifier
+                            .defaultMinSize(minWidth = 38.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(colors.surface2)
+                            .border(1.dp, colors.border, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = sym,
+                            fontFamily = JetBrainsMonoFontFamily,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = colors.txt
+                        )
+                    }
                 }
             }
         }
 
-        // Barre d'outils inférieure de l'éditeur (undo, redo, box/gradle, play/build, spark/ia)
+        // Barre d'outils inférieure de l'éditeur (undo, redo, gradle, build, ia)
+        HorizontalDivider(thickness = 0.5.dp, color = colors.border)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(46.dp)
+                .heightIn(min = 52.dp)
                 .background(colors.surface)
-                .border(width = 0.5.dp, color = colors.border)
                 .padding(horizontal = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             NexcodeIconButton(
                 icon = painterResource(id = R.drawable.ic_undo),
                 contentDescription = "Annuler",
-                onClick = { /* Undo */ },
-                testTag = "s11_btn_undo",
-                modifier = Modifier.size(38.dp)
+                onClick = { viewModel.undo() },
+                enabled = uiState.canUndo,
+                testTag = "s11_btn_undo"
             )
 
             NexcodeIconButton(
                 icon = painterResource(id = R.drawable.ic_redo),
                 contentDescription = "Rétablir",
-                onClick = { /* Redo */ },
-                testTag = "s11_btn_redo",
-                modifier = Modifier.size(38.dp)
+                onClick = { viewModel.redo() },
+                enabled = uiState.canRedo,
+                testTag = "s11_btn_redo"
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -355,33 +366,38 @@ fun ScreenS11CodeEditor(
                 icon = painterResource(id = R.drawable.ic_box),
                 contentDescription = "Dépendances Gradle",
                 onClick = onNavigateDependencies,
-                testTag = "s11_btn_gradle",
-                modifier = Modifier.size(38.dp)
+                testTag = "s11_btn_gradle"
             )
 
             NexcodeIconButton(
                 icon = painterResource(id = R.drawable.ic_play),
                 contentDescription = "Compiler & Exécuter",
                 onClick = onNavigateBuild,
-                testTag = "s11_btn_run",
-                modifier = Modifier.size(38.dp)
+                testTag = "s11_btn_run"
             )
 
-            // Bouton IA accentué
+            // Bouton IA accentué (cible tactile 48 dp)
             Box(
                 modifier = Modifier
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(colors.accent.copy(alpha = 0.15f))
+                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .clickable(onClick = onNavigateAiChat),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_spark),
-                    contentDescription = "Chat IA",
-                    modifier = Modifier.size(18.dp),
-                    tint = colors.accent
-                )
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(colors.accent.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_spark),
+                        contentDescription = "Chat IA",
+                        modifier = Modifier.size(18.dp),
+                        tint = colors.accent
+                    )
+                }
             }
         }
     }
@@ -399,30 +415,36 @@ private fun EditorTabItem(
     val textColor = if (isActive) colors.txt else colors.txt2
     val border = if (isActive) colors.border else Color.Transparent
 
-    Row(
+    Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(bg)
-            .border(1.dp, border, RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+            .defaultMinSize(minHeight = 48.dp)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
     ) {
-        if (hasDot) {
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .clip(CircleShape)
-                    .background(colors.warn)
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(bg)
+                .border(1.dp, border, RoundedCornerShape(8.dp))
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            if (hasDot) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(colors.warn)
+                )
+            }
+            Text(
+                text = title,
+                fontSize = 11.5.sp,
+                fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
+                color = textColor
             )
         }
-        Text(
-            text = title,
-            fontSize = 11.5.sp,
-            fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
-            color = textColor
-        )
     }
 }
 
@@ -446,14 +468,14 @@ private fun CodeLineRow(
             text = line.number.toString(),
             fontFamily = JetBrainsMonoFontFamily,
             fontSize = 11.sp,
-            color = colors.txt2.copy(alpha = 0.5f),
+            color = colors.txt2.copy(alpha = 0.55f),
             modifier = Modifier.width(24.dp)
         )
 
         Spacer(modifier = Modifier.width(6.dp))
 
         // Texte avec coloration syntaxique
-        val annotatedText = buildAnnotatedCodeString(line, codeColors)
+        val annotatedText = buildAnnotatedCodeString(line, codeColors, colors.err)
         Text(
             text = annotatedText,
             fontFamily = JetBrainsMonoFontFamily,
@@ -465,7 +487,8 @@ private fun CodeLineRow(
 
 private fun buildAnnotatedCodeString(
     line: CodeLine,
-    codeColors: com.nexcode.app.ui.theme.CodeColors
+    codeColors: com.nexcode.app.ui.theme.CodeColors,
+    errColor: Color
 ): androidx.compose.ui.text.AnnotatedString {
     return buildAnnotatedString {
         val text = line.content
@@ -512,12 +535,11 @@ private fun buildAnnotatedCodeString(
                 append(") {")
             }
             line.hasError && line.errorSpanText != null -> {
-                // Surligner l'erreur avec un soulignement rouge
                 val parts = text.split(line.errorSpanText)
                 append(parts[0])
                 withStyle(
                     SpanStyle(
-                        color = Color(0xFFFF5C7A),
+                        color = errColor,
                         textDecoration = TextDecoration.Underline,
                         fontWeight = FontWeight.Bold
                     )

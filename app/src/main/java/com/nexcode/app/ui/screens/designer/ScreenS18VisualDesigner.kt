@@ -11,11 +11,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -118,6 +120,7 @@ fun ScreenS18VisualDesigner(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(min = 48.dp)
                                 .padding(vertical = 2.dp)
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(if (isSelected) colors.surface2 else colors.surface)
@@ -145,11 +148,25 @@ fun ScreenS18VisualDesigner(
                     Spacer(modifier = Modifier.height(60.dp))
                 }
 
-                // Zone du Canvas (.canvasw : flex: 1, centre avec mphone)
+                // Zone du Canvas (.canvasw avec quadrillage subtil)
+                val gridColor = colors.txt.copy(alpha = 0.045f)
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxSize()
+                        .drawBehind {
+                            val stepPx = 18.dp.toPx()
+                            var x = 0f
+                            while (x <= size.width) {
+                                drawLine(gridColor, Offset(x, 0f), Offset(x, size.height), strokeWidth = 1f)
+                                x += stepPx
+                            }
+                            var y = 0f
+                            while (y <= size.height) {
+                                drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
+                                y += stepPx
+                            }
+                        }
                         .verticalScroll(rememberScrollState())
                         .padding(start = 12.dp, end = 12.dp, top = 18.dp, bottom = 90.dp),
                     horizontalAlignment = Alignment.CenterHorizontally

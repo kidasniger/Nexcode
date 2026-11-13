@@ -40,6 +40,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
@@ -200,9 +201,26 @@ fun ScreenS03GitHub(
                         }
                     }
 
+                    val tokenHintRaw = stringResource(id = R.string.s03_token_hint)
+                    val monoScopeStyle = androidx.compose.ui.text.SpanStyle(
+                        fontFamily = com.nexcode.app.ui.theme.JetBrainsMonoFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.accent,
+                        background = colors.surface2
+                    )
                     Text(
                         text = buildAnnotatedString {
-                            append(stringResource(id = R.string.s03_token_hint))
+                            val idxRepo = tokenHintRaw.indexOf("repo")
+                            val idxWorkflow = tokenHintRaw.indexOf("workflow")
+                            if (idxRepo >= 0 && idxWorkflow > idxRepo) {
+                                append(tokenHintRaw.substring(0, idxRepo))
+                                withStyle(monoScopeStyle) { append("repo") }
+                                append(tokenHintRaw.substring(idxRepo + 4, idxWorkflow))
+                                withStyle(monoScopeStyle) { append("workflow") }
+                                append(tokenHintRaw.substring(idxWorkflow + 8))
+                            } else {
+                                append(tokenHintRaw)
+                            }
                         },
                         fontFamily = InterFontFamily,
                         fontSize = 11.5.sp,

@@ -26,7 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.nexcode.app.ui.theme.DarkAccent
 import com.nexcode.app.ui.theme.DarkBg
+import com.nexcode.app.ui.theme.DarkTxt
 import com.nexcode.app.ui.theme.InterFontFamily
 import com.nexcode.app.ui.theme.NexcodeTheme
 
@@ -148,8 +150,8 @@ fun NexcodeSplashScreen(
             )
             NexcodeWordmark(
                 fontSize = 20.sp,
-                color = Color(0xFFE8EDF7),
-                accentColor = Color(0xFF3DDCFF)
+                color = DarkTxt,
+                accentColor = DarkAccent
             )
         }
     }

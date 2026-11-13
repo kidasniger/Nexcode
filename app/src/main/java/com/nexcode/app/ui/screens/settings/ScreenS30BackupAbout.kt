@@ -5,26 +5,31 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +47,7 @@ import com.nexcode.app.ui.components.NexcodeBannerVariant
 import com.nexcode.app.ui.components.NexcodeButton
 import com.nexcode.app.ui.components.NexcodeButtonVariant
 import com.nexcode.app.ui.components.NexcodeCard
+import com.nexcode.app.ui.components.NexcodeSwitch
 import com.nexcode.app.ui.theme.JetBrainsMonoFontFamily
 import com.nexcode.app.ui.theme.NexcodeTheme
 
@@ -54,6 +60,39 @@ fun ScreenS30BackupAbout(
     val state by viewModel.uiState.collectAsState()
     val colors = NexcodeTheme.colors
     val scrollState = rememberScrollState()
+    var activeInfoDialog by remember { mutableStateOf<Pair<String, String>?>(null) }
+
+    activeInfoDialog?.let { (dialogTitle, dialogBody) ->
+        AlertDialog(
+            onDismissRequest = { activeInfoDialog = null },
+            containerColor = colors.surface,
+            titleContentColor = colors.txt,
+            textContentColor = colors.txt2,
+            title = {
+                Text(
+                    text = dialogTitle,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            },
+            text = {
+                Text(
+                    text = dialogBody,
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { activeInfoDialog = null }) {
+                    Text(
+                        text = "Fermer",
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.accent
+                    )
+                }
+            }
+        )
+    }
 
     Column(
         modifier = modifier
@@ -65,7 +104,8 @@ fun ScreenS30BackupAbout(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .heightIn(min = 56.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
@@ -122,7 +162,8 @@ fun ScreenS30BackupAbout(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 10.dp)
-                    .testTag("s30_card_export")
+                    .testTag("s30_card_export"),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
                     Row(
@@ -181,12 +222,15 @@ fun ScreenS30BackupAbout(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 14.dp)
-                    .testTag("s30_card_auto_backup")
+                    .testTag("s30_card_auto_backup"),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(14.dp),
+                        .heightIn(min = 52.dp)
+                        .clickable { viewModel.toggleAutoBackup(!state.autoBackupEnabled) }
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
@@ -203,14 +247,10 @@ fun ScreenS30BackupAbout(
                             modifier = Modifier.padding(top = 2.dp)
                         )
                     }
-                    Switch(
+                    NexcodeSwitch(
                         checked = state.autoBackupEnabled,
                         onCheckedChange = { viewModel.toggleAutoBackup(it) },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = colors.bg,
-                            checkedTrackColor = colors.accent
-                        ),
-                        modifier = Modifier.testTag("s30_switch_auto_backup")
+                        testTag = "s30_switch_auto_backup"
                     )
                 }
             }
@@ -228,13 +268,15 @@ fun ScreenS30BackupAbout(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 4.dp)
-                    .testTag("s30_card_about")
+                    .testTag("s30_card_about"),
+                contentPadding = PaddingValues(0.dp)
             ) {
                 Column {
                     // Version
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .padding(horizontal = 14.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -259,6 +301,7 @@ fun ScreenS30BackupAbout(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .padding(horizontal = 14.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -283,7 +326,11 @@ fun ScreenS30BackupAbout(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { }
+                            .heightIn(min = 48.dp)
+                            .clickable {
+                                activeInfoDialog = "Licences open source" to
+                                    "• Jetpack Compose & Material 3 (Apache 2.0)\n• Kotlin & Coroutines (Apache 2.0)\n• Eclipse JGit (EDL 1.0)\n• Retrofit & OkHttp (Apache 2.0)\n• Sora Code Editor (LGPL 2.1)\n• Inter & JetBrains Mono (SIL OFL 1.1)"
+                            }
                             .padding(horizontal = 14.dp, vertical = 12.dp)
                             .testTag("s30_row_licenses"),
                         verticalAlignment = Alignment.CenterVertically
@@ -316,7 +363,11 @@ fun ScreenS30BackupAbout(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { }
+                            .heightIn(min = 48.dp)
+                            .clickable {
+                                activeInfoDialog = "Aide et assistance" to
+                                    "Raccourcis éditeur : glissez la barre de symboles au-dessus du clavier, touchez l'icône éclair pour corriger une erreur avec l'IA.\n\nSynchronisation Git : configurez votre jeton PAT dans Connexion GitHub pour cloner, pousser et lancer GitHub Actions."
+                            }
                             .padding(horizontal = 14.dp, vertical = 12.dp)
                             .testTag("s30_row_help"),
                         verticalAlignment = Alignment.CenterVertically
@@ -349,7 +400,11 @@ fun ScreenS30BackupAbout(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { }
+                            .heightIn(min = 48.dp)
+                            .clickable {
+                                activeInfoDialog = "Politique de confidentialité" to
+                                    "Vos fichiers de projet, historiques et bases locales restent stockés sur votre appareil.\n\nVos clés API IA et jetons GitHub sont chiffrés via EncryptedSharedPreferences et Android Keystore, et ne sont transmis qu'aux fournisseurs que vous configurez."
+                            }
                             .padding(horizontal = 14.dp, vertical = 12.dp)
                             .testTag("s30_row_privacy"),
                         verticalAlignment = Alignment.CenterVertically
@@ -399,7 +454,7 @@ fun ScreenS30BackupAbout(
                 Text(
                     text = "Codez vraiment, depuis votre poche.",
                     fontSize = 10.5.sp,
-                    color = colors.txt2.copy(alpha = 0.8f),
+                    color = colors.txt2,
                     modifier = Modifier.padding(top = 5.dp)
                 )
             }

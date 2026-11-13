@@ -20,16 +20,19 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
@@ -295,58 +298,60 @@ private fun DiffFileCard(
 
         HorizontalDivider(thickness = 0.5.dp, color = colors.border)
 
-        // Conteneur de diff (.diff font-family: JetBrains Mono, font-size: 11px, line-height: 1.6, background: var(--codebg))
+        // Conteneur de diff forcé LTR (.diff JetBrains Mono)
         val hScroll = rememberScrollState()
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(colors.codeBg)
-                .horizontalScroll(hScroll)
-        ) {
-            diffItem.lines.forEach { line ->
-                val (lineBg, lineTextColor, sign, signColor) = when (line.type) {
-                    DiffLineType.CONTEXT -> Quadruple(
-                        Color.Transparent,
-                        colors.txt2,
-                        " ",
-                        colors.txt2.copy(alpha = 0.7f)
-                    )
-                    DiffLineType.ADDITION -> Quadruple(
-                        colors.ok.copy(alpha = 0.1f),
-                        colors.ok,
-                        "+",
-                        colors.ok
-                    )
-                    DiffLineType.DELETION -> Quadruple(
-                        colors.err.copy(alpha = 0.1f),
-                        colors.err,
-                        "−",
-                        colors.err
-                    )
-                }
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.codeBg)
+                    .horizontalScroll(hScroll)
+            ) {
+                diffItem.lines.forEach { line ->
+                    val (lineBg, lineTextColor, sign, signColor) = when (line.type) {
+                        DiffLineType.CONTEXT -> Quadruple(
+                            Color.Transparent,
+                            colors.txt2,
+                            " ",
+                            colors.txt2.copy(alpha = 0.7f)
+                        )
+                        DiffLineType.ADDITION -> Quadruple(
+                            colors.ok.copy(alpha = 0.1f),
+                            colors.ok,
+                            "+",
+                            colors.ok
+                        )
+                        DiffLineType.DELETION -> Quadruple(
+                            colors.err.copy(alpha = 0.1f),
+                            colors.err,
+                            "−",
+                            colors.err
+                        )
+                    }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(lineBg)
-                        .padding(horizontal = 10.dp, vertical = 1.dp),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Text(
-                        text = sign,
-                        fontFamily = JetBrainsMonoFontFamily,
-                        fontSize = 11.sp,
-                        color = signColor,
-                        modifier = Modifier.width(16.dp)
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(lineBg)
+                            .padding(horizontal = 10.dp, vertical = 1.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(
+                            text = sign,
+                            fontFamily = JetBrainsMonoFontFamily,
+                            fontSize = 11.sp,
+                            color = signColor,
+                            modifier = Modifier.width(16.dp)
+                        )
 
-                    Text(
-                        text = line.content,
-                        fontFamily = JetBrainsMonoFontFamily,
-                        fontSize = 11.sp,
-                        lineHeight = 17.5.sp,
-                        color = lineTextColor
-                    )
+                        Text(
+                            text = line.content,
+                            fontFamily = JetBrainsMonoFontFamily,
+                            fontSize = 11.sp,
+                            lineHeight = 17.5.sp,
+                            color = lineTextColor
+                        )
+                    }
                 }
             }
         }

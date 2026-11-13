@@ -5,10 +5,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -209,19 +211,20 @@ fun ScreenS08ProjectDetails(
                             .fillMaxWidth()
                             .padding(bottom = 10.dp)
                             .clickable(onClick = onNavigateGitBranch)
-                            .testTag("s08_github_card")
+                            .testTag("s08_github_card"),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 13.dp)
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 13.dp),
+                                .heightIn(min = 48.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(ShapeRadius12)
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(11.dp))
                                     .background(colors.surface2),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -354,13 +357,15 @@ fun ScreenS08ProjectDetails(
                     NexcodeCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 24.dp)
+                            .padding(bottom = 24.dp),
+                        contentPadding = PaddingValues(0.dp)
                     ) {
                         Column {
                             if (uiState.recentBuilds.isEmpty()) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .heightIn(min = 48.dp)
                                         .clickable(onClick = onNavigateBuild)
                                         .padding(horizontal = 14.dp, vertical = 14.dp),
                                     verticalAlignment = Alignment.CenterVertically,
@@ -368,8 +373,8 @@ fun ScreenS08ProjectDetails(
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .size(32.dp)
-                                            .clip(RoundedCornerShape(9.dp))
+                                            .size(38.dp)
+                                            .clip(RoundedCornerShape(11.dp))
                                             .background(colors.surface2),
                                         contentAlignment = Alignment.Center
                                     ) {
@@ -453,11 +458,12 @@ private fun StatCard(
 ) {
     val colors = NexcodeTheme.colors
 
-    NexcodeCard(modifier = modifier) {
+    NexcodeCard(
+        modifier = modifier,
+        contentPadding = PaddingValues(vertical = 12.dp, horizontal = 6.dp)
+    ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp, horizontal = 6.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -493,6 +499,7 @@ private fun BuildRowItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -500,8 +507,8 @@ private fun BuildRowItem(
     ) {
         Box(
             modifier = Modifier
-                .size(32.dp)
-                .clip(RoundedCornerShape(9.dp))
+                .size(38.dp)
+                .clip(RoundedCornerShape(11.dp))
                 .background(if (isSuccess) colors.ok.copy(alpha = 0.12f) else colors.err.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {

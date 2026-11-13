@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,51 +82,89 @@ fun NexcodeChip(
         )
     }
 
-    val clickModifier = if (onClick != null) {
-        Modifier.clickable(onClick = onClick)
-    } else {
-        Modifier
-    }
-
-    Row(
-        modifier = modifier
-            .testTag(testTag)
-            .height(26.dp)
-            .clip(PillShape)
-            .background(bg)
-            .then(
-                if (borderColor != Color.Transparent) {
-                    Modifier.border(1.dp, borderColor, PillShape)
-                } else Modifier
-            )
-            .then(clickModifier)
-            .padding(horizontal = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
-    ) {
-        if (showDot) {
-            Box(
-                modifier = Modifier
-                    .size(7.dp)
-                    .clip(CircleShape)
-                    .background(txtColor)
-            )
-        }
-        if (icon != null) {
-            Icon(
-                painter = icon,
-                contentDescription = null,
-                modifier = Modifier.size(13.dp),
-                tint = txtColor
-            )
-        }
-        Text(
-            text = text,
-            fontFamily = fontFamily,
-            fontSize = 11.5.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = txtColor,
-            maxLines = 1
+    val pillModifier = Modifier
+        .height(26.dp)
+        .clip(PillShape)
+        .background(bg)
+        .then(
+            if (borderColor != Color.Transparent) {
+                Modifier.border(1.dp, borderColor, PillShape)
+            } else Modifier
         )
+        .padding(horizontal = 10.dp)
+
+    if (onClick != null) {
+        Box(
+            modifier = modifier
+                .testTag(testTag)
+                .minimumInteractiveComponentSize()
+                .clip(PillShape)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(
+                modifier = pillModifier,
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                if (showDot) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(txtColor)
+                    )
+                }
+                if (icon != null) {
+                    Icon(
+                        painter = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(13.dp),
+                        tint = txtColor
+                    )
+                }
+                Text(
+                    text = text,
+                    fontFamily = fontFamily,
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = txtColor,
+                    maxLines = 1
+                )
+            }
+        }
+    } else {
+        Row(
+            modifier = modifier
+                .testTag(testTag)
+                .then(pillModifier),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            if (showDot) {
+                Box(
+                    modifier = Modifier
+                        .size(7.dp)
+                        .clip(CircleShape)
+                        .background(txtColor)
+                )
+            }
+            if (icon != null) {
+                Icon(
+                    painter = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(13.dp),
+                    tint = txtColor
+                )
+            }
+            Text(
+                text = text,
+                fontFamily = fontFamily,
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = txtColor,
+                maxLines = 1
+            )
+        }
     }
 }

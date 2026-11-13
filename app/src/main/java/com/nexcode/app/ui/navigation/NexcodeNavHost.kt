@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -92,42 +90,9 @@ fun NexcodeNavHost(
     val gitViewModel = remember { GitViewModel(context.applicationContext) }
     val settingsViewModel = remember { SettingsViewModel(context.applicationContext) }
 
-    val projectsState by projectsViewModel.uiState.collectAsState()
-    val onboardingState by onboardingViewModel.uiState.collectAsState()
-    val settingsState by settingsViewModel.uiState.collectAsState()
-
-    LaunchedEffect(projectsState.selectedProject) {
-        val selected = projectsState.selectedProject
-        if (selected != null) {
-            gitViewModel.bindProject(selected.name, selected.gitRepo, selected.localPath)
-        } else {
-            gitViewModel.bindProject("", "", "")
-        }
-        buildViewModel.bindProject(selected)
-        chatViewModel.bindProject(selected)
-    }
-
-    LaunchedEffect(onboardingState.isGitHubConnected) {
-        projectsViewModel.loadUserRepositories()
-        settingsViewModel.refreshAccountAndStorage()
-    }
-
-    LaunchedEffect(settingsState.isSignedOut) {
-        if (settingsState.isSignedOut) {
-            onboardingViewModel.refreshSessionFromStorage()
-            projectsViewModel.loadUserRepositories()
-        }
-    }
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val currentScreen = NexcodeScreen.fromRoute(currentRoute)
-
-    LaunchedEffect(currentRoute) {
-        if (currentRoute == NexcodeScreen.S15.route) {
-            chatViewModel.refreshAiConfigStateSync()
-        }
-    }
 
     val currentTab = currentScreen.tab ?: NexcodeNavTab.PROJECTS
 
@@ -253,12 +218,8 @@ fun NexcodeNavHost(
                     viewModel = onboardingViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onFinish = {
-                        val returnedToCaller = navController.popBackStack(NexcodeScreen.S15.route, inclusive = false) ||
-                            navController.popBackStack(NexcodeScreen.S28.route, inclusive = false)
-                        if (!returnedToCaller) {
-                            navController.navigate(NexcodeScreen.S05.route) {
-                                popUpTo(NexcodeScreen.S01.route) { inclusive = true }
-                            }
+                        navController.navigate(NexcodeScreen.S05.route) {
+                            popUpTo(NexcodeScreen.S01.route) { inclusive = true }
                         }
                     }
                 )
@@ -442,8 +403,7 @@ fun NexcodeNavHost(
                     viewModel = chatViewModel,
                     onNavigateBack = { handleBackNavigation(navController, NexcodeScreen.S15) },
                     onNavigateHistory = { navController.navigate(NexcodeScreen.S16.route) },
-                    onNavigateReview = { navController.navigate(NexcodeScreen.S17.route) },
-                    onNavigateAiConfig = { navController.navigate(NexcodeScreen.S04.route) }
+                    onNavigateReview = { navController.navigate(NexcodeScreen.S17.route) }
                 )
             }
 
@@ -538,6 +498,9 @@ fun NexcodeNavHost(
                     },
                     onNavigateApk = {
                         navController.navigate(NexcodeScreen.S24.route)
+                    },
+                    onNavigateAiChat = {
+                        navController.navigate(NexcodeScreen.S15.route)
                     }
                 )
             }
@@ -551,8 +514,6 @@ fun NexcodeNavHost(
                     viewModel = buildViewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateAiChat = {
-                        val (prompt, hints) = buildViewModel.buildAiFixPrompt()
-                        chatViewModel.sendErrorFixRequest(prompt, hints)
                         navController.navigate(NexcodeScreen.S15.route)
                     },
                     onNavigateBuildConfig = {
@@ -637,7 +598,12 @@ fun NexcodeNavHost(
                         navController.navigate(NexcodeScreen.S30.route)
                     },
                     onNavigateGitHub = {
-                        navController.navigate(NexcodeScreen.S03.route)
+                        val target = if (settingsViewModel.uiState.value.isSignedOut) {
+                            NexcodeScreen.S03.route
+                        } else {
+                            NexcodeScreen.S25.route
+                        }
+                        navController.navigate(target)
                     }
                 )
             }

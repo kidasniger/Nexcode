@@ -77,12 +77,16 @@ data class EditorUiState(
     val errorLineNumber: Int = 23,
     val errorTitle: String = "Ligne 23 · référence introuvable",
     val errorDesc: String = "R.string.title_detail n'existe pas — la ressource s'appelle title_details.",
+    // S11 : État undo/redo & feedback symbole
+    val canUndo: Boolean = false,
+    val canRedo: Boolean = false,
     // S12 : Recherche et remplacement
     val searchQuery: String = "R.string.title_",
     val replaceQuery: String = "R.string.title_details",
     val matchCase: Boolean = true,
     val regex: Boolean = false,
     val wholeProject: Boolean = true,
+    val showReplacePreview: Boolean = false,
     val searchResults: List<SearchResultFileGroup> = emptyList(),
     val totalMatchesCount: Int = 4,
     // S13 : Ressources
@@ -90,10 +94,18 @@ data class EditorUiState(
     val stringResources: List<ResourceStringItem> = emptyList(),
     val colorResources: List<ResourceColorItem> = emptyList(),
     val dimensionResources: List<ResourceDimensionItem> = emptyList(),
+    val showTranslationsSyncedBanner: Boolean = false,
+    val showThemesPreviewDialog: Boolean = false,
+    val editingStringResource: ResourceStringItem? = null,
+    val showAddResourceDialog: Boolean = false,
     // S14 : Dépendances Gradle
     val gradleDependencies: List<GradleDependencyItem> = emptyList(),
     val newDependencyInput: String = "",
-    // Bottom sheets / modales
+    val gradleSyncSuccess: Boolean = false,
+    // Bottom sheets / modales S10
     val showFileContextMenu: Boolean = false,
-    val selectedFileForMenu: FileTreeItem? = null
+    val selectedFileForMenu: FileTreeItem? = null,
+    val showNewEntryDialog: Boolean = false,
+    val newEntryIsDirectory: Boolean = false,
+    val showRenameDialog: Boolean = false
 )

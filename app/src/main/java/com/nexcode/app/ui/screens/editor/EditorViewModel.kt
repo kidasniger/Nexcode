@@ -143,6 +143,9 @@ class EditorViewModel(
         }
     }
 
+    private val undoStack = ArrayDeque<List<CodeLine>>()
+    private val redoStack = ArrayDeque<List<CodeLine>>()
+
     fun selectFile(item: FileTreeItem) {
         _uiState.update { state ->
             val updatedTree = state.treeItems.map {
@@ -153,17 +156,39 @@ class EditorViewModel(
             } else {
                 state.openTabs
             }
+            val nextActive = if (!item.isDirectory) item.name else state.activeTab
             state.copy(
                 treeItems = updatedTree,
                 openTabs = openTabs,
-                activeTab = if (!item.isDirectory) item.name else state.activeTab
+                activeTab = nextActive,
+                codeHeaderTitle = if (!item.isDirectory) "${item.name} · Kotlin" else state.codeHeaderTitle
             )
         }
     }
 
     fun openTab(tabName: String) {
         _uiState.update { state ->
-            state.copy(activeTab = tabName)
+            state.copy(
+                activeTab = tabName,
+                codeHeaderTitle = "$tabName · ${if (tabName.endsWith(".xml")) "XML" else "Kotlin"}"
+            )
+        }
+    }
+
+    fun addScratchTab() {
+        _uiState.update { state ->
+            val candidate = if ("City.kt" !in state.openTabs) {
+                "City.kt"
+            } else {
+                var idx = 1
+                while ("Helper$idx.kt" in state.openTabs) idx++
+                "Helper$idx.kt"
+            }
+            state.copy(
+                openTabs = state.openTabs + candidate,
+                activeTab = candidate,
+                codeHeaderTitle = "$candidate · Kotlin"
+            )
         }
     }
 
@@ -184,11 +209,165 @@ class EditorViewModel(
     }
 
     fun hideContextMenu() {
-        _uiState.update { it.copy(showFileContextMenu = false, selectedFileForMenu = null) }
+        _uiState.update { it.copy(showFileContextMenu = false) }
+    }
+
+    fun openNewEntryDialog(isDirectory: Boolean) {
+        _uiState.update {
+            it.copy(
+                showFileContextMenu = false,
+                showNewEntryDialog = true,
+                newEntryIsDirectory = isDirectory
+            )
+        }
+    }
+
+    fun dismissNewEntryDialog() {
+        _uiState.update { it.copy(showNewEntryDialog = false) }
+    }
+
+    fun createNewEntry(rawName: String, isDirectory: Boolean) {
+        val cleanName = rawName.trim()
+        if (cleanName.isEmpty()) {
+            dismissNewEntryDialog()
+            return
+        }
+        _uiState.update { state ->
+            val newItem = FileTreeItem(
+                name = cleanName,
+                path = if (isDirectory) "app/src/main/$cleanName" else "app/src/main/java/com/nimbus/meteo/$cleanName",
+                isDirectory = isDirectory,
+                indentLevel = if (isDirectory) 2 else 3,
+                countOrDesc = if (isDirectory) "0" else null,
+                isModified = !isDirectory,
+                isSelected = true
+            )
+            val updated = state.treeItems.map { it.copy(isSelected = false) } + newItem
+            val tabs = if (!isDirectory && cleanName !in state.openTabs) state.openTabs + cleanName else state.openTabs
+            state.copy(
+                treeItems = updated,
+                openTabs = tabs,
+                activeTab = if (!isDirectory) cleanName else state.activeTab,
+                showNewEntryDialog = false
+            )
+        }
+    }
+
+    fun openRenameDialog() {
+        _uiState.update { it.copy(showFileContextMenu = false, showRenameDialog = true) }
+    }
+
+    fun dismissRenameDialog() {
+        _uiState.update { it.copy(showRenameDialog = false, selectedFileForMenu = null) }
+    }
+
+    fun renameSelectedFile(newName: String) {
+        val clean = newName.trim()
+        val target = _uiState.value.selectedFileForMenu ?: return
+        if (clean.isEmpty()) {
+            dismissRenameDialog()
+            return
+        }
+        _uiState.update { state ->
+            val updatedTree = state.treeItems.map {
+                if (it.path == target.path) it.copy(name = clean, isModified = true) else it
+            }
+            val updatedTabs = state.openTabs.map { if (it == target.name) clean else it }
+            val nextActive = if (state.activeTab == target.name) clean else state.activeTab
+            state.copy(
+                treeItems = updatedTree,
+                openTabs = updatedTabs,
+                activeTab = nextActive,
+                showRenameDialog = false,
+                selectedFileForMenu = null
+            )
+        }
+    }
+
+    fun duplicateSelectedFile() {
+        val target = _uiState.value.selectedFileForMenu ?: return
+        _uiState.update { state ->
+            val copyName = if (target.name.contains(".")) {
+                val base = target.name.substringBeforeLast(".")
+                val ext = target.name.substringAfterLast(".")
+                "${base}Copy.$ext"
+            } else {
+                "${target.name}_copy"
+            }
+            val copyItem = target.copy(
+                name = copyName,
+                path = "${target.path}_copy",
+                isModified = true,
+                isSelected = true
+            )
+            val updatedTree = state.treeItems.map { it.copy(isSelected = false) } + copyItem
+            state.copy(
+                treeItems = updatedTree,
+                showFileContextMenu = false,
+                selectedFileForMenu = null
+            )
+        }
+    }
+
+    fun deleteSelectedFile() {
+        val target = _uiState.value.selectedFileForMenu ?: return
+        _uiState.update { state ->
+            val updatedTree = state.treeItems.filterNot { it.path == target.path }
+            val updatedTabs = state.openTabs.filterNot { it == target.name }
+            val nextActive = if (state.activeTab == target.name) updatedTabs.firstOrNull() ?: "" else state.activeTab
+            state.copy(
+                treeItems = updatedTree,
+                openTabs = updatedTabs,
+                activeTab = nextActive,
+                showFileContextMenu = false,
+                selectedFileForMenu = null
+            )
+        }
     }
 
     fun insertSymbol(symbol: String) {
-        // Ajoute ou modifie le code en simulation
+        val inserted = when (symbol) {
+            "⇥" -> "    "
+            else -> symbol
+        }
+        _uiState.update { state ->
+            if (state.codeLines.isEmpty()) return@update state
+            undoStack.addLast(state.codeLines)
+            redoStack.clear()
+            val targetIdx = state.codeLines.indexOfLast { it.content.isNotBlank() }.coerceAtLeast(0)
+            val updated = state.codeLines.mapIndexed { idx, line ->
+                if (idx == targetIdx) line.copy(content = line.content + inserted) else line
+            }
+            state.copy(
+                codeLines = updated,
+                canUndo = undoStack.isNotEmpty(),
+                canRedo = false
+            )
+        }
+    }
+
+    fun undo() {
+        val previous = undoStack.removeLastOrNull() ?: return
+        _uiState.update { state ->
+            redoStack.addLast(state.codeLines)
+            state.copy(
+                codeLines = previous,
+                canUndo = undoStack.isNotEmpty(),
+                canRedo = redoStack.isNotEmpty()
+            )
+        }
+    }
+
+    fun redo() {
+        val next = redoStack.removeLastOrNull() ?: return
+        _uiState.update { state ->
+            undoStack.addLast(state.codeLines)
+            state.copy(
+                codeLines = next,
+                canUndo = undoStack.isNotEmpty(),
+                canRedo = redoStack.isNotEmpty()
+            )
+        }
     }
 
     fun updateSearchQuery(query: String) {
@@ -211,8 +390,14 @@ class EditorViewModel(
         _uiState.update { it.copy(wholeProject = !it.wholeProject) }
     }
 
+    fun toggleReplacePreview() {
+        _uiState.update { it.copy(showReplacePreview = !it.showReplacePreview) }
+    }
+
     fun executeReplaceAll() {
         _uiState.update { state ->
+            undoStack.addLast(state.codeLines)
+            redoStack.clear()
             val updatedLines = state.codeLines.map { line ->
                 if (line.number == 23) {
                     line.copy(
@@ -226,7 +411,9 @@ class EditorViewModel(
                 codeLines = updatedLines,
                 errorCount = 0,
                 searchResults = emptyList(),
-                totalMatchesCount = 0
+                totalMatchesCount = 0,
+                showReplacePreview = false,
+                canUndo = true
             )
         }
     }
@@ -235,7 +422,108 @@ class EditorViewModel(
         _uiState.update { it.copy(activeResourceTab = tab) }
     }
 
+    fun openAddResourceDialog() {
+        _uiState.update { it.copy(showAddResourceDialog = true) }
+    }
+
+    fun dismissAddResourceDialog() {
+        _uiState.update { it.copy(showAddResourceDialog = false) }
+    }
+
+    fun addStringResource(key: String, value: String) {
+        val k = key.trim()
+        val v = value.trim()
+        if (k.isEmpty() || v.isEmpty()) {
+            dismissAddResourceDialog()
+            return
+        }
+        _uiState.update { state ->
+            state.copy(
+                stringResources = state.stringResources + ResourceStringItem(k, v),
+                showAddResourceDialog = false
+            )
+        }
+    }
+
+    fun addColorResource(key: String, hex: String) {
+        val k = key.trim()
+        val h = hex.trim().let { if (it.startsWith("#")) it else "#$it" }
+        if (k.isEmpty() || h.length < 4) {
+            dismissAddResourceDialog()
+            return
+        }
+        _uiState.update { state ->
+            state.copy(
+                colorResources = state.colorResources + ResourceColorItem(k, h),
+                showAddResourceDialog = false
+            )
+        }
+    }
+
+    fun startEditingString(item: ResourceStringItem) {
+        _uiState.update { it.copy(editingStringResource = item) }
+    }
+
+    fun dismissEditingString() {
+        _uiState.update { it.copy(editingStringResource = null) }
+    }
+
+    fun saveEditedString(key: String, newValue: String) {
+        val v = newValue.trim()
+        if (v.isEmpty()) {
+            dismissEditingString()
+            return
+        }
+        _uiState.update { state ->
+            state.copy(
+                stringResources = state.stringResources.map { if (it.key == key) it.copy(value = v) else it },
+                editingStringResource = null
+            )
+        }
+    }
+
+    fun completeTranslations() {
+        _uiState.update { it.copy(showTranslationsSyncedBanner = true) }
+    }
+
+    fun toggleThemesPreviewDialog(show: Boolean) {
+        _uiState.update { it.copy(showThemesPreviewDialog = show) }
+    }
+
     fun updateDependencyInput(input: String) {
-        _uiState.update { it.copy(newDependencyInput = input) }
+        _uiState.update { it.copy(newDependencyInput = input, gradleSyncSuccess = false) }
+    }
+
+    fun syncGradleDependencies() {
+        _uiState.update { state ->
+            val raw = state.newDependencyInput.trim()
+            val withNew = if (raw.isNotEmpty() && raw.contains(":")) {
+                val lastColon = raw.lastIndexOf(':')
+                val artifact = raw.substring(0, lastColon)
+                val version = raw.substring(lastColon + 1).ifBlank { "1.0.0" }
+                state.gradleDependencies + GradleDependencyItem(
+                    name = artifact,
+                    version = version,
+                    statusText = "Ajoutée",
+                    statusVariant = DependencyStatusVariant.UP_TO_DATE
+                )
+            } else {
+                state.gradleDependencies
+            }
+            val resolved = withNew.map { dep ->
+                if (dep.name == "org.jetbrains.kotlin:kotlin-stdlib") {
+                    dep.copy(
+                        version = "2.0.21",
+                        statusText = "Alignée",
+                        statusVariant = DependencyStatusVariant.UP_TO_DATE
+                    )
+                } else dep
+            }
+            state.copy(
+                gradleDependencies = resolved,
+                newDependencyInput = "",
+                gradleSyncSuccess = true
+            )
+        }
     }
 }

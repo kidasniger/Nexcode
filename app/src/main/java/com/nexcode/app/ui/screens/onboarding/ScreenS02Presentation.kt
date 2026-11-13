@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -68,14 +70,20 @@ fun ScreenS02Presentation(
                 )
             }
 
-            // Contenu centré
-            Column(
+            // Contenu centré verticalement au-dessus du bouton fixe
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 26.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 26.dp, vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
 
                 // Tuile cyan .tile.c (72x72 dp, rayon 22 dp, icone 32x32)
                 Box(
@@ -191,31 +199,31 @@ fun ScreenS02Presentation(
                     )
                 }
             }
-        }
+            }
 
-        // Bas de page : Bouton Suivant et libellé d'étape
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 30.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            NexcodeButton(
-                text = stringResource(id = R.string.s02_next),
-                onClick = onNavigateNext,
-                variant = NexcodeButtonVariant.PRIMARY,
-                fullWidth = true,
-                testTag = "s02_next_btn"
-            )
-            Text(
-                text = stringResource(id = R.string.s02_step_label),
-                fontFamily = InterFontFamily,
-                fontSize = 11.sp,
-                color = colors.txt2,
-                modifier = Modifier.padding(top = 12.dp),
-                textAlign = TextAlign.Center
-            )
+            // Bas de page : Bouton Suivant et libellé d'étape
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                NexcodeButton(
+                    text = stringResource(id = R.string.s02_next),
+                    onClick = onNavigateNext,
+                    variant = NexcodeButtonVariant.PRIMARY,
+                    fullWidth = true,
+                    testTag = "s02_next_btn"
+                )
+                Text(
+                    text = stringResource(id = R.string.s02_step_label),
+                    fontFamily = InterFontFamily,
+                    fontSize = 11.sp,
+                    color = colors.txt2,
+                    modifier = Modifier.padding(top = 12.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }

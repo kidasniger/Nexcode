@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -55,8 +56,9 @@ fun NexcodeBottomBar(
         modifier = modifier
             .testTag(testTag)
             .fillMaxWidth()
-            .height(82.dp)
             .background(colors.bNavBg)
+            .navigationBarsPadding()
+            .height(74.dp)
     ) {
         // Bordure supérieure fine
         HorizontalDivider(thickness = 1.dp, color = colors.border)
@@ -83,10 +85,7 @@ fun NexcodeBottomBar(
                             .weight(1f)
                             .height(52.dp)
                             .clip(ShapeRadius12)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) { onTabSelected(tab) }
+                            .clickable { onTabSelected(tab) }
                             .testTag(tab.testTag),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center

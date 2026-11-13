@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -103,6 +104,7 @@ fun NexcodeButton(
         enabled = enabled,
         modifier = modifier
             .testTag(testTag)
+            .minimumInteractiveComponentSize()
             .then(if (fullWidth) Modifier.fillMaxWidth() else Modifier)
             .height(height)
             .clip(PillShape),
@@ -121,10 +123,11 @@ fun NexcodeButton(
                 Icon(
                     painter = icon,
                     contentDescription = null,
-                    modifier = Modifier
-                        .size(iconSize)
-                        .padding(end = gap),
+                    modifier = Modifier.size(iconSize),
                     tint = contentColor
+                )
+                androidx.compose.foundation.layout.Spacer(
+                    modifier = Modifier.size(gap)
                 )
             }
             Text(
@@ -155,7 +158,7 @@ fun NexcodeIconButton(
     Box(
         modifier = modifier
             .testTag(testTag)
-            .size(40.dp)
+            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
             .clip(ShapeRadius12)
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center

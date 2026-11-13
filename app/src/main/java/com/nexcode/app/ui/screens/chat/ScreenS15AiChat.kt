@@ -35,6 +35,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,7 +45,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -191,7 +194,6 @@ fun ScreenS15AiChat(
                     variant = NexcodeButtonVariant.GHOST,
                     size = NexcodeButtonSize.SMALL,
                     onClick = { viewModel.openFilePicker() },
-                    modifier = Modifier.height(32.dp),
                     testTag = "s15_btn_add_files"
                 )
             }
@@ -593,6 +595,7 @@ private fun ProjectContextPickerSheet(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(min = 48.dp)
                                 .clip(ShapeRadius12)
                                 .background(
                                     if (isSelected) colors.accent.copy(alpha = 0.12f) else colors.surface2
@@ -771,67 +774,69 @@ private fun CodeBlockCard(
 ) {
     val colors = NexcodeTheme.colors
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(ShapeRadius12)
-            .background(colors.codeBg)
-            .border(1.dp, colors.border, ShapeRadius12)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(colors.surface2)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = block.headerLabel,
-                fontFamily = InterFontFamily,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.txt2,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        HorizontalDivider(thickness = 0.5.dp, color = colors.border)
-
-        val scrollState = rememberScrollState()
-        val lines = block.content.lines()
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
-                .horizontalScroll(scrollState)
-                .padding(vertical = 10.dp)
+                .clip(ShapeRadius12)
+                .background(colors.codeBg)
+                .border(1.dp, colors.border, ShapeRadius12)
         ) {
-            lines.forEachIndexed { idx, rawLine ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "${idx + 1}",
-                        fontFamily = JetBrainsMonoFontFamily,
-                        fontSize = 11.5.sp,
-                        color = colors.txt2.copy(alpha = 0.55f),
-                        modifier = Modifier
-                            .width(38.dp)
-                            .padding(end = 12.dp),
-                        textAlign = TextAlign.Right
-                    )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.surface2)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = block.headerLabel,
+                    fontFamily = InterFontFamily,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.txt2,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
-                    Text(
-                        text = highlightCodeLine(rawLine, codeColors),
-                        fontFamily = JetBrainsMonoFontFamily,
-                        fontSize = 11.5.sp,
-                        lineHeight = 18.sp,
-                        color = colors.txt
-                    )
+            HorizontalDivider(thickness = 0.5.dp, color = colors.border)
+
+            val scrollState = rememberScrollState()
+            val lines = block.content.lines()
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(scrollState)
+                    .padding(vertical = 10.dp)
+            ) {
+                lines.forEachIndexed { idx, rawLine ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${idx + 1}",
+                            fontFamily = JetBrainsMonoFontFamily,
+                            fontSize = 11.5.sp,
+                            color = colors.txt2.copy(alpha = 0.55f),
+                            modifier = Modifier
+                                .width(38.dp)
+                                .padding(end = 12.dp),
+                            textAlign = TextAlign.End
+                        )
+
+                        Text(
+                            text = highlightCodeLine(rawLine, codeColors),
+                            fontFamily = JetBrainsMonoFontFamily,
+                            fontSize = 11.5.sp,
+                            lineHeight = 18.sp,
+                            color = colors.txt
+                        )
+                    }
                 }
             }
         }
@@ -973,7 +978,6 @@ private fun WaitingProgressCard(
             variant = NexcodeButtonVariant.DANGER,
             size = NexcodeButtonSize.SMALL,
             onClick = onStopClick,
-            modifier = Modifier.height(32.dp),
             testTag = "s15_btn_stop"
         )
     }

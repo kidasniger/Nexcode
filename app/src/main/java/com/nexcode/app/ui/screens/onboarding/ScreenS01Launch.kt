@@ -90,7 +90,7 @@ fun ScreenS01Launch(
             ) {
                 NexcodeLogoIcon(
                     size = 104.dp,
-                    logoTheme = NexcodeLogoTheme.DARK
+                    logoTheme = NexcodeLogoTheme.AUTO
                 )
             }
 

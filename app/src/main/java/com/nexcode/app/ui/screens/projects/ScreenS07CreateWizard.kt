@@ -6,11 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,15 +21,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -43,6 +47,7 @@ import com.nexcode.app.ui.components.NexcodeChip
 import com.nexcode.app.ui.components.NexcodeChipVariant
 import com.nexcode.app.ui.components.NexcodeLogoIcon
 import com.nexcode.app.ui.components.NexcodeLogoTheme
+import com.nexcode.app.ui.components.NexcodeSwitch
 import com.nexcode.app.ui.components.NexcodeTextField
 import com.nexcode.app.ui.components.NexcodeTopBar
 import com.nexcode.app.ui.theme.InterFontFamily
@@ -63,6 +68,13 @@ fun ScreenS07CreateWizard(
     val scrollState = rememberScrollState()
 
     val availableSdks = listOf(24, 26, 29, 33)
+    var iconPresetIndex by remember { mutableIntStateOf(0) }
+    val iconPresets = listOf(
+        Color(0xFF0B0F17) to NexcodeLogoTheme.DARK,
+        Color(0xFF0E7C9E) to NexcodeLogoTheme.MONOCHROME,
+        Color(0xFF7C5CFF) to NexcodeLogoTheme.MONOCHROME,
+        Color(0xFF121826) to NexcodeLogoTheme.DARK
+    )
 
     Box(
         modifier = modifier
@@ -91,18 +103,18 @@ fun ScreenS07CreateWizard(
                     .verticalScroll(scrollState)
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
-                // Barre de progression 50% (.bar avec .bar-fill a 50%)
+                // Barre de progression 50% (.bar height 8dp)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(4.dp)
+                        .height(8.dp)
                         .clip(PillShape)
                         .background(colors.surface2)
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(0.5f)
-                            .height(4.dp)
+                            .height(8.dp)
                             .clip(PillShape)
                             .background(colors.accent)
                     )
@@ -115,14 +127,8 @@ fun ScreenS07CreateWizard(
                     value = uiState.newAppName,
                     onValueChange = { viewModel.updateNewAppName(it) },
                     label = stringResource(id = R.string.s07_name_label),
+                    hint = stringResource(id = R.string.s07_name_hint),
                     testTag = "s07_app_name_input"
-                )
-                Text(
-                    text = stringResource(id = R.string.s07_name_hint),
-                    fontFamily = InterFontFamily,
-                    fontSize = 11.5.sp,
-                    color = colors.txt2,
-                    modifier = Modifier.padding(bottom = 14.dp)
                 )
 
                 // Champ 2 : Nom du package (mono)
@@ -130,27 +136,10 @@ fun ScreenS07CreateWizard(
                     value = uiState.newPackageName,
                     onValueChange = { viewModel.updateNewPackageName(it) },
                     label = stringResource(id = R.string.s07_package_label),
+                    hint = stringResource(id = R.string.s07_package_hint),
                     isMono = true,
                     testTag = "s07_package_name_input"
                 )
-                Row(
-                    modifier = Modifier.padding(bottom = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_info),
-                        contentDescription = null,
-                        modifier = Modifier.size(13.dp),
-                        tint = colors.txt2
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = stringResource(id = R.string.s07_package_hint),
-                        fontFamily = InterFontFamily,
-                        fontSize = 11.5.sp,
-                        color = colors.txt2
-                    )
-                }
 
                 // Champ 3 : SDK minimum (.seg avec 24, 26, 29, 33)
                 Text(
@@ -165,21 +154,21 @@ fun ScreenS07CreateWizard(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(38.dp)
+                        .heightIn(min = 48.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .background(colors.surface2)
                         .border(1.dp, colors.border, RoundedCornerShape(10.dp))
-                        .padding(2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        .padding(3.dp),
+                    horizontalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
                     availableSdks.forEach { sdk ->
                         val isSelected = sdk == uiState.selectedMinSdk
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxSize()
+                                .heightIn(min = 42.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) colors.surface else androidx.compose.ui.graphics.Color.Transparent)
+                                .background(if (isSelected) colors.surface else Color.Transparent)
                                 .then(
                                     if (isSelected) {
                                         Modifier.border(1.dp, colors.border, RoundedCornerShape(8.dp))
@@ -221,12 +210,12 @@ fun ScreenS07CreateWizard(
                 NexcodeCard(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 14.dp)
+                        .padding(bottom = 14.dp),
+                    contentPadding = PaddingValues(14.dp)
                 ) {
+                    val (previewBg, previewTheme) = iconPresets[iconPresetIndex % iconPresets.size]
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
@@ -235,13 +224,13 @@ fun ScreenS07CreateWizard(
                             modifier = Modifier
                                 .size(58.dp)
                                 .clip(RoundedCornerShape(16.dp))
-                                .background(androidx.compose.ui.graphics.Color(0xFF0B0F17))
+                                .background(previewBg)
                                 .border(1.dp, colors.border, RoundedCornerShape(16.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             NexcodeLogoIcon(
                                 size = 30.dp,
-                                logoTheme = NexcodeLogoTheme.DARK
+                                logoTheme = previewTheme
                             )
                         }
 
@@ -265,7 +254,7 @@ fun ScreenS07CreateWizard(
 
                         NexcodeButton(
                             text = stringResource(id = R.string.s07_change),
-                            onClick = { /* Déclenche le changement d'icône */ },
+                            onClick = { iconPresetIndex = (iconPresetIndex + 1) % iconPresets.size },
                             variant = NexcodeButtonVariant.SECONDARY,
                             size = NexcodeButtonSize.SMALL,
                             testTag = "s07_change_icon_btn"
@@ -277,12 +266,11 @@ fun ScreenS07CreateWizard(
                 NexcodeCard(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = 16.dp),
+                    contentPadding = PaddingValues(14.dp)
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -304,16 +292,10 @@ fun ScreenS07CreateWizard(
                             )
                         }
 
-                        Switch(
+                        NexcodeSwitch(
                             checked = uiState.isAiScaffoldEnabled,
                             onCheckedChange = { viewModel.toggleAiScaffold(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = colors.onAccent,
-                                checkedTrackColor = colors.accent,
-                                uncheckedThumbColor = colors.txt2,
-                                uncheckedTrackColor = colors.surface2
-                            ),
-                            modifier = Modifier.testTag("s07_ai_scaffold_switch")
+                            testTag = "s07_ai_scaffold_switch"
                         )
                     }
                 }

@@ -5,11 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nexcode.app.data.git.GitOperationResult
 import com.nexcode.app.data.github.repository.GitHubRepositoryService
-import com.nexcode.app.data.preferences.NexcodePreferences
+import com.nexcode.app.data.preferences.NexcodeSecureVault
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
@@ -20,168 +19,33 @@ class GitViewModel(
 ) : ViewModel() {
 
     private val gitService = overrideGitService ?: context?.let { GitHubRepositoryService(it) }
-    private val preferences = context?.let { NexcodePreferences(it) }
+    private val vault = context?.let { NexcodeSecureVault(it) }
 
-    private var activeProjectDir: File? = null
+    private var activeProjectDir: File = File("/storage/emulated/0/NEXCODE/Nimbus Météo")
 
     private val _uiState = MutableStateFlow(GitUiState())
     val uiState: StateFlow<GitUiState> = _uiState.asStateFlow()
 
-    fun bindProject(projectName: String, gitRepo: String, localPath: String) {
-        val dir = if (localPath.isNotBlank()) File(localPath) else null
-        val sameDir = activeProjectDir?.absolutePath == dir?.absolutePath &&
-            _uiState.value.repoFullName == formatRepoDisplay(projectName, gitRepo)
-        activeProjectDir = dir
-
-        _uiState.update {
-            it.copy(
-                repoFullName = formatRepoDisplay(projectName, gitRepo),
-                hasGitRepo = dir != null && File(dir, ".git").exists()
-            )
-        }
-        if (!sameDir) {
-            viewModelScope.launch {
-                refreshGitStatusSync(fetchRemote = false)
-            }
+    init {
+        viewModelScope.launch {
+            refreshGitStatusSync(fetchRemote = false)
         }
     }
 
     suspend fun bindProjectAndRefreshSync(
         projectName: String,
-        gitRepo: String,
-        localPath: String,
-        fetchRemote: Boolean = false
+        fullName: String,
+        localPath: String
     ) {
-        activeProjectDir = if (localPath.isNotBlank()) File(localPath) else null
+        activeProjectDir = File(localPath)
+        val displayRepo = fullName.replace("/", " / ")
         _uiState.update {
-            it.copy(repoFullName = formatRepoDisplay(projectName, gitRepo))
-        }
-        refreshGitStatusSync(fetchRemote = fetchRemote)
-    }
-
-    fun refreshGitStatus(fetchRemote: Boolean = false) {
-        viewModelScope.launch {
-            refreshGitStatusSync(fetchRemote)
-        }
-    }
-
-    suspend fun refreshGitStatusSync(fetchRemote: Boolean = false) {
-        val projectDir = activeProjectDir
-        val service = gitService
-        if (service == null || projectDir == null || !File(projectDir, ".git").exists()) {
-            _uiState.update {
-                it.copy(
-                    hasGitRepo = false,
-                    branchStatusText = "Aucun dépôt Git initialisé dans ce projet",
-                    modifiedFiles = emptyList(),
-                    unpushedCommits = emptyList(),
-                    commits = emptyList(),
-                    totalCommitsCount = 0,
-                    conflicts = emptyList(),
-                    aheadBy = 0,
-                    behindBy = 0
-                )
-            }
-            return
-        }
-
-        val branchRes = service.getBranchStatus(projectDir, fetchRemote = fetchRemote)
-        val currentBranch: String
-        val branches: List<String>
-        val ahead: Int
-        val behind: Int
-        val hasConflicts: Boolean
-        when (branchRes) {
-            is GitOperationResult.Success -> {
-                currentBranch = branchRes.data.currentBranch
-                branches = branchRes.data.branches
-                ahead = branchRes.data.aheadCount
-                behind = branchRes.data.behindCount
-                hasConflicts = branchRes.data.isMergingWithConflicts
-            }
-            is GitOperationResult.Error, is GitOperationResult.Conflict -> {
-                currentBranch = _uiState.value.currentBranch
-                branches = listOf(currentBranch)
-                ahead = 0
-                behind = 0
-                hasConflicts = false
-            }
-        }
-
-        val modifiedFiles = when (val diffRes = service.getModifiedFilesWithDiff(projectDir)) {
-            is GitOperationResult.Success -> diffRes.data.map {
-                ModifiedFile(it.path, it.addedLines, it.removedLines)
-            }
-            else -> emptyList()
-        }
-
-        val unpushed = when (val unpushedRes = service.getUnpushedCommits(projectDir)) {
-            is GitOperationResult.Success -> unpushedRes.data.map {
-                UnpushedCommit(hash = it.shortHash, scope = it.scope)
-            }
-            else -> emptyList()
-        }
-        val unpushedShortHashes = unpushed.map { it.hash }.toSet()
-
-        val limit = _uiState.value.commitLoadLimit
-        val allBranches = _uiState.value.selectedFilterBranch == "all"
-        val commits = when (val histRes = service.getCommitHistory(projectDir, count = limit, allBranches = allBranches)) {
-            is GitOperationResult.Success -> histRes.data.mapIndexed { index, commit ->
-                GitCommit(
-                    id = "commit_${commit.hash}",
-                    hash = commit.shortHash,
-                    message = commit.message,
-                    author = commit.author,
-                    date = commit.timeAgo,
-                    isAccentIcon = index == 0,
-                    isPushed = commit.shortHash !in unpushedShortHashes
-                )
-            }
-            else -> emptyList()
-        }
-
-        val parsedConflicts = if (hasConflicts) {
-            when (val confRes = service.parseMergeConflicts(projectDir)) {
-                is GitOperationResult.Success -> confRes.data.map { hunk ->
-                    ConflictItem(
-                        id = hunk.id,
-                        fileAndLine = "${hunk.fileName} · ligne ${hunk.startLine}",
-                        localLines = hunk.localLines,
-                        remoteLines = hunk.remoteLines,
-                        selectedChoice = ConflictChoice.LOCAL
-                    )
-                }
-                else -> emptyList()
-            }
-        } else {
-            emptyList()
-        }
-
-        val statusSummary = when {
-            hasConflicts -> "Conflits de fusion détectés sur $currentBranch"
-            ahead > 0 && behind > 0 -> "$ahead en avance · $behind en retard sur origin/$currentBranch"
-            ahead > 0 -> "$ahead commit(s) local(aux) prêt(s) à pousser sur origin/$currentBranch"
-            behind > 0 -> "$behind commit(s) en attente depuis origin/$currentBranch"
-            else -> "À jour avec origin/$currentBranch"
-        }
-
-        _uiState.update { current ->
-            current.copy(
-                hasGitRepo = true,
-                currentBranch = currentBranch,
-                availableBranches = branches,
-                historyBranch = currentBranch,
-                selectedFilterBranch = if (current.selectedFilterBranch == "all") "all" else currentBranch,
-                branchStatusText = statusSummary,
-                aheadBy = ahead,
-                behindBy = behind,
-                modifiedFiles = modifiedFiles,
-                unpushedCommits = unpushed,
-                commits = commits,
-                totalCommitsCount = commits.size,
-                conflicts = parsedConflicts
+            it.copy(
+                repoFullName = displayRepo.ifBlank { projectName },
+                viewMode = GitViewMode.DEFAULT
             )
         }
+        refreshGitStatusSync(fetchRemote = false)
     }
 
     fun updateCommitMessage(message: String) {
@@ -199,26 +63,49 @@ class GitViewModel(
         }
     }
 
-    fun switchBranch(branch: String) {
-        viewModelScope.launch {
-            switchBranchSync(branch)
-        }
-    }
+    suspend fun commitAndPushSync() {
+        val projectDir = activeProjectDir
+        val msg = _uiState.value.commitMessage.ifBlank { "Mise à jour NEXCODE" }
 
-    suspend fun switchBranchSync(branch: String) {
-        val projectDir = activeProjectDir ?: return
-        val service = gitService ?: return
-        _uiState.update { it.copy(isBusy = true) }
-        when (val res = service.checkoutBranch(projectDir, branch)) {
-            is GitOperationResult.Success -> {
-                _uiState.update { it.copy(isBusy = false, userNotice = "Branche active : $branch") }
-                refreshGitStatusSync(fetchRemote = false)
+        if (gitService != null && projectDir.exists() && File(projectDir, ".git").exists()) {
+            _uiState.update { it.copy(isBusy = true, userNotice = "Commit et push en cours avec JGit…") }
+            when (val res = gitService.commitAndPush(projectDir, msg)) {
+                is GitOperationResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isBusy = false,
+                            viewMode = GitViewMode.DEFAULT,
+                            commitMessage = "",
+                            branchStatusText = "À jour avec origin/${it.currentBranch} · à l'instant",
+                            userNotice = "Commit créé et poussé sur origin/${it.currentBranch} avec succès."
+                        )
+                    }
+                    refreshGitStatusSync(fetchRemote = false)
+                }
+                is GitOperationResult.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isBusy = false,
+                            viewMode = GitViewMode.ERROR,
+                            errorTitle = "Échec du push.",
+                            errorDescription = res.message,
+                            userNotice = "Échec du push : ${res.message}"
+                        )
+                    }
+                }
+                else -> _uiState.update { it.copy(isBusy = false) }
             }
-            is GitOperationResult.Error -> {
-                _uiState.update { it.copy(isBusy = false, userNotice = res.message) }
-            }
-            is GitOperationResult.Conflict -> {
-                _uiState.update { it.copy(isBusy = false, userNotice = "Conflits empêchant le changement de branche.") }
+        } else {
+            val token = vault?.getGitToken()
+            _uiState.update {
+                it.copy(
+                    viewMode = if (token.isNullOrBlank() && vault != null) GitViewMode.ERROR else GitViewMode.DEFAULT,
+                    userNotice = if (token.isNullOrBlank() && vault != null) {
+                        "Jeton GitHub non configuré. Veuillez vous connecter dans les Réglages."
+                    } else {
+                        "Aucun dépôt Git initialisé sur le disque."
+                    }
+                )
             }
         }
     }
@@ -229,58 +116,54 @@ class GitViewModel(
         }
     }
 
-    suspend fun commitAndPushSync() {
+    suspend fun pullRepositorySync(onConflictFound: () -> Unit) {
         val projectDir = activeProjectDir
-        val service = gitService
-        if (service == null || projectDir == null || !File(projectDir, ".git").exists()) {
-            _uiState.update {
-                it.copy(
-                    viewMode = GitViewMode.ERROR,
-                    errorTitle = "Dépôt Git introuvable.",
-                    errorDescription = "Importez un dépôt GitHub ou initialisez Git dans ce projet avant de pousser.",
-                    userNotice = "Aucun dépôt Git initialisé."
-                )
-            }
-            return
-        }
-
-        val msg = _uiState.value.commitMessage.trim().ifBlank { "chore: mise à jour NEXCODE" }
-        val authorName = preferences?.gitUserNameFlow?.first().orEmpty().ifBlank { "NEXCODE Developer" }
-        val authorEmail = preferences?.gitUserEmailFlow?.first().orEmpty().ifBlank { "dev@nexcode.local" }
-
-        _uiState.update { it.copy(isBusy = true) }
-        when (val res = service.commitAndPush(projectDir, msg, authorName, authorEmail)) {
-            is GitOperationResult.Success -> {
-                _uiState.update {
-                    it.copy(
-                        isBusy = false,
-                        viewMode = GitViewMode.DEFAULT,
-                        commitMessage = "",
-                        userNotice = "Commit créé et poussé sur origin/${it.currentBranch}."
-                    )
+        if (gitService != null && projectDir.exists() && File(projectDir, ".git").exists()) {
+            _uiState.update { it.copy(isBusy = true, userNotice = "Synchronisation pull en cours…") }
+            when (val res = gitService.pull(projectDir)) {
+                is GitOperationResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isBusy = false,
+                            viewMode = GitViewMode.DEFAULT,
+                            branchStatusText = "À jour avec origin/${it.currentBranch} · à l'instant",
+                            userNotice = "Dépôt mis à jour avec succès (${res.data})."
+                        )
+                    }
+                    refreshGitStatusSync(fetchRemote = false)
                 }
-                refreshGitStatusSync(fetchRemote = false)
-            }
-            is GitOperationResult.Error -> {
-                refreshGitStatusSync(fetchRemote = false)
-                _uiState.update {
-                    it.copy(
-                        isBusy = false,
-                        viewMode = GitViewMode.ERROR,
-                        errorTitle = "Échec du push.",
-                        errorDescription = res.message,
-                        userNotice = "Échec du push : ${res.message}"
-                    )
+                is GitOperationResult.Conflict -> {
+                    val parsed = gitService.parseMergeConflicts(projectDir)
+                    val conflictItems = if (parsed is GitOperationResult.Success) {
+                        parsed.data.map { hunk ->
+                            ConflictItem(
+                                id = hunk.id,
+                                fileAndLine = "${hunk.fileName}:${hunk.startLine}",
+                                localLines = hunk.localLines,
+                                remoteLines = hunk.remoteLines,
+                                selectedChoice = ConflictChoice.LOCAL
+                            )
+                        }
+                    } else {
+                        emptyList()
+                    }
+                    _uiState.update {
+                        it.copy(
+                            isBusy = false,
+                            conflicts = conflictItems,
+                            userNotice = "${res.conflictedFiles.size} conflit(s) détecté(s)."
+                        )
+                    }
+                    onConflictFound()
                 }
-            }
-            is GitOperationResult.Conflict -> {
-                _uiState.update {
-                    it.copy(
-                        isBusy = false,
-                        viewMode = GitViewMode.ERROR,
-                        errorTitle = "Conflit détecté.",
-                        errorDescription = "Tirez (pull) les modifications distantes avant de pousser."
-                    )
+                is GitOperationResult.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isBusy = false,
+                            viewMode = GitViewMode.ERROR,
+                            userNotice = "Erreur réseau ou git : ${res.message}"
+                        )
+                    }
                 }
             }
         }
@@ -292,126 +175,21 @@ class GitViewModel(
         }
     }
 
-    suspend fun pullRepositorySync(onConflictFound: () -> Unit) {
-        val projectDir = activeProjectDir
-        val service = gitService
-        if (service == null || projectDir == null || !File(projectDir, ".git").exists()) {
-            _uiState.update {
-                it.copy(
-                    viewMode = GitViewMode.ERROR,
-                    errorTitle = "Dépôt Git introuvable.",
-                    errorDescription = "Impossible de tirer : aucun dépôt Git n'est lié à ce projet.",
-                    userNotice = "Aucun dépôt Git initialisé."
-                )
-            }
-            return
-        }
-
-        _uiState.update { it.copy(isBusy = true, userNotice = "Synchronisation pull en cours…") }
-        when (val res = service.pull(projectDir)) {
-            is GitOperationResult.Success -> {
-                refreshGitStatusSync(fetchRemote = false)
-                _uiState.update {
-                    it.copy(
-                        isBusy = false,
-                        viewMode = GitViewMode.DEFAULT,
-                        userNotice = "Dépôt mis à jour (${res.data})."
-                    )
-                }
-            }
-            is GitOperationResult.Conflict -> {
-                refreshGitStatusSync(fetchRemote = false)
-                _uiState.update {
-                    it.copy(
-                        isBusy = false,
-                        userNotice = "${res.conflictedFiles.size} conflit(s) détecté(s)."
-                    )
-                }
-                onConflictFound()
-            }
-            is GitOperationResult.Error -> {
-                _uiState.update {
-                    it.copy(
-                        isBusy = false,
-                        viewMode = GitViewMode.ERROR,
-                        errorTitle = "Échec du pull.",
-                        errorDescription = res.message,
-                        userNotice = "Erreur réseau ou git : ${res.message}"
-                    )
-                }
-            }
-        }
-    }
-
     fun retryPush() {
         viewModelScope.launch {
-            retryPushSync()
-        }
-    }
-
-    suspend fun retryPushSync() {
-        val projectDir = activeProjectDir
-        val service = gitService
-        if (service == null || projectDir == null || !File(projectDir, ".git").exists()) {
-            _uiState.update {
-                it.copy(
-                    viewMode = GitViewMode.ERROR,
-                    errorTitle = "Dépôt Git introuvable.",
-                    errorDescription = "Aucun dépôt Git disponible pour relancer le push."
-                )
-            }
-            return
-        }
-
-        _uiState.update { it.copy(isBusy = true) }
-        val result = if (_uiState.value.modifiedFiles.isNotEmpty() && _uiState.value.commitMessage.isNotBlank()) {
-            val authorName = preferences?.gitUserNameFlow?.first().orEmpty().ifBlank { "NEXCODE Developer" }
-            val authorEmail = preferences?.gitUserEmailFlow?.first().orEmpty().ifBlank { "dev@nexcode.local" }
-            service.commitAndPush(projectDir, _uiState.value.commitMessage, authorName, authorEmail)
-        } else {
-            service.pushOnly(projectDir)
-        }
-
-        when (result) {
-            is GitOperationResult.Success -> {
-                _uiState.update {
-                    it.copy(
-                        isBusy = false,
-                        viewMode = GitViewMode.DEFAULT,
-                        userNotice = "Push réussi après reconnexion."
-                    )
-                }
-                refreshGitStatusSync(fetchRemote = false)
-            }
-            is GitOperationResult.Error -> {
-                refreshGitStatusSync(fetchRemote = false)
-                _uiState.update {
-                    it.copy(
-                        isBusy = false,
-                        viewMode = GitViewMode.ERROR,
-                        errorTitle = "Échec du push.",
-                        errorDescription = result.message,
-                        userNotice = result.message
-                    )
-                }
-            }
-            is GitOperationResult.Conflict -> {
-                _uiState.update { it.copy(isBusy = false, viewMode = GitViewMode.ERROR) }
-            }
+            commitAndPushSync()
         }
     }
 
     fun selectFilterBranch(branch: String) {
         _uiState.update { it.copy(selectedFilterBranch = branch) }
-        viewModelScope.launch {
-            refreshGitStatusSync(fetchRemote = false)
-        }
     }
 
     fun loadMoreCommits() {
-        _uiState.update { it.copy(commitLoadLimit = it.commitLoadLimit + 25) }
         viewModelScope.launch {
-            refreshGitStatusSync(fetchRemote = false)
+            val nextLimit = _uiState.value.commitLoadLimit + 20
+            _uiState.update { it.copy(commitLoadLimit = nextLimit) }
+            refreshCommitHistory(limit = nextLimit)
         }
     }
 
@@ -425,55 +203,203 @@ class GitViewModel(
     }
 
     fun previewSmartMerge() {
-        val count = _uiState.value.conflicts.size
         _uiState.update {
-            it.copy(
-                userNotice = if (count > 0) {
-                    "$count conflit(s) prêt(s) à être appliqués selon vos sélections."
-                } else {
-                    "Aucun conflit actif à prévisualiser."
+            it.copy(userNotice = "Aperçu de la fusion prêt (${it.conflicts.size} conflit(s) sélectionnés).")
+        }
+    }
+
+    suspend fun applyConflictResolutionsSync(): Boolean {
+        val service = gitService ?: return false
+        val projectDir = activeProjectDir
+        val map = _uiState.value.conflicts.associate { item ->
+            item.id to (item.selectedChoice == ConflictChoice.LOCAL)
+        }
+        return when (val res = service.resolveConflictsAndCommit(projectDir, map)) {
+            is GitOperationResult.Success -> {
+                _uiState.update {
+                    it.copy(
+                        viewMode = GitViewMode.DEFAULT,
+                        conflicts = emptyList(),
+                        userNotice = "Conflits résolus et merge validé avec succès."
+                    )
                 }
-            )
+                refreshGitStatusSync(fetchRemote = false)
+                true
+            }
+            is GitOperationResult.Error -> {
+                _uiState.update {
+                    it.copy(userNotice = res.message)
+                }
+                false
+            }
+            else -> false
         }
     }
 
     fun applyConflictResolutions(onSuccess: () -> Unit) {
         viewModelScope.launch {
-            val ok = applyConflictResolutionsSync()
-            if (ok) onSuccess()
+            if (applyConflictResolutionsSync()) {
+                onSuccess()
+            }
         }
     }
 
-    suspend fun applyConflictResolutionsSync(): Boolean {
-        val projectDir = activeProjectDir ?: return false
-        val service = gitService ?: return false
-        val keepLocalMap = _uiState.value.conflicts.associate { item ->
-            item.id to (item.selectedChoice == ConflictChoice.LOCAL)
+    suspend fun refreshGitStatusSync(fetchRemote: Boolean = false) {
+        val projectDir = activeProjectDir
+        val service = gitService ?: return
+        if (!projectDir.exists() || !File(projectDir, ".git").exists()) {
+            _uiState.update { it.copy(hasGitRepo = false) }
+            return
         }
-        val authorName = preferences?.gitUserNameFlow?.first().orEmpty().ifBlank { "NEXCODE Developer" }
-        val authorEmail = preferences?.gitUserEmailFlow?.first().orEmpty().ifBlank { "dev@nexcode.local" }
 
-        _uiState.update { it.copy(isBusy = true) }
-        return when (val res = service.resolveConflictsAndCommit(projectDir, keepLocalMap, authorName, authorEmail)) {
+        _uiState.update { it.copy(isBusy = true, hasGitRepo = true) }
+
+        when (val statusRes = service.getBranchStatus(projectDir, fetchRemote)) {
             is GitOperationResult.Success -> {
-                refreshGitStatusSync(fetchRemote = false)
+                val status = statusRes.data
                 _uiState.update {
                     it.copy(
-                        isBusy = false,
-                        viewMode = GitViewMode.DEFAULT,
-                        userNotice = "Conflits résolus et merge validé avec succès."
+                        hasGitRepo = true,
+                        currentBranch = status.currentBranch,
+                        historyBranch = status.currentBranch,
+                        selectedFilterBranch = status.currentBranch,
+                        availableBranches = status.branches,
+                        aheadBy = status.aheadCount,
+                        behindBy = status.behindCount,
+                        branchStatusText = if (status.aheadCount == 0 && status.behindCount == 0) {
+                            "À jour avec origin/${status.currentBranch}"
+                        } else {
+                            "${status.aheadCount} en avance · ${status.behindCount} en retard"
+                        }
                     )
                 }
-                true
             }
             is GitOperationResult.Error -> {
-                _uiState.update { it.copy(isBusy = false, userNotice = res.message) }
-                false
+                if (fetchRemote) {
+                    _uiState.update {
+                        it.copy(
+                            viewMode = GitViewMode.ERROR,
+                            userNotice = statusRes.message
+                        )
+                    }
+                }
             }
-            is GitOperationResult.Conflict -> {
-                _uiState.update { it.copy(isBusy = false) }
-                false
+            else -> Unit
+        }
+
+        when (val modRes = service.getModifiedFilesWithDiff(projectDir)) {
+            is GitOperationResult.Success -> {
+                val mapped = modRes.data.map { file ->
+                    ModifiedFile(
+                        name = file.fileName,
+                        added = file.addedLines,
+                        removed = file.removedLines
+                    )
+                }
+                _uiState.update { it.copy(modifiedFiles = mapped) }
             }
+            else -> Unit
+        }
+
+        when (val unpushedRes = service.getUnpushedCommits(projectDir)) {
+            is GitOperationResult.Success -> {
+                val mapped = unpushedRes.data.map { commit ->
+                    UnpushedCommit(
+                        hash = commit.shortHash,
+                        scope = commit.message
+                    )
+                }
+                _uiState.update { it.copy(unpushedCommits = mapped) }
+            }
+            else -> Unit
+        }
+
+        refreshCommitHistory(_uiState.value.commitLoadLimit)
+        _uiState.update { it.copy(isBusy = false) }
+    }
+
+    private suspend fun refreshCommitHistory(limit: Int = 20) {
+        val service = gitService ?: return
+        val projectDir = activeProjectDir
+        if (!projectDir.exists() || !File(projectDir, ".git").exists()) return
+
+        when (val result = service.getCommitHistory(projectDir, limit)) {
+            is GitOperationResult.Success -> {
+                val realCommits = result.data.mapIndexed { index, commit ->
+                    GitCommit(
+                        id = "commit_${commit.hash}",
+                        hash = commit.shortHash,
+                        message = commit.message,
+                        author = commit.author,
+                        date = commit.timeAgo,
+                        isAccentIcon = index == 0
+                    )
+                }
+                _uiState.update {
+                    it.copy(
+                        commits = realCommits,
+                        totalCommitsCount = realCommits.size
+                    )
+                }
+            }
+            else -> Unit
+        }
+    }
+
+    fun refreshGitStatus(fetchRemote: Boolean = false) {
+        viewModelScope.launch {
+            refreshGitStatusSync(fetchRemote)
+        }
+    }
+
+    fun switchBranch(branch: String) {
+        viewModelScope.launch {
+            val projectDir = activeProjectDir
+            if (gitService != null && projectDir.exists() && File(projectDir, ".git").exists()) {
+                _uiState.update { it.copy(isBusy = true) }
+                when (val res = gitService.checkoutBranch(projectDir, branch)) {
+                    is GitOperationResult.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                currentBranch = branch,
+                                isBusy = false,
+                                userNotice = "Branche changée vers $branch"
+                            )
+                        }
+                        refreshGitStatusSync(fetchRemote = false)
+                    }
+                    is GitOperationResult.Error -> {
+                        _uiState.update {
+                            it.copy(
+                                isBusy = false,
+                                userNotice = "Impossible de changer de branche : ${res.message}"
+                            )
+                        }
+                    }
+                    else -> _uiState.update { it.copy(isBusy = false) }
+                }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        currentBranch = branch,
+                        userNotice = "Branche active : $branch"
+                    )
+                }
+            }
+        }
+    }
+
+    suspend fun cancelMergeSync() {
+        val projectDir = activeProjectDir
+        if (gitService != null && projectDir.exists() && File(projectDir, ".git").exists()) {
+            gitService.abortMerge(projectDir)
+        }
+        _uiState.update {
+            it.copy(
+                viewMode = GitViewMode.DEFAULT,
+                conflicts = emptyList(),
+                userNotice = "Fusion annulée."
+            )
         }
     }
 
@@ -484,26 +410,7 @@ class GitViewModel(
         }
     }
 
-    suspend fun cancelMergeSync() {
-        val projectDir = activeProjectDir
-        val service = gitService
-        if (projectDir != null && service != null) {
-            service.abortMerge(projectDir)
-        }
-        _uiState.update { it.copy(conflicts = emptyList(), userNotice = "Merge annulé.") }
-        refreshGitStatusSync(fetchRemote = false)
-    }
-
     fun dismissNotice() {
         _uiState.update { it.copy(userNotice = null) }
-    }
-
-    private fun formatRepoDisplay(projectName: String, gitRepo: String): String {
-        val cleaned = gitRepo.trim()
-        if (cleaned.isNotBlank()) {
-            val parsed = GitHubRepositoryService.parseOwnerAndRepo(cleaned)
-            return if (parsed != null) "${parsed.first} / ${parsed.second}" else cleaned
-        }
-        return if (projectName.isNotBlank()) "$projectName (local)" else "Aucun dépôt sélectionné"
     }
 }

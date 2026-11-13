@@ -8,17 +8,20 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -85,30 +88,30 @@ fun ScreenS09ImportProject(
                 onNavigationClick = onNavigateBack
             )
 
-            // Barre d'onglets (.tabbar avec Fichier .zip et Dépôt GitHub)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(colors.surface2)
-                    .padding(3.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                TabItem(
-                    title = stringResource(id = R.string.s09_tab_zip),
-                    iconRes = R.drawable.ic_box,
-                    isSelected = uiState.importTabIndex == 0,
-                    modifier = Modifier.weight(1f),
-                    onClick = { viewModel.setImportTab(0) }
-                )
-                TabItem(
-                    title = stringResource(id = R.string.s09_tab_git),
-                    iconRes = R.drawable.ic_branch,
-                    isSelected = uiState.importTabIndex == 1,
-                    modifier = Modifier.weight(1f),
-                    onClick = { viewModel.setImportTab(1) }
-                )
+            // Barre d'onglets (.tabbar avec indicateur bas accent 2dp)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TabItem(
+                        title = stringResource(id = R.string.s09_tab_zip),
+                        iconRes = R.drawable.ic_box,
+                        isSelected = uiState.importTabIndex == 0,
+                        modifier = Modifier.weight(1f),
+                        onClick = { viewModel.setImportTab(0) }
+                    )
+                    TabItem(
+                        title = stringResource(id = R.string.s09_tab_git),
+                        iconRes = R.drawable.ic_branch,
+                        isSelected = uiState.importTabIndex == 1,
+                        modifier = Modifier.weight(1f),
+                        onClick = { viewModel.setImportTab(1) }
+                    )
+                }
+                HorizontalDivider(color = colors.border, thickness = 1.dp)
             }
 
             Column(
@@ -200,12 +203,11 @@ fun ScreenS09ImportProject(
                         NexcodeCard(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .testTag("s09_recent_zip_card")
+                                .testTag("s09_recent_zip_card"),
+                            contentPadding = PaddingValues(14.dp)
                         ) {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(14.dp),
+                                modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
@@ -338,13 +340,12 @@ private fun TabItem(
 
     Box(
         modifier = modifier
-            .height(38.dp)
-            .clip(RoundedCornerShape(9.dp))
-            .background(if (isSelected) colors.surface else androidx.compose.ui.graphics.Color.Transparent)
+            .heightIn(min = 48.dp)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
@@ -357,9 +358,18 @@ private fun TabItem(
             Text(
                 text = title,
                 fontFamily = InterFontFamily,
-                fontSize = 12.5.sp,
+                fontSize = 13.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) colors.txt else colors.txt2
+                color = if (isSelected) colors.accent else colors.txt2
+            )
+        }
+        if (isSelected) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(2.dp)
+                    .background(colors.accent)
             )
         }
     }

@@ -6,11 +6,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -81,7 +84,7 @@ fun ScreenS26CommitHistory(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .heightIn(min = 56.dp)
                     .background(colors.bg)
                     .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -120,41 +123,55 @@ fun ScreenS26CommitHistory(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 12.dp),
+                        .padding(bottom = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Box(
                         modifier = Modifier
                             .testTag("s26_chip_main")
+                            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                             .clip(PillShape)
-                            .background(if (isCurrentBranchFilter) colors.accent else colors.surface2)
-                            .then(if (!isCurrentBranchFilter) Modifier.border(1.dp, colors.border, PillShape) else Modifier)
-                            .clickable { viewModel.selectFilterBranch(uiState.currentBranch) }
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .clickable { viewModel.selectFilterBranch(uiState.currentBranch) },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = uiState.currentBranch,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (isCurrentBranchFilter) colors.onAccent else colors.txt
-                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(PillShape)
+                                .background(if (isCurrentBranchFilter) colors.accent else colors.surface2)
+                                .then(if (!isCurrentBranchFilter) Modifier.border(1.dp, colors.border, PillShape) else Modifier)
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = uiState.currentBranch,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isCurrentBranchFilter) colors.onAccent else colors.txt
+                            )
+                        }
                     }
 
                     Box(
                         modifier = Modifier
                             .testTag("s26_chip_all_branches")
+                            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                             .clip(PillShape)
-                            .background(if (!isCurrentBranchFilter) colors.accent else colors.surface2)
-                            .then(if (isCurrentBranchFilter) Modifier.border(1.dp, colors.border, PillShape) else Modifier)
-                            .clickable { viewModel.selectFilterBranch("all") }
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .clickable { viewModel.selectFilterBranch("all") },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = stringResource(id = R.string.s26_chip_all_branches),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (!isCurrentBranchFilter) colors.onAccent else colors.txt
-                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(PillShape)
+                                .background(if (!isCurrentBranchFilter) colors.accent else colors.surface2)
+                                .then(if (isCurrentBranchFilter) Modifier.border(1.dp, colors.border, PillShape) else Modifier)
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.s26_chip_all_branches),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (!isCurrentBranchFilter) colors.onAccent else colors.txt
+                            )
+                        }
                     }
                 }
 
@@ -162,21 +179,22 @@ fun ScreenS26CommitHistory(
                 NexcodeCard(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 10.dp)
+                        .padding(bottom = 10.dp),
+                    contentPadding = PaddingValues(0.dp)
                 ) {
                     if (uiState.commits.isEmpty()) {
                         Text(
                             text = "Aucun commit trouvé dans ce dépôt local.",
                             fontSize = 12.5.sp,
-                            color = colors.txt2
+                            color = colors.txt2,
+                            modifier = Modifier.padding(16.dp)
                         )
                     } else {
                         uiState.commits.forEachIndexed { index, commit ->
                             if (index > 0) {
                                 HorizontalDivider(
                                     color = colors.border,
-                                    thickness = 1.dp,
-                                    modifier = Modifier.padding(vertical = 10.dp)
+                                    thickness = 1.dp
                                 )
                             }
                             CommitListItem(
@@ -226,8 +244,9 @@ private fun CommitListItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .clickable(onClick = onClick)
-            .padding(vertical = 2.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {

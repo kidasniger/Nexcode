@@ -3,16 +3,19 @@ package com.nexcode.app.ui.screens.git
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,9 +27,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,10 +37,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
@@ -83,7 +88,7 @@ fun ScreenS27ConflictResolution(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .heightIn(min = 56.dp)
                     .background(colors.bg)
                     .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -254,19 +259,20 @@ private fun ConflictCard(
             .border(1.dp, colors.border, ShapeRadius14)
     ) {
         Column {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, colors.border, RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp))
-                    .padding(horizontal = 14.dp, vertical = 9.dp)
-            ) {
-                Text(
-                    text = conflict.fileAndLine,
-                    fontFamily = JetBrainsMonoFontFamily,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.txt
-                )
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 9.dp)
+                ) {
+                    Text(
+                        text = conflict.fileAndLine,
+                        fontFamily = JetBrainsMonoFontFamily,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.txt
+                    )
+                }
             }
 
             HorizontalDivider(color = colors.border, thickness = 1.dp)
@@ -305,45 +311,54 @@ private fun ConflictCard(
                         )
                     }
 
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        conflict.localLines.forEach { line ->
-                            Text(
-                                text = line,
-                                fontFamily = JetBrainsMonoFontFamily,
-                                fontSize = 10.5.sp,
-                                color = colors.txt,
-                                lineHeight = 16.sp
-                            )
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            conflict.localLines.forEach { line ->
+                                Text(
+                                    text = line,
+                                    fontFamily = JetBrainsMonoFontFamily,
+                                    fontSize = 10.5.sp,
+                                    color = colors.txt,
+                                    lineHeight = 16.sp
+                                )
+                            }
                         }
                     }
 
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 10.dp, vertical = 8.dp)
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
-                        Surface(
-                            onClick = { onSelectChoice(ConflictChoice.LOCAL) },
+                        Box(
                             modifier = Modifier
                                 .testTag("s27_btn_use_local_${conflict.id}")
                                 .fillMaxWidth()
-                                .height(32.dp)
-                                .clip(PillShape),
-                            shape = PillShape,
-                            color = if (isLocalSelected) colors.accent else colors.surface2,
-                            contentColor = if (isLocalSelected) colors.onAccent else colors.txt,
-                            border = if (isLocalSelected) null else BorderStroke(1.dp, colors.border)
+                                .defaultMinSize(minHeight = 48.dp)
+                                .clip(PillShape)
+                                .clickable { onSelectChoice(ConflictChoice.LOCAL) },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(34.dp)
+                                    .clip(PillShape)
+                                    .background(if (isLocalSelected) colors.accent else colors.surface2)
+                                    .then(if (isLocalSelected) Modifier else Modifier.border(1.dp, colors.border, PillShape)),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Text(
                                     text = stringResource(id = R.string.s27_btn_use),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isLocalSelected) colors.onAccent else colors.txt
                                 )
                             }
                         }
@@ -379,45 +394,54 @@ private fun ConflictCard(
                         )
                     }
 
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        conflict.remoteLines.forEach { line ->
-                            Text(
-                                text = line,
-                                fontFamily = JetBrainsMonoFontFamily,
-                                fontSize = 10.5.sp,
-                                color = colors.txt2,
-                                lineHeight = 16.sp
-                            )
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            conflict.remoteLines.forEach { line ->
+                                Text(
+                                    text = line,
+                                    fontFamily = JetBrainsMonoFontFamily,
+                                    fontSize = 10.5.sp,
+                                    color = colors.txt2,
+                                    lineHeight = 16.sp
+                                )
+                            }
                         }
                     }
 
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 10.dp, vertical = 8.dp)
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
-                        Surface(
-                            onClick = { onSelectChoice(ConflictChoice.REMOTE) },
+                        Box(
                             modifier = Modifier
                                 .testTag("s27_btn_use_remote_${conflict.id}")
                                 .fillMaxWidth()
-                                .height(32.dp)
-                                .clip(PillShape),
-                            shape = PillShape,
-                            color = if (isRemoteSelected) colors.accent else colors.surface2,
-                            contentColor = if (isRemoteSelected) colors.onAccent else colors.txt,
-                            border = if (isRemoteSelected) null else BorderStroke(1.dp, colors.border)
+                                .defaultMinSize(minHeight = 48.dp)
+                                .clip(PillShape)
+                                .clickable { onSelectChoice(ConflictChoice.REMOTE) },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(34.dp)
+                                    .clip(PillShape)
+                                    .background(if (isRemoteSelected) colors.accent else colors.surface2)
+                                    .then(if (isRemoteSelected) Modifier else Modifier.border(1.dp, colors.border, PillShape)),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Text(
                                     text = stringResource(id = R.string.s27_btn_use),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isRemoteSelected) colors.onAccent else colors.txt
                                 )
                             }
                         }
