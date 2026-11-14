@@ -10,6 +10,7 @@ import com.nexcode.app.data.preferences.NexcodeSecureVault
 import com.nexcode.app.ui.screens.onboarding.OnboardingViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -17,6 +18,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -26,6 +28,8 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class OnboardingTest {
+
+
 
     private lateinit var context: Context
     private lateinit var fakeApi: FakeGitHubApiService
@@ -71,12 +75,12 @@ class OnboardingTest {
         assertEquals("Plan Pro", prefs.gitPlanFlow.first())
 
         viewModel.refreshSessionFromStorage()
-        kotlinx.coroutines.delay(50)
+        awaitCondition { viewModel.uiState.value.isGitHubConnected }
         assertTrue(viewModel.uiState.value.isGitHubConnected)
         assertEquals("octo-dev", viewModel.uiState.value.gitHubUsername)
 
         viewModel.disconnectGitHub()
-        kotlinx.coroutines.delay(50)
+        awaitCondition { !viewModel.uiState.value.isGitHubConnected }
         assertFalse(viewModel.uiState.value.isGitHubConnected)
         assertNull(vault.getGitToken())
     }
@@ -121,6 +125,17 @@ class OnboardingTest {
         while (true) {
             Shadows.shadowOf(Looper.getMainLooper()).idle()
             if (!viewModel.uiState.value.isTestingAi || System.currentTimeMillis() >= deadline) {
+                break
+            }
+            delay(25)
+        }
+    }
+
+    private suspend fun awaitCondition(timeoutMs: Long = 5000L, predicate: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (true) {
+            Shadows.shadowOf(Looper.getMainLooper()).idle()
+            if (predicate() || System.currentTimeMillis() >= deadline) {
                 break
             }
             delay(25)

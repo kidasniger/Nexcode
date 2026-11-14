@@ -3,6 +3,7 @@ name: Build NEXCODE APK
 on:
   push:
     branches: [ "main", "master" ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ "main", "master" ]
   workflow_dispatch:
@@ -11,6 +12,12 @@ on:
         description: "Variante à compiler (debug / release / all)"
         required: false
         default: "all"
+
+# Un seul build à la fois par branche : les pushs rapprochés annulent le run obsolète
+# (un run complet coûte plusieurs minutes ; annuler économise du temps de runner).
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -26,7 +33,12 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
+
+      # Cache Gradle dédié : wrapper + dépendances + build cache + configuration cache.
+      # Le « cache: gradle » de setup-java ne couvrait pas tout et chaque run
+      # re-téléchargeait des dépendances (~1 min par run économisée).
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew || true
@@ -34,28 +46,37 @@ jobs:
       - name: Decode release keystore from secrets
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > my-upload-key.jks
 
+      # Stratégie de variantes :
+      # - push sur main/master/PR : assembleDebug + tests unitaires (retour rapide,
+      #   ~1 seule compilation Kotlin au lieu de deux).
+      # - déclenchement manuel : variante au choix (debug / release / all).
+      # - tag v* : assembleRelease (keystore décodé + secrets) pour publier.
       - name: Determine build variant
         id: variant
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "value=${{ github.event.inputs.build_variant }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "value=debug" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "value=release" >> $GITHUB_OUTPUT
           else
-            echo "value=all" >> $GITHUB_OUTPUT
+            echo "value=debug" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build APKs with Gradle
+      # UNE seule invocation Gradle pour compiler + tester : le second appel
+      # (« ./gradlew testDebugUnitTest » séparé) re-payait la configuration et
+      # le redémarrage du daemon (~40 s par run économisés).
+      - name: Build APKs and run unit tests
         env:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           case "${{ steps.variant.outputs.value }}" in
-            debug) ./gradlew assembleDebug --stacktrace ;;
-            release) ./gradlew assembleRelease --stacktrace ;;
-            *) ./gradlew assembleDebug assembleRelease --stacktrace ;;
+            debug)   ./gradlew assembleDebug testDebugUnitTest --console=plain ;;
+            release) ./gradlew assembleRelease --console=plain ;;
+            *)       ./gradlew assembleDebug assembleRelease testDebugUnitTest --console=plain ;;
           esac
-
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest --stacktrace --console=plain
 
       - name: Upload Debug APK Artifact
         if: ${{ steps.variant.outputs.value != 'release' }}
@@ -71,4 +92,4 @@ jobs:
         with:
           name: nexcode-release-apk
           path: app/build/outputs/apk/release/*.apk
-          retention-days: 14
+          retention-days: 90

@@ -44,8 +44,18 @@ class BuildViewModel(
         try { NexcodeDatabase.getInstance(it).buildDao() } catch (_: Exception) { null }
     }
 
-    private val _uiState = MutableStateFlow(BuildUiState())
+    private val _uiState = MutableStateFlow(
+        BuildUiState(
+            configNotice = "Aucun projet ouvert. Ouvrez un projet pour configurer son build.",
+            keystoreInfo = "",
+            versionName = "",
+            buildNumber = ""
+        )
+    )
     val uiState: StateFlow<BuildUiState> = _uiState.asStateFlow()
+
+    // Ligne Room du build en cours (une seule ligne par build : RUNNING puis mise à jour)
+    private var activeBuildDbId: Long = 0L
 
     // Projet réellement lié (owner/repo + chemin disque)
     private var owner: String = ""
@@ -121,6 +131,7 @@ class BuildViewModel(
             return
         }
         buildStartMs = System.currentTimeMillis()
+        activeBuildDbId = 0L
         val variantValue = state.selectedVariant.name.lowercase()
         _uiState.update {
             it.copy(
@@ -386,23 +397,42 @@ class BuildViewModel(
         val pid = projectId ?: return
         val state = _uiState.value
         try {
-            dao.insertBuild(
-                BuildEntity(
-                    projectId = pid,
-                    buildType = state.selectedVariant.name.lowercase(),
-                    status = status,
-                    startTime = buildStartMs,
-                    durationMs = durationMs,
-                    apkPath = apkPath,
-                    apkSize = state.apkList.firstOrNull()?.sizeBytes ?: 0,
-                    logOutput = logOutput?.take(100_000),
-                    errorCount = errorCount,
-                    githubRunId = activeRunId,
-                    runNumber = 0,
-                    versionName = state.versionName.ifBlank { "1.0" },
-                    errorSummary = errorSummary
+            if (activeBuildDbId != 0L) {
+                // Mise à jour de la ligne existante : un build = une seule ligne
+                // (sinon l'historique contient un doublon RUNNING qui masque le statut final).
+                val existing = dao.getBuildById(activeBuildDbId) ?: return
+                dao.updateBuild(
+                    existing.copy(
+                        status = status,
+                        durationMs = durationMs,
+                        apkPath = apkPath,
+                        apkSize = state.apkList.firstOrNull()?.sizeBytes ?: 0,
+                        logOutput = logOutput?.take(100_000),
+                        errorCount = errorCount,
+                        githubRunId = activeRunId,
+                        versionName = state.versionName.ifBlank { "1.0" },
+                        errorSummary = errorSummary
+                    )
                 )
-            )
+            } else {
+                activeBuildDbId = dao.insertBuild(
+                    BuildEntity(
+                        projectId = pid,
+                        buildType = state.selectedVariant.name.lowercase(),
+                        status = status,
+                        startTime = buildStartMs,
+                        durationMs = durationMs,
+                        apkPath = apkPath,
+                        apkSize = state.apkList.firstOrNull()?.sizeBytes ?: 0,
+                        logOutput = logOutput?.take(100_000),
+                        errorCount = errorCount,
+                        githubRunId = activeRunId,
+                        runNumber = 0,
+                        versionName = state.versionName.ifBlank { "1.0" },
+                        errorSummary = errorSummary
+                    )
+                )
+            }
         } catch (_: Exception) {
             // La persistance ne doit jamais faire échouer le build lui-même.
         }

@@ -34,7 +34,7 @@ private val GRADLE_CONFIGURATIONS = listOf(
 )
 
 private val GRADLE_ENTRY_REGEX = Regex(
-    """(?:${GRADLE_CONFIGURATIONS.joinToString("|")})\s*(?:\(\s*)?["']([^"']+)["']"""
+    """(${GRADLE_CONFIGURATIONS.joinToString("|")})\s*(?:\(\s*)?["']([^"']+)["']"""
 )
 
 class EditorViewModel(
@@ -92,6 +92,9 @@ class EditorViewModel(
             projectName = project.name,
             projectRootPath = root.absolutePath
         )
+        // Déploiement réel de l'arborescence : tous les dossiers source sont ouverts
+        // dès la liaison (l'affichage reste plafonné par MAX_TREE_FILES).
+        expandedDirs.addAll(collectAllDirectories(root))
         refreshTreeSync()
         loadResourcesSync()
         syncGradleDependenciesSync()
@@ -104,6 +107,25 @@ class EditorViewModel(
         undoStack.clear()
         redoStack.clear()
         _uiState.value = EditorUiState()
+    }
+
+    /**
+     * Liste réelle des dossiers du projet (chemins relatifs) pour l'auto-déploiement.
+     * Les dossiers ignorés (.git, build, etc.) ne sont jamais ouverts.
+     */
+    private fun collectAllDirectories(root: File): Set<String> {
+        val dirs = mutableSetOf<String>()
+        root.walkTopDown()
+            .onEnter { dir ->
+                // Descendre depuis la racine, mais jamais dans un dossier ignoré.
+                dir.isDirectory && (dir == root || dir.name !in IGNORED_DIR_NAMES)
+            }
+            .forEach { dir ->
+                if (dir.isDirectory && dir != root) {
+                    dirs += dir.relativeTo(root).path
+                }
+            }
+        return dirs
     }
 
     // ------------------------------------------------------------------

@@ -30,6 +30,8 @@ import java.io.File
 @Config(sdk = [34])
 class RealGitHubIntegrationTest {
 
+
+
     @get:Rule
     val tempFolder = TemporaryFolder()
 
@@ -104,11 +106,13 @@ class RealGitHubIntegrationTest {
         gitViewModel.setViewMode(GitViewMode.ERROR)
         assertEquals(GitViewMode.ERROR, gitViewModel.uiState.value.viewMode)
 
-        // Résolution d'un conflit
+        // Résolution de conflit sur un état honnête : sans dépôt réel en conflit,
+        // la liste est vide et la résolution d'un id inconnu ne doit ni planter
+        // ni inventer un conflit (plus de conflits de démonstration).
+        assertTrue(gitViewModel.uiState.value.conflicts.isEmpty())
         gitViewModel.chooseConflictResolution("conf_1", ConflictChoice.REMOTE)
-        val conf1 = gitViewModel.uiState.value.conflicts.find { it.id == "conf_1" }
-        assertNotNull(conf1)
-        assertEquals(ConflictChoice.REMOTE, conf1!!.selectedChoice)
+        assertTrue(gitViewModel.uiState.value.conflicts.isEmpty())
+        assertEquals(GitViewMode.ERROR, gitViewModel.uiState.value.viewMode)
     }
 
     @Test

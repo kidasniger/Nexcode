@@ -63,7 +63,28 @@ android {
     compose = true
     buildConfig = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+      all { test ->
+        // Un JVM de worker frais par classe de tests : le dispatcher Main de
+        // kotlinx-coroutines-android est mis en cache par JVM avec le looper du
+        // premier test. Sans isolation, les classes suivantes postent leurs
+        // coroutines Main sur un looper mort -> échecs d'attente et blocages
+        // infinis (le run CI de 40 min observé le 14/11).
+        test.forkEvery = 1
+        test.maxParallelForks = (findProperty("testMaxForks") ?: "2").toString().toInt()
+        test.testLogging {
+          events("started", "passed", "skipped", "failed")
+          showExceptions = true
+          showCauses = true
+          showStackTraces = true
+        }
+        test.systemProperty("robolectric.offline", "true")
+        test.systemProperty("robolectric.dependency.dir", robolectricDepsDir)
+      }
+    }
+  }
   dependenciesInfo {
     includeInApk = false
     includeInBundle = true
@@ -79,6 +100,20 @@ secrets {
 }
 
 googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
+
+// Robolectric télécharge normalement ses jars "android-all" à l'exécution des tests,
+// directement depuis Maven Central (sans passer par les repositories Gradle).
+// Sur les runners CI à IP partagée, Maven Central répond 429 et le fetch n'a ni
+// timeout ni retry borné : la suite de tests peut alors rester bloquée très longtemps.
+// On télécharge donc le jar via Gradle (même cache/miroir que les autres dépendances)
+// et on bascule Robolectric en mode offline.
+val robolectricDeps by configurations.creating { isCanBeResolved = true }
+dependencies {
+  robolectricDeps(libs.robolectric.android.all)
+}
+
+// Répertoire du jar android-all (String sérialisable pour le configuration cache)
+val robolectricDepsDir: String = robolectricDeps.singleFile.parentFile.absolutePath
 
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.

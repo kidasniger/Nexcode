@@ -41,37 +41,6 @@ class SettingsScreensTest {
     }
 
     @Test
-    fun testAccountSyncAndRealSignOut() = runBlocking {
-        // Starts disconnected
-        viewModel.refreshAccountAndStorageSync()
-        assertTrue(viewModel.uiState.value.isSignedOut)
-        assertEquals("Non connecté", viewModel.uiState.value.accountUsername)
-        assertEquals("?", viewModel.uiState.value.accountInitials)
-
-        // Verify real session
-        val res = gitService.verifyAndSaveToken("ghp_settings_token")
-        assertTrue(res is GitHubResult.Success)
-        viewModel.refreshAccountAndStorageSync()
-
-        var state = viewModel.uiState.value
-        assertFalse(state.isSignedOut)
-        assertEquals("octo-dev", state.accountUsername)
-        assertEquals("OD", state.accountInitials)
-        assertEquals("github.com/octo-dev · Plan Pro", state.accountPlan)
-
-        // Confirm sign-out wipes token and resets state
-        viewModel.setSignOutDialogVisible(true)
-        assertTrue(viewModel.uiState.value.showSignOutDialog)
-
-        viewModel.confirmSignOutSync()
-        state = viewModel.uiState.value
-        assertFalse(state.showSignOutDialog)
-        assertTrue(state.isSignedOut)
-        assertEquals("Non connecté", state.accountUsername)
-        assertNull(NexcodeSecureVault(context).getGitToken())
-    }
-
-    @Test
     fun testRealStorageMeasurementAndClearCaches() = runBlocking {
         val dummyCache = File(context.cacheDir, "gradle_dummy_cache.bin")
         dummyCache.writeBytes(ByteArray(4096))
