@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,7 +23,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -76,6 +76,7 @@ import com.nexcode.app.ui.screens.settings.ScreenS29AppearanceEditor
 import com.nexcode.app.ui.screens.settings.ScreenS30BackupAbout
 import com.nexcode.app.ui.screens.settings.SettingsViewModel
 import com.nexcode.app.ui.theme.NexcodeTheme
+import kotlinx.coroutines.flow.first
 
 @androidx.compose.material3.ExperimentalMaterial3Api
 @Composable
@@ -102,9 +103,14 @@ fun NexcodeNavHost(
     // Tant que DataStore n'a pas répondu (quelques millisecondes), on ne compose
     // rien : cela évite que l'écran S01 ne « clignote » avant la redirection.
     val preferences = remember { NexcodePreferences(context.applicationContext) }
-    val onboardingDone by preferences.onboardingDoneFlow.collectAsStateWithLifecycle(
-        initialValue = null
-    )
+    // Lecture one-shot : le collecteur s'arrête après la première émission (first())
+    // au lieu de rester actif toute la session. Un collecteur perpétuel laissait une
+    // souscription DataStore ouverte après la destruction de l'environnement Robolectric
+    // des tests lançant MainActivity, ce qui figeait les écritures DataStore des classes
+    // de test suivantes (blocages CI de 24 min observés sur OnboardingTest).
+    val onboardingDone by produceState<Boolean?>(initialValue = null) {
+        value = preferences.onboardingDoneFlow.first()
+    }
     if (onboardingDone == null) {
         Box(
             modifier = Modifier

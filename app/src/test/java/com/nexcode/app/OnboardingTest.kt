@@ -12,6 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -106,20 +107,23 @@ class OnboardingTest {
         viewModel.selectAiProvider("OpenAI")
         assertEquals("OpenAI", viewModel.uiState.value.selectedProvider)
 
-        viewModel.selectModelSync("gpt-4o")
+        // Toutes les interactions DataStore sont bornées : si l'actor DataStore du JVM
+        // de test se fige (blocage non déterministe connu, cf. setUp), le test échoue
+        // en ~20 s en nommant l'étape coupable au lieu de geler la tâche Gradle 24 min.
+        withTimeout(20_000) { viewModel.selectModelSync("gpt-4o") }
         assertEquals("gpt-4o", viewModel.uiState.value.selectedModel)
 
         viewModel.updateApiKey("sk-proj-test12345")
         assertEquals("sk-proj-test12345", viewModel.uiState.value.apiKey)
 
-        viewModel.completeOnboardingSync()
+        withTimeout(20_000) { viewModel.completeOnboardingSync() }
 
         val vault = NexcodeSecureVault(context)
         assertEquals("sk-proj-test12345", vault.getApiKey())
 
         val prefs = NexcodePreferences(context)
-        assertTrue(prefs.onboardingDoneFlow.first())
-        assertEquals("gpt-4o", prefs.aiModelFlow.first())
+        assertTrue(withTimeout(20_000) { prefs.onboardingDoneFlow.first() })
+        assertEquals("gpt-4o", withTimeout(20_000) { prefs.aiModelFlow.first() })
         assertNotNull(viewModel.uiState.value)
     }
 
