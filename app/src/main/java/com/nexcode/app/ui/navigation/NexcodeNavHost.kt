@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -89,6 +91,24 @@ fun NexcodeNavHost(
     val buildViewModel = remember { BuildViewModel(context.applicationContext) }
     val gitViewModel = remember { GitViewModel(context.applicationContext) }
     val settingsViewModel = remember { SettingsViewModel(context.applicationContext) }
+
+    // Liaison réelle du projet sélectionné à tous les ViewModels qui en dépendent :
+    // chat (historique persistant), éditeur (fichiers réels), build (GitHub Actions)
+    // et git (dépôt local réel).
+    val projectsUiState by projectsViewModel.uiState.collectAsState()
+    val boundProject = projectsUiState.selectedProject
+    LaunchedEffect(boundProject?.id, boundProject?.localPath) {
+        chatViewModel.bindProject(boundProject)
+        editorViewModel.bindProject(boundProject)
+        buildViewModel.bindProject(boundProject)
+        if (boundProject != null && boundProject.localPath.isNotBlank()) {
+            gitViewModel.bindProjectAndRefreshSync(
+                projectName = boundProject.name,
+                fullName = boundProject.gitRepo,
+                localPath = boundProject.localPath
+            )
+        }
+    }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route

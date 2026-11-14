@@ -614,18 +614,23 @@ class ChatViewModel(
                     appliedCount++
                     item.copy(statusText = "Appliqué", statusVariant = DiffStatusVariant.SUCCESS)
                 } else {
-                    item
+                    item.copy(
+                        statusText = "Échec",
+                        statusVariant = DiffStatusVariant.WARNING
+                    )
                 }
             } else {
-                appliedCount++
-                item.copy(statusText = "Appliqué", statusVariant = DiffStatusVariant.SUCCESS)
+                // Impossible d'écrire réellement : l'application ne doit jamais
+                // afficher un faux succès.
+                item.copy(statusText = "Échec", statusVariant = DiffStatusVariant.WARNING)
             }
         }
 
-        val notice = if (projectDir == null) {
-            "Aucun projet local actif pour écrire les fichiers."
-        } else {
-            "$appliedCount fichier(s) appliqué(s) au projet après revue."
+        val notice = when {
+            projectDir == null -> "Aucun projet local actif : les fichiers n'ont pas été écrits."
+            service == null -> "Service IA indisponible : les fichiers n'ont pas été écrits."
+            appliedCount > 0 -> "$appliedCount fichier(s) réellement écrit(s) dans le projet."
+            else -> "Aucun fichier n'a pu être écrit sur le disque."
         }
 
         _uiState.update { it.copy(diffItems = updated, reviewNotice = notice) }
@@ -662,6 +667,18 @@ class ChatViewModel(
                 }
                 return false
             }
+        } else {
+            // Écriture impossible : aucun faux succès n'est affiché.
+            _uiState.update {
+                it.copy(
+                    reviewNotice = when {
+                        projectDir == null -> "Aucun projet local actif : $fileName n'a pas été écrit."
+                        service == null -> "Service IA indisponible : $fileName n'a pas été écrit."
+                        else -> "Contenu vide : $fileName n'a pas été écrit."
+                    }
+                )
+            }
+            return false
         }
 
         _uiState.update { current ->

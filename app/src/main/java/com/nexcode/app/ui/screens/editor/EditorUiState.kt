@@ -2,19 +2,17 @@ package com.nexcode.app.ui.screens.editor
 
 data class FileTreeItem(
     val name: String,
-    val path: String,
+    val path: String, // chemin relatif au dossier racine du projet (données réelles du disque)
     val isDirectory: Boolean,
-    val indentLevel: Int, // 0: root, 1: i1, 2: i2, 3: i3
+    val indentLevel: Int, // 0: racine, 1: enfant, 2: petit-enfant...
     val countOrDesc: String? = null,
-    val isModified: Boolean = false,
+    val isModified: Boolean = false, // tampon modifié non encore enregistré sur le disque
     val isSelected: Boolean = false
 )
 
 data class CodeLine(
     val number: Int,
-    val content: String,
-    val hasError: Boolean = false,
-    val errorSpanText: String? = null
+    val content: String
 )
 
 data class SearchResultMatch(
@@ -25,7 +23,7 @@ data class SearchResultMatch(
 )
 
 data class SearchResultFileGroup(
-    val fileName: String,
+    val fileName: String, // chemin relatif réel du fichier
     val matchCount: Int,
     val matches: List<SearchResultMatch>
 )
@@ -46,17 +44,10 @@ data class ResourceDimensionItem(
 )
 
 data class GradleDependencyItem(
-    val name: String,
+    val name: String, // groupe:artefact
     val version: String,
-    val statusText: String,
-    val statusVariant: DependencyStatusVariant
+    val configuration: String // implementation, ksp, testImplementation... (config réelle du fichier)
 )
-
-enum class DependencyStatusVariant {
-    UP_TO_DATE,
-    WARN_UPDATE,
-    CONFLICT
-}
 
 enum class ResourceTab {
     STRINGS,
@@ -66,42 +57,58 @@ enum class ResourceTab {
 }
 
 data class EditorUiState(
-    val projectName: String = "Nimbus Météo",
-    val packageSubPath: String = "app · src · main · java · com · nimbus · meteo",
+    // Projet réellement ouvert (bindProject) — aucun projet fictif
+    val hasProject: Boolean = false,
+    val projectName: String = "",
+    val projectRootPath: String = "",
+
+    // Arborescence réelle du disque
     val treeItems: List<FileTreeItem> = emptyList(),
-    val openTabs: List<String> = listOf("MainActivity.kt", "Theme.kt", "CityRepository.kt"),
-    val activeTab: String = "MainActivity.kt",
-    val codeHeaderTitle: String = "MainActivity.kt · Kotlin",
-    val errorCount: Int = 1,
+
+    // Onglets ouverts : chemins relatifs réels
+    val openTabs: List<String> = emptyList(),
+    val activeTab: String = "",
+    val codeHeaderTitle: String = "",
     val codeLines: List<CodeLine> = emptyList(),
-    val errorLineNumber: Int = 23,
-    val errorTitle: String = "Ligne 23 · référence introuvable",
-    val errorDesc: String = "R.string.title_detail n'existe pas — la ressource s'appelle title_details.",
+    val unsavedPaths: Set<String> = emptySet(),
+
+    // Messages réels issus des opérations disque
+    val fileMessage: String? = null,
+    val fileError: String? = null,
+
     // S11 : État undo/redo & feedback symbole
     val canUndo: Boolean = false,
     val canRedo: Boolean = false,
-    // S12 : Recherche et remplacement
-    val searchQuery: String = "R.string.title_",
-    val replaceQuery: String = "R.string.title_details",
+
+    // S12 : Recherche et remplacement (requêtes vides par défaut)
+    val searchQuery: String = "",
+    val replaceQuery: String = "",
     val matchCase: Boolean = true,
     val regex: Boolean = false,
     val wholeProject: Boolean = true,
     val showReplacePreview: Boolean = false,
     val searchResults: List<SearchResultFileGroup> = emptyList(),
-    val totalMatchesCount: Int = 4,
-    // S13 : Ressources
+    val totalMatchesCount: Int = 0,
+    val searchStatusMessage: String? = null,
+    val searchStatusIsError: Boolean = false,
+
+    // S13 : Ressources (parsées depuis les vrais fichiers res/values)
     val activeResourceTab: ResourceTab = ResourceTab.STRINGS,
     val stringResources: List<ResourceStringItem> = emptyList(),
     val colorResources: List<ResourceColorItem> = emptyList(),
     val dimensionResources: List<ResourceDimensionItem> = emptyList(),
-    val showTranslationsSyncedBanner: Boolean = false,
+    val themesFileContent: String? = null, // contenu réel de res/values/themes.xml (null si absent)
     val showThemesPreviewDialog: Boolean = false,
     val editingStringResource: ResourceStringItem? = null,
     val showAddResourceDialog: Boolean = false,
-    // S14 : Dépendances Gradle
+
+    // S14 : Dépendances Gradle (parsées depuis le vrai build.gradle(.kts))
     val gradleDependencies: List<GradleDependencyItem> = emptyList(),
-    val newDependencyInput: String = "",
     val gradleSyncSuccess: Boolean = false,
+    val gradleSyncMessage: String = "",
+    val gradleSyncError: String? = null,
+    val newDependencyInput: String = "",
+
     // Bottom sheets / modales S10
     val showFileContextMenu: Boolean = false,
     val selectedFileForMenu: FileTreeItem? = null,

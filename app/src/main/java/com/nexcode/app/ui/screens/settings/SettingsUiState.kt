@@ -58,7 +58,13 @@ data class SettingsUiState(
     // Sauvegarde & À propos S30
     val lastExportText: String = "Export local des projets au format .zip",
     val autoBackupEnabled: Boolean = true,
-    val appVersion: String = "1.4.2 (build 42)",
-    val updateStatus: String = "À jour",
+    // Version réelle lue depuis le PackageManager ; statut réel provenant des releases GitHub.
+    val appVersion: String = "",
+    val updateStatus: String = "",
+    val isUpdateChecking: Boolean = false,
+    val updateAvailableVersion: String? = null,
+    val updateReleaseNotes: String? = null,
+    val updateDownloadProgress: Int? = null,
+    val updateError: String? = null,
     val userNotice: String? = null
 )

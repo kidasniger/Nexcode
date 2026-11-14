@@ -1,5 +1,9 @@
 package com.nexcode.app.ui.screens.build
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -28,6 +33,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import com.example.R
 import com.nexcode.app.ui.components.NexcodeBanner
 import com.nexcode.app.ui.components.NexcodeBannerVariant
@@ -39,6 +45,7 @@ import com.nexcode.app.ui.components.NexcodeIconButton
 import com.nexcode.app.ui.components.NexcodeTile
 import com.nexcode.app.ui.components.NexcodeTileVariant
 import com.nexcode.app.ui.theme.NexcodeTheme
+import java.io.File
 
 @Composable
 fun ScreenS24ApkList(
@@ -81,7 +88,11 @@ fun ScreenS24ApkList(
                         color = colors.txt
                     )
                     Text(
-                        text = stringResource(id = R.string.s24_sub),
+                        text = if (uiState.apkList.isEmpty()) {
+                            "Aucun APK téléchargé"
+                        } else {
+                            "${uiState.apkList.size} fichier(s) téléchargé(s) depuis les artefacts"
+                        },
                         fontSize = 12.sp,
                         color = colors.txt2
                     )
@@ -120,20 +131,31 @@ fun ScreenS24ApkList(
                     }
                 }
 
-                // Liste des APK
-                NexcodeCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 10.dp),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    uiState.apkList.forEachIndexed { index, apk ->
-                        ApkRow(
-                            apk = apk,
-                            accentIndex = index
+                // Liste des APK réels téléchargés depuis les artefacts du run
+                if (uiState.apkList.isEmpty()) {
+                    NexcodeCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 10.dp)
+                    ) {
+                        Text(
+                            text = "Aucun APK pour le moment. Lancez un build : les APK produits par le run GitHub Actions seront téléchargés ici.",
+                            fontSize = 12.sp,
+                            color = colors.txt2
                         )
-                        if (index < uiState.apkList.lastIndex) {
-                            HorizontalDivider(color = colors.border, thickness = 1.dp)
+                    }
+                } else {
+                    NexcodeCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 10.dp),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        uiState.apkList.forEachIndexed { index, apk ->
+                            ApkRow(apk = apk, index = index)
+                            if (index < uiState.apkList.lastIndex) {
+                                HorizontalDivider(color = colors.border, thickness = 1.dp)
+                            }
                         }
                     }
                 }
@@ -159,9 +181,40 @@ fun ScreenS24ApkList(
 @Composable
 private fun ApkRow(
     apk: ApkItem,
-    accentIndex: Int
+    index: Int
 ) {
     val colors = NexcodeTheme.colors
+    val context = LocalContext.current
+
+    fun installApk() {
+        try {
+            val apkFile = File(apk.path)
+            if (!apkFile.exists()) return
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                !context.packageManager.canRequestPackageInstalls()
+            ) {
+                val permissionIntent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(permissionIntent)
+                return
+            }
+            val apkUri: Uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                apkFile
+            )
+            val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(apkUri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(installIntent)
+        } catch (_: Exception) {
+            // L'utilisateur peut relancer l'installation ; aucune action silencieuse.
+        }
+    }
 
     Row(
         modifier = Modifier
@@ -173,20 +226,20 @@ private fun ApkRow(
     ) {
         NexcodeTile(
             icon = painterResource(id = R.drawable.ic_box),
-            variant = if (apk.isAccent) NexcodeTileVariant.ACCENT else NexcodeTileVariant.SURFACE,
+            variant = if (index == 0) NexcodeTileVariant.ACCENT else NexcodeTileVariant.SURFACE,
             isSmall = true,
-            testTag = "s24_tile_apk_$accentIndex"
+            testTag = "s24_tile_apk_$index"
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = stringResource(id = apk.nameRes),
+                text = apk.name,
                 fontFamily = FontFamily.Monospace,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = colors.txt
             )
             Text(
-                text = stringResource(id = apk.descriptionRes),
+                text = apk.description,
                 fontSize = 11.sp,
                 color = colors.txt2,
                 modifier = Modifier.padding(top = 2.dp)
@@ -194,10 +247,10 @@ private fun ApkRow(
         }
         NexcodeButton(
             text = stringResource(id = R.string.s24_btn_install),
-            onClick = { },
-            variant = if (apk.isAccent) NexcodeButtonVariant.PRIMARY else NexcodeButtonVariant.SECONDARY,
+            onClick = { installApk() },
+            variant = if (index == 0) NexcodeButtonVariant.PRIMARY else NexcodeButtonVariant.SECONDARY,
             size = NexcodeButtonSize.SMALL,
-            testTag = "s24_btn_install_$accentIndex"
+            testTag = "s24_btn_install_$index"
         )
     }
 }

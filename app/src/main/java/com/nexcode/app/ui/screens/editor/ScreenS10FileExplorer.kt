@@ -41,6 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.nexcode.app.ui.components.NexcodeBanner
+import com.nexcode.app.ui.components.NexcodeBannerVariant
 import com.nexcode.app.ui.components.NexcodeButton
 import com.nexcode.app.ui.components.NexcodeButtonSize
 import com.nexcode.app.ui.components.NexcodeButtonVariant
@@ -71,10 +73,10 @@ fun ScreenS10FileExplorer(
             .fillMaxSize()
             .background(colors.bg)
     ) {
-        // TopBar S10 : Nimbus Météo / sub: app · src · main · java · com · nimbus · meteo
+        // TopBar S10 : titre = nom réel du projet ouvert (vide si aucun projet)
         NexcodeTopBar(
-            title = uiState.projectName,
-            subtitle = uiState.packageSubPath,
+            title = uiState.projectName.ifBlank { "Éditeur" },
+            subtitle = if (uiState.hasProject) "Projet local" else null,
             navigationIcon = painterResource(id = R.drawable.ic_back),
             onNavigationClick = onNavigateBack,
             actions = {
@@ -87,7 +89,19 @@ fun ScreenS10FileExplorer(
             }
         )
 
-        // Arborescence de fichiers dans une Card avec marge 0 16px, border-radius 12dp
+        // Messages réels issus des opérations disque
+        val fileMessage = uiState.fileMessage
+        val fileError = uiState.fileError
+        if (fileMessage != null || fileError != null) {
+            NexcodeBanner(
+                text = fileError ?: fileMessage.orEmpty(),
+                icon = painterResource(id = if (fileError != null) R.drawable.ic_alert else R.drawable.ic_check),
+                variant = if (fileError != null) NexcodeBannerVariant.ERROR else NexcodeBannerVariant.SUCCESS,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+            )
+        }
+
+        // Arborescence de fichiers réelle dans une Card avec marge 0 16px, border-radius 12dp
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -101,58 +115,105 @@ fun ScreenS10FileExplorer(
                     .background(colors.surface)
                     .border(1.dp, colors.border, ShapeRadius12)
             ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                ) {
-                    items(uiState.treeItems) { item ->
-                        TreeRowItem(
-                            item = item,
-                            onClick = {
-                                viewModel.selectFile(item)
-                                when {
-                                    item.name.contains("res") || item.name.contains(".xml") -> onNavigateResources()
-                                    item.name.contains("gradle") -> onNavigateDependencies()
-                                    else -> onNavigateEditor()
-                                }
-                            },
-                            onLongClick = {
-                                viewModel.showContextMenu(item)
-                            }
+                if (!uiState.hasProject) {
+                    // État vide honnête : aucun projet ouvert, aucune donnée inventée
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_folder),
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp),
+                            tint = colors.txt2
+                        )
+                        Text(
+                            text = "Aucun projet ouvert",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.txt,
+                            modifier = Modifier.padding(top = 12.dp)
+                        )
+                        Text(
+                            text = "Ouvrez un projet depuis l'écran Projets pour explorer ses fichiers réels.",
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp,
+                            color = colors.txt2,
+                            modifier = Modifier.padding(top = 6.dp)
                         )
                     }
-
-                    item {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 12.dp),
-                            thickness = 1.dp,
-                            color = colors.border
+                } else if (uiState.treeItems.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Ce dossier de projet est vide.",
+                            fontSize = 12.sp,
+                            color = colors.txt2
                         )
-
-                        // Ligne indicative appui long (48 dp cible tactile)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 48.dp)
-                                .clickable {
-                                    uiState.treeItems.firstOrNull()?.let { viewModel.showContextMenu(it) }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) {
+                        items(uiState.treeItems.filter { it.path.isNotEmpty() }) { item ->
+                            TreeRowItem(
+                                item = item,
+                                onClick = {
+                                    viewModel.selectFile(item)
+                                    when {
+                                        item.isDirectory -> Unit // expansion gérée par le ViewModel
+                                        item.path.contains("/res/") && item.path.endsWith(".xml") -> onNavigateResources()
+                                        item.path.endsWith(".gradle.kts") || item.path.endsWith(".gradle") -> onNavigateDependencies()
+                                        else -> onNavigateEditor()
+                                    }
+                                },
+                                onLongClick = {
+                                    viewModel.showContextMenu(item)
                                 }
-                                .padding(horizontal = 14.dp, vertical = 11.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_more),
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = colors.txt2
                             )
-                            Text(
-                                text = stringResource(id = R.string.s10_file_menu_hint),
-                                color = colors.txt2,
-                                fontSize = 12.sp
+                        }
+
+                        item {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                                thickness = 1.dp,
+                                color = colors.border
                             )
+
+                            // Ligne indicative appui long (48 dp cible tactile)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .clickable {
+                                        uiState.treeItems.firstOrNull { it.path.isNotEmpty() }?.let { viewModel.showContextMenu(it) }
+                                    }
+                                    .padding(horizontal = 14.dp, vertical = 11.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_more),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = colors.txt2
+                                )
+                                Text(
+                                    text = stringResource(id = R.string.s10_file_menu_hint),
+                                    color = colors.txt2,
+                                    fontSize = 12.sp
+                                )
+                            }
                         }
                     }
                 }
@@ -172,6 +233,7 @@ fun ScreenS10FileExplorer(
                 icon = painterResource(id = R.drawable.ic_folder),
                 variant = NexcodeButtonVariant.SECONDARY,
                 size = NexcodeButtonSize.SMALL,
+                enabled = uiState.hasProject,
                 onClick = { viewModel.openNewEntryDialog(isDirectory = true) },
                 modifier = Modifier.weight(1f),
                 testTag = "s10_btn_new_folder"
@@ -182,6 +244,7 @@ fun ScreenS10FileExplorer(
                 icon = painterResource(id = R.drawable.ic_plus),
                 variant = NexcodeButtonVariant.SECONDARY,
                 size = NexcodeButtonSize.SMALL,
+                enabled = uiState.hasProject,
                 onClick = { viewModel.openNewEntryDialog(isDirectory = false) },
                 modifier = Modifier.weight(1f),
                 testTag = "s10_btn_new_file"
@@ -211,9 +274,7 @@ fun ScreenS10FileExplorer(
     }
 
     if (uiState.showNewEntryDialog) {
-        var entryName by remember(uiState.newEntryIsDirectory) {
-            mutableStateOf(if (uiState.newEntryIsDirectory) "ui" else "ForecastCard.kt")
-        }
+        var entryName by remember(uiState.newEntryIsDirectory) { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { viewModel.dismissNewEntryDialog() },
             containerColor = colors.surface,
@@ -226,12 +287,19 @@ fun ScreenS10FileExplorer(
                 )
             },
             text = {
-                NexcodeTextField(
-                    value = entryName,
-                    onValueChange = { entryName = it },
-                    label = if (uiState.newEntryIsDirectory) "Nom du dossier" else "Nom du fichier",
-                    isMono = true
-                )
+                Column {
+                    NexcodeTextField(
+                        value = entryName,
+                        onValueChange = { entryName = it },
+                        label = if (uiState.newEntryIsDirectory) "Nom du dossier" else "Nom du fichier",
+                        isMono = true
+                    )
+                    Text(
+                        text = "Le fichier est réellement créé dans le dossier sélectionné (ou à la racine du projet).",
+                        fontSize = 11.sp,
+                        color = colors.txt2
+                    )
+                }
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.createNewEntry(entryName, uiState.newEntryIsDirectory) }) {

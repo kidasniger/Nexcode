@@ -21,7 +21,8 @@ class GitViewModel(
     private val gitService = overrideGitService ?: context?.let { GitHubRepositoryService(it) }
     private val vault = context?.let { NexcodeSecureVault(it) }
 
-    private var activeProjectDir: File = File("/storage/emulated/0/NEXCODE/Nimbus Météo")
+    // Chemin réel du projet actif : alimenté par bindProjectAndRefreshSync (aucun chemin codé en dur)
+    private var activeProjectDir: File? = null
 
     private val _uiState = MutableStateFlow(GitUiState())
     val uiState: StateFlow<GitUiState> = _uiState.asStateFlow()
@@ -37,7 +38,7 @@ class GitViewModel(
         fullName: String,
         localPath: String
     ) {
-        activeProjectDir = File(localPath)
+        activeProjectDir = localPath.takeIf { it.isNotBlank() }?.let { File(it) }
         val displayRepo = fullName.replace("/", " / ")
         _uiState.update {
             it.copy(
@@ -56,18 +57,11 @@ class GitViewModel(
         _uiState.update { it.copy(viewMode = mode) }
     }
 
-    fun toggleViewMode() {
-        _uiState.update {
-            val next = if (it.viewMode == GitViewMode.DEFAULT) GitViewMode.ERROR else GitViewMode.DEFAULT
-            it.copy(viewMode = next)
-        }
-    }
-
     suspend fun commitAndPushSync() {
         val projectDir = activeProjectDir
         val msg = _uiState.value.commitMessage.ifBlank { "Mise à jour NEXCODE" }
 
-        if (gitService != null && projectDir.exists() && File(projectDir, ".git").exists()) {
+        if (gitService != null && projectDir != null && projectDir.exists() && File(projectDir, ".git").exists()) {
             _uiState.update { it.copy(isBusy = true, userNotice = "Commit et push en cours avec JGit…") }
             when (val res = gitService.commitAndPush(projectDir, msg)) {
                 is GitOperationResult.Success -> {
@@ -98,14 +92,18 @@ class GitViewModel(
         } else {
             val token = vault?.getGitToken()
             _uiState.update {
-                it.copy(
-                    viewMode = if (token.isNullOrBlank() && vault != null) GitViewMode.ERROR else GitViewMode.DEFAULT,
-                    userNotice = if (token.isNullOrBlank() && vault != null) {
-                        "Jeton GitHub non configuré. Veuillez vous connecter dans les Réglages."
-                    } else {
-                        "Aucun dépôt Git initialisé sur le disque."
-                    }
-                )
+                if (token.isNullOrBlank() && vault != null) {
+                    it.copy(
+                        viewMode = GitViewMode.ERROR,
+                        errorTitle = "Échec du push.",
+                        errorDescription = "Jeton GitHub non configuré. Connectez-vous dans les Réglages.",
+                        userNotice = "Jeton GitHub non configuré. Veuillez vous connecter dans les Réglages."
+                    )
+                } else {
+                    it.copy(
+                        userNotice = "Aucun dépôt Git initialisé sur le disque."
+                    )
+                }
             }
         }
     }
@@ -118,7 +116,7 @@ class GitViewModel(
 
     suspend fun pullRepositorySync(onConflictFound: () -> Unit) {
         val projectDir = activeProjectDir
-        if (gitService != null && projectDir.exists() && File(projectDir, ".git").exists()) {
+        if (gitService != null && projectDir != null && projectDir.exists() && File(projectDir, ".git").exists()) {
             _uiState.update { it.copy(isBusy = true, userNotice = "Synchronisation pull en cours…") }
             when (val res = gitService.pull(projectDir)) {
                 is GitOperationResult.Success -> {
@@ -166,6 +164,10 @@ class GitViewModel(
                     }
                 }
             }
+        } else {
+            _uiState.update {
+                it.copy(userNotice = "Aucun dépôt Git local")
+            }
         }
     }
 
@@ -183,6 +185,9 @@ class GitViewModel(
 
     fun selectFilterBranch(branch: String) {
         _uiState.update { it.copy(selectedFilterBranch = branch) }
+        viewModelScope.launch {
+            refreshCommitHistory(_uiState.value.commitLoadLimit)
+        }
     }
 
     fun loadMoreCommits() {
@@ -203,14 +208,21 @@ class GitViewModel(
     }
 
     fun previewSmartMerge() {
+        // Aucun calcul de fusion intelligente n'existe : notice honnête au lieu d'un faux aperçu
         _uiState.update {
-            it.copy(userNotice = "Aperçu de la fusion prêt (${it.conflicts.size} conflit(s) sélectionnés).")
+            it.copy(userNotice = "Fusion intelligente non disponible : résolvez les conflits manuellement.")
         }
     }
 
     suspend fun applyConflictResolutionsSync(): Boolean {
         val service = gitService ?: return false
         val projectDir = activeProjectDir
+        if (projectDir == null) {
+            _uiState.update {
+                it.copy(userNotice = "Aucun dépôt Git local")
+            }
+            return false
+        }
         val map = _uiState.value.conflicts.associate { item ->
             item.id to (item.selectedChoice == ConflictChoice.LOCAL)
         }
@@ -247,7 +259,7 @@ class GitViewModel(
     suspend fun refreshGitStatusSync(fetchRemote: Boolean = false) {
         val projectDir = activeProjectDir
         val service = gitService ?: return
-        if (!projectDir.exists() || !File(projectDir, ".git").exists()) {
+        if (projectDir == null || !projectDir.exists() || !File(projectDir, ".git").exists()) {
             _uiState.update { it.copy(hasGitRepo = false) }
             return
         }
@@ -279,6 +291,8 @@ class GitViewModel(
                     _uiState.update {
                         it.copy(
                             viewMode = GitViewMode.ERROR,
+                            errorTitle = "Échec de la synchronisation.",
+                            errorDescription = statusRes.message,
                             userNotice = statusRes.message
                         )
                     }
@@ -320,10 +334,12 @@ class GitViewModel(
 
     private suspend fun refreshCommitHistory(limit: Int = 20) {
         val service = gitService ?: return
-        val projectDir = activeProjectDir
+        val projectDir = activeProjectDir ?: return
         if (!projectDir.exists() || !File(projectDir, ".git").exists()) return
 
-        when (val result = service.getCommitHistory(projectDir, limit)) {
+        // Filtre réel : branche courante uniquement, ou toutes les branches du dépôt
+        val allBranches = _uiState.value.selectedFilterBranch == "all"
+        when (val result = service.getCommitHistory(projectDir, limit, allBranches)) {
             is GitOperationResult.Success -> {
                 val realCommits = result.data.mapIndexed { index, commit ->
                     GitCommit(
@@ -355,7 +371,7 @@ class GitViewModel(
     fun switchBranch(branch: String) {
         viewModelScope.launch {
             val projectDir = activeProjectDir
-            if (gitService != null && projectDir.exists() && File(projectDir, ".git").exists()) {
+            if (gitService != null && projectDir != null && projectDir.exists() && File(projectDir, ".git").exists()) {
                 _uiState.update { it.copy(isBusy = true) }
                 when (val res = gitService.checkoutBranch(projectDir, branch)) {
                     is GitOperationResult.Success -> {
@@ -379,11 +395,9 @@ class GitViewModel(
                     else -> _uiState.update { it.copy(isBusy = false) }
                 }
             } else {
+                // Aucun dépôt réel : échec honnête, pas de succès fictif
                 _uiState.update {
-                    it.copy(
-                        currentBranch = branch,
-                        userNotice = "Branche active : $branch"
-                    )
+                    it.copy(userNotice = "Aucun dépôt Git local")
                 }
             }
         }
@@ -391,7 +405,7 @@ class GitViewModel(
 
     suspend fun cancelMergeSync() {
         val projectDir = activeProjectDir
-        if (gitService != null && projectDir.exists() && File(projectDir, ".git").exists()) {
+        if (gitService != null && projectDir != null && projectDir.exists() && File(projectDir, ".git").exists()) {
             gitService.abortMerge(projectDir)
         }
         _uiState.update {

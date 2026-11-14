@@ -92,18 +92,10 @@ fun ScreenS05Projects(
                 title = stringResource(id = R.string.s05_title),
                 subtitle = stringResource(
                     id = R.string.s05_subtitle_format,
-                    if (uiState.viewMode == ProjectsViewMode.EMPTY) 0 else uiState.totalProjectCount,
-                    if (uiState.viewMode == ProjectsViewMode.EMPTY) "0 Mo" else uiState.totalSizeText
+                    uiState.totalProjectCount,
+                    uiState.totalSizeText
                 ),
                 actions = {
-                    // Puce permettant de basculer facilement entre état par défaut et état vide (conforme à la consigne de l'étape 7)
-                    NexcodeChip(
-                        text = if (uiState.viewMode == ProjectsViewMode.DEFAULT) "Défaut" else "Vide",
-                        variant = if (uiState.viewMode == ProjectsViewMode.DEFAULT) NexcodeChipVariant.ACCENT else NexcodeChipVariant.DEFAULT,
-                        onClick = { viewModel.toggleViewMode() },
-                        testTag = "s05_toggle_view_chip"
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
                     NexcodeIconButton(
                         icon = painterResource(id = R.drawable.ic_download),
                         onClick = onNavigateImportProject,
@@ -305,13 +297,11 @@ private fun ProjectCardItem(
 
     val tileBg = when {
         project.tileBgHex != null -> Color(android.graphics.Color.parseColor(project.tileBgHex))
-        project.initials == "NM" -> colors.accent
         else -> colors.surface2
     }
 
     val tileTextColor = when {
         project.tileTextHex != null -> Color(android.graphics.Color.parseColor(project.tileTextHex))
-        project.initials == "NM" -> colors.onAccent
         else -> colors.txt2
     }
 
@@ -333,7 +323,7 @@ private fun ProjectCardItem(
                     .clip(ShapeRadius14)
                     .background(tileBg)
                     .then(
-                        if (project.tileBgHex == null && project.initials != "NM") {
+                        if (project.tileBgHex == null) {
                             Modifier.border(1.dp, colors.border, ShapeRadius14)
                         } else Modifier
                     ),

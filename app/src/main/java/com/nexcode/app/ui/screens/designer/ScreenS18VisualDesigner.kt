@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -38,6 +39,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.nexcode.app.ui.components.NexcodeBanner
+import com.nexcode.app.ui.components.NexcodeBannerVariant
 import com.nexcode.app.ui.components.NexcodeButton
 import com.nexcode.app.ui.components.NexcodeButtonSize
 import com.nexcode.app.ui.components.NexcodeButtonVariant
@@ -46,8 +49,6 @@ import com.nexcode.app.ui.components.NexcodeTopBar
 import com.nexcode.app.ui.theme.InterFontFamily
 import com.nexcode.app.ui.theme.JetBrainsMonoFontFamily
 import com.nexcode.app.ui.theme.NexcodeTheme
-import com.nexcode.app.ui.theme.ShapeRadius12
-import com.nexcode.app.ui.theme.ShapeRadius14
 
 @Composable
 fun ScreenS18VisualDesigner(
@@ -66,10 +67,10 @@ fun ScreenS18VisualDesigner(
             .fillMaxSize()
             .background(colors.bg)
     ) {
-        // En-tete : TopBar (height: 50dp) avec titre Concepteur visuel et icone œil vers S20
+        // En-tete : TopBar avec titre Concepteur visuel et icône œil vers S20
         NexcodeTopBar(
             title = stringResource(id = R.string.s18_title),
-            subtitle = stringResource(id = R.string.s18_sub),
+            subtitle = "Plan de travail local",
             navigationIcon = painterResource(id = R.drawable.ic_back),
             onNavigationClick = onNavigateBack,
             actions = {
@@ -80,6 +81,15 @@ fun ScreenS18VisualDesigner(
                     testTag = "s18_btn_preview"
                 )
             }
+        )
+
+        // Bannière honnête : le plan de travail est local et n'est pas enregistré
+        NexcodeBanner(
+            text = "Plan de travail local — non enregistré dans le projet.",
+            icon = painterResource(id = R.drawable.ic_info),
+            variant = NexcodeBannerVariant.WARNING,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            testTag = "s18_banner_local_workspace"
         )
 
         // Zone centrale : Colonne d'outils (.palcol 88dp) + Canvas interactif (.canvasw)
@@ -148,7 +158,8 @@ fun ScreenS18VisualDesigner(
                     Spacer(modifier = Modifier.height(60.dp))
                 }
 
-                // Zone du Canvas (.canvasw avec quadrillage subtil)
+                // Zone du Canvas (.canvasw avec quadrillage subtil) : rendu RÉEL
+                // des composants créés par l'utilisateur (aucune donnée en dur)
                 val gridColor = colors.txt.copy(alpha = 0.045f)
                 Column(
                     modifier = Modifier
@@ -194,257 +205,47 @@ fun ScreenS18VisualDesigner(
                             )
                         }
 
-                        // Contenu de l'application miniature (.mini-c : padding 12px)
+                        // Contenu du plan de travail réel
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(12.dp)
                         ) {
-                            // Barre de titre miniature (.mtb)
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(id = R.string.s18_canvas_cities),
-                                    fontFamily = InterFontFamily,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.txt
-                                )
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_plus),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = colors.txt2
-                                )
-                            }
-
-                            // Salutation (.mini-txt : 15px, gras, margin-bottom 8px)
-                            Text(
-                                text = stringResource(id = R.string.s18_canvas_greeting),
-                                fontFamily = InterFontFamily,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.txt,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-
-                            // Placeholder d'image (.mini-img : height 64px, radius 10px, border dashed)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(64.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(colors.surface2)
-                                    .border(1.dp, colors.border, RoundedCornerShape(10.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_image),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                    tint = colors.txt2
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // Bouton miniature (.mini-btn : height 36px, pilule, background accent)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(36.dp)
-                                    .clip(CircleShape)
-                                    .background(colors.accent),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = stringResource(id = R.string.s18_canvas_refresh),
-                                    fontFamily = InterFontFamily,
-                                    fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.onAccent
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            // Carte selectionnee : CARTE #3 Lyon (.selbox avec etiquette tag et poignees)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 10.dp)
-                            ) {
-                                Box(
+                            if (uiState.components.isEmpty()) {
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(ShapeRadius12)
-                                        .background(colors.surface)
-                                        .border(1.5.dp, colors.accent, ShapeRadius12)
-                                        .clickable { onNavigateProperties() }
-                                        .padding(10.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column {
-                                            Text(
-                                                text = stringResource(id = R.string.s18_canvas_lyon),
-                                                fontFamily = InterFontFamily,
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = colors.txt
-                                            )
-                                            Text(
-                                                text = stringResource(id = R.string.s18_canvas_lyon_sub),
-                                                fontFamily = InterFontFamily,
-                                                fontSize = 9.5.sp,
-                                                color = colors.txt2,
-                                                modifier = Modifier.padding(top = 2.dp)
-                                            )
-                                        }
-
-                                        Text(
-                                            text = stringResource(id = R.string.s18_canvas_lyon_temp),
-                                            fontFamily = InterFontFamily,
-                                            fontSize = 19.sp,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = colors.txt
-                                        )
-                                    }
-                                }
-
-                                // Etiquette .tag : CARTE #3 (top: -17px)
-                                Box(
-                                    modifier = Modifier
-                                        .offset(x = 8.dp, y = (-8).dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(colors.accent)
-                                        .padding(horizontal = 5.dp, vertical = 2.dp)
+                                        .padding(vertical = 24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(
-                                        text = stringResource(id = R.string.s18_canvas_card3_tag),
+                                        text = "Aucun composant",
                                         fontFamily = InterFontFamily,
-                                        fontSize = 8.5.sp,
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
-                                        letterSpacing = 0.4.sp,
-                                        color = colors.onAccent
-                                    )
-                                }
-
-                                // Poignee coin superieur gauche (.hnd.tl)
-                                Box(
-                                    modifier = Modifier
-                                        .offset(x = (-3).dp, y = (-3).dp)
-                                        .size(7.dp)
-                                        .clip(RoundedCornerShape(2.dp))
-                                        .background(colors.accent)
-                                        .border(1.dp, colors.bg, RoundedCornerShape(2.dp))
-                                )
-
-                                // Poignee coin inferieur droit (.hnd.br)
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.BottomEnd)
-                                        .offset(x = 3.dp, y = 3.dp)
-                                        .size(7.dp)
-                                        .clip(RoundedCornerShape(2.dp))
-                                        .background(colors.accent)
-                                        .border(1.dp, colors.bg, RoundedCornerShape(2.dp))
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // Carte 2 : Paris (opacite 0.75)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .alpha(0.75f)
-                                    .clip(ShapeRadius12)
-                                    .background(colors.surface)
-                                    .border(1.dp, colors.border, ShapeRadius12)
-                                    .padding(10.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column {
-                                        Text(
-                                            text = stringResource(id = R.string.s18_canvas_paris),
-                                            fontFamily = InterFontFamily,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = colors.txt
-                                        )
-                                        Text(
-                                            text = stringResource(id = R.string.s18_canvas_paris_sub),
-                                            fontFamily = InterFontFamily,
-                                            fontSize = 9.5.sp,
-                                            color = colors.txt2,
-                                            modifier = Modifier.padding(top = 2.dp)
-                                        )
-                                    }
-
-                                    Text(
-                                        text = stringResource(id = R.string.s18_canvas_paris_temp),
-                                        fontFamily = InterFontFamily,
-                                        fontSize = 19.sp,
-                                        fontWeight = FontWeight.ExtraBold,
                                         color = colors.txt
                                     )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // Carte 3 : Brest (opacite 0.75)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .alpha(0.75f)
-                                    .clip(ShapeRadius12)
-                                    .background(colors.surface)
-                                    .border(1.dp, colors.border, ShapeRadius12)
-                                    .padding(10.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column {
-                                        Text(
-                                            text = stringResource(id = R.string.s18_canvas_brest),
-                                            fontFamily = InterFontFamily,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = colors.txt
-                                        )
-                                        Text(
-                                            text = stringResource(id = R.string.s18_canvas_brest_sub),
-                                            fontFamily = InterFontFamily,
-                                            fontSize = 9.5.sp,
-                                            color = colors.txt2,
-                                            modifier = Modifier.padding(top = 2.dp)
-                                        )
-                                    }
-
                                     Text(
-                                        text = stringResource(id = R.string.s18_canvas_brest_temp),
+                                        text = "Choisissez un outil dans la palette puis touchez « Ajouter » pour créer un composant.",
                                         fontFamily = InterFontFamily,
-                                        fontSize = 19.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = colors.txt
+                                        fontSize = 10.5.sp,
+                                        lineHeight = 15.sp,
+                                        color = colors.txt2,
+                                        modifier = Modifier.padding(top = 6.dp)
                                     )
+                                }
+                            } else {
+                                uiState.components.forEach { component ->
+                                    val isSelected = component.id == uiState.selectedComponentId
+                                    WorkspaceComponentItem(
+                                        component = component,
+                                        isSelected = isSelected,
+                                        onClick = {
+                                            viewModel.selectComponent(component.id)
+                                            if (isSelected) onNavigateProperties()
+                                        }
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
                                 }
                             }
                         }
@@ -465,14 +266,14 @@ fun ScreenS18VisualDesigner(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_move),
+                    painter = painterResource(id = R.drawable.ic_plus),
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
                     tint = colors.accent
                 )
 
                 Text(
-                    text = stringResource(id = R.string.s18_footer_hint),
+                    text = "Touchez un outil puis « Ajouter » · touchez un composant pour le sélectionner",
                     fontFamily = InterFontFamily,
                     fontSize = 11.sp,
                     lineHeight = 15.sp,
@@ -481,13 +282,169 @@ fun ScreenS18VisualDesigner(
                 )
 
                 NexcodeButton(
+                    text = "Ajouter",
+                    variant = NexcodeButtonVariant.SECONDARY,
+                    size = NexcodeButtonSize.SMALL,
+                    onClick = { viewModel.addComponentFromTool() },
+                    enabled = uiState.selectedTool != null,
+                    testTag = "s18_btn_add_component"
+                )
+
+                NexcodeButton(
                     text = stringResource(id = R.string.s18_btn_properties),
                     variant = NexcodeButtonVariant.PRIMARY,
                     size = NexcodeButtonSize.SMALL,
                     onClick = onNavigateProperties,
+                    enabled = uiState.selectedComponent != null,
                     testTag = "s18_btn_properties"
                 )
             }
+        }
+    }
+}
+
+/**
+ * Rendu réel d'un composant du plan de travail : les propriétés affichées
+ * (texte, couleur de fond, rayon, hauteur, largeur, état activé) viennent
+ * du modèle éditable par l'utilisateur.
+ */
+@Composable
+private fun WorkspaceComponentItem(
+    component: DesignerComponent,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val colors = NexcodeTheme.colors
+
+    val componentBg = runCatching {
+        Color(android.graphics.Color.parseColor(component.bgColorHex))
+    }.getOrDefault(colors.surface)
+
+    val widthModifier = when (component.widthMode) {
+        "160 dp" -> Modifier.width(160.dp)
+        "240 dp" -> Modifier.width(240.dp)
+        else -> Modifier.fillMaxWidth() // "Remplir" / "Ajuster"
+    }
+
+    Box(
+        modifier = Modifier
+            .padding(top = if (isSelected) 10.dp else 0.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .then(widthModifier)
+                .heightIn(min = if (component.type == PaletteToolType.TEXT) 24.dp else component.heightDp.dp)
+                .clip(RoundedCornerShape(component.cornerRadius.dp))
+                .alpha(if (component.isEnabled) 1f else 0.55f)
+                .background(componentBg)
+                .border(
+                    width = if (isSelected) 1.5.dp else 1.dp,
+                    color = if (isSelected) colors.accent else colors.border,
+                    shape = RoundedCornerShape(component.cornerRadius.dp)
+                )
+                .clickable(onClick = onClick)
+                .padding(10.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            when (component.type) {
+                PaletteToolType.TEXT -> {
+                    Text(
+                        text = component.text.ifBlank { "(texte vide)" },
+                        fontFamily = InterFontFamily,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.txt
+                    )
+                }
+                PaletteToolType.BUTTON -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(32.dp)
+                            .clip(CircleShape)
+                            .background(colors.accent),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = component.text.ifBlank { component.type.label },
+                            fontFamily = InterFontFamily,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onAccent
+                        )
+                    }
+                }
+                PaletteToolType.FIELD -> {
+                    Text(
+                        text = component.text.ifBlank { "(champ vide)" },
+                        fontFamily = InterFontFamily,
+                        fontSize = 11.5.sp,
+                        color = colors.txt2
+                    )
+                }
+                PaletteToolType.IMAGE -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_image),
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                            tint = colors.txt2
+                        )
+                    }
+                }
+                else -> {
+                    Text(
+                        text = component.name,
+                        fontFamily = JetBrainsMonoFontFamily,
+                        fontSize = 10.sp,
+                        color = colors.txt2
+                    )
+                }
+            }
+        }
+
+        // Étiquette réelle : nom du composant sélectionné
+        if (isSelected) {
+            Box(
+                modifier = Modifier
+                    .offset(x = 8.dp, y = (-8).dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(colors.accent)
+                    .padding(horizontal = 5.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = component.name,
+                    fontFamily = InterFontFamily,
+                    fontSize = 8.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.4.sp,
+                    color = colors.onAccent
+                )
+            }
+
+            // Poignée coin supérieur gauche
+            Box(
+                modifier = Modifier
+                    .offset(x = (-3).dp, y = (-3).dp)
+                    .size(7.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(colors.accent)
+                    .border(1.dp, colors.bg, RoundedCornerShape(2.dp))
+            )
+
+            // Poignée coin inférieur droit
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 3.dp, y = 3.dp)
+                    .size(7.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(colors.accent)
+                    .border(1.dp, colors.bg, RoundedCornerShape(2.dp))
+            )
         }
     }
 }

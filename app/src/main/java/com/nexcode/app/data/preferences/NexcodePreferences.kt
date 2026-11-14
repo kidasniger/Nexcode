@@ -32,6 +32,13 @@ class NexcodePreferences(private val context: Context) {
         val KEY_GIT_PLAN = stringPreferencesKey("git_plan")
         val KEY_ACTIVE_PROJECT_ID = androidx.datastore.preferences.core.longPreferencesKey("active_project_id")
         val KEY_ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
+        val KEY_NOTIFY_BUILD_COMPLETED = booleanPreferencesKey("notify_build_completed")
+        val KEY_NOTIFY_BUILD_ERRORS = booleanPreferencesKey("notify_build_errors")
+        val KEY_NOTIFY_DEPENDENCY_UPDATES = booleanPreferencesKey("notify_dependency_updates")
+        val KEY_EDITOR_AUTO_CLOSE_BRACKETS = booleanPreferencesKey("editor_auto_close_brackets")
+        val KEY_EDITOR_CODE_THEME = stringPreferencesKey("editor_code_theme")
+        val KEY_EDITOR_INDENTATION = stringPreferencesKey("editor_indentation")
+        val KEY_AUTO_BACKUP_ENABLED = booleanPreferencesKey("auto_backup_enabled")
 
         // Valeurs par defaut sures
         const val DEFAULT_THEME_MODE = "SYSTEM"
@@ -109,6 +116,34 @@ class NexcodePreferences(private val context: Context) {
         prefs[KEY_ONBOARDING_DONE] ?: false
     }
 
+    val notifyBuildCompletedFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[KEY_NOTIFY_BUILD_COMPLETED] ?: true
+    }
+
+    val notifyBuildErrorsFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[KEY_NOTIFY_BUILD_ERRORS] ?: true
+    }
+
+    val notifyDependencyUpdatesFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[KEY_NOTIFY_DEPENDENCY_UPDATES] ?: false
+    }
+
+    val editorAutoCloseBracketsFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[KEY_EDITOR_AUTO_CLOSE_BRACKETS] ?: true
+    }
+
+    val editorCodeThemeFlow: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_EDITOR_CODE_THEME] ?: "NEX_DARK"
+    }
+
+    val editorIndentationFlow: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[KEY_EDITOR_INDENTATION] ?: "SPACES_4"
+    }
+
+    val autoBackupEnabledFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[KEY_AUTO_BACKUP_ENABLED] ?: true
+    }
+
     suspend fun setThemeMode(mode: String) {
         context.dataStore.edit { it[KEY_THEME_MODE] = mode }
     }
@@ -184,5 +219,33 @@ class NexcodePreferences(private val context: Context) {
 
     suspend fun setOnboardingDone(done: Boolean) {
         context.dataStore.edit { it[KEY_ONBOARDING_DONE] = done }
+    }
+
+    suspend fun setNotifyBuildCompleted(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_NOTIFY_BUILD_COMPLETED] = enabled }
+    }
+
+    suspend fun setNotifyBuildErrors(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_NOTIFY_BUILD_ERRORS] = enabled }
+    }
+
+    suspend fun setNotifyDependencyUpdates(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_NOTIFY_DEPENDENCY_UPDATES] = enabled }
+    }
+
+    suspend fun setEditorAutoCloseBrackets(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_EDITOR_AUTO_CLOSE_BRACKETS] = enabled }
+    }
+
+    suspend fun setEditorCodeTheme(theme: String) {
+        context.dataStore.edit { it[KEY_EDITOR_CODE_THEME] = theme }
+    }
+
+    suspend fun setEditorIndentation(indentation: String) {
+        context.dataStore.edit { it[KEY_EDITOR_INDENTATION] = indentation }
+    }
+
+    suspend fun setAutoBackupEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_AUTO_BACKUP_ENABLED] = enabled }
     }
 }

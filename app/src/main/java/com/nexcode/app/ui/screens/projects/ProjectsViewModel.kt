@@ -9,8 +9,10 @@ import com.nexcode.app.data.git.GitOperationResult
 import com.nexcode.app.data.github.repository.GitHubRepositoryService
 import com.nexcode.app.data.github.repository.GitHubResult
 import com.nexcode.app.data.local.NexcodeDatabase
+import com.nexcode.app.data.local.entity.BuildEntity
 import com.nexcode.app.data.local.entity.ProjectEntity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +22,9 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipInputStream
 
@@ -30,8 +35,14 @@ class ProjectsViewModel(
 
     private val database = NexcodeDatabase.getInstance(context)
     private val projectDao = database.projectDao()
+    private val buildDao = database.buildDao()
     private val gitService = overrideGitService ?: GitHubRepositoryService(context)
     private val templateMetadataById = ConcurrentHashMap<Long, Pair<String, String>>()
+
+    // Données réelles issues de BuildDao, indexées par projet
+    private val buildsByProjectId = ConcurrentHashMap<Long, List<BuildEntity>>()
+    private val entitiesById = ConcurrentHashMap<Long, ProjectEntity>()
+    private val buildObserverJobs = ConcurrentHashMap<Long, Job>()
 
     private val _uiState = MutableStateFlow(ProjectsUiState())
     val uiState: StateFlow<ProjectsUiState> = _uiState.asStateFlow()
@@ -64,30 +75,79 @@ class ProjectsViewModel(
     private fun loadProjectsFromDb() {
         viewModelScope.launch {
             projectDao.getAllProjects().collect { entities ->
+                entities.forEach { entity -> entitiesById[entity.id] = entity }
+                entitiesById.keys.retainAll(entities.map { it.id }.toSet())
                 val mapped = entities.map { entity -> mapEntityToItem(entity) }
+                val totalBytes = entities.sumOf { entity -> directoryBytes(File(entity.path)) }
                 _uiState.update { current ->
                     val filtered = filterProjectList(mapped, current.searchQuery, current.selectedFilter)
+                    val selectedId = current.selectedProject?.id
+                        ?: mapped.firstOrNull()?.id
                     current.copy(
                         projects = mapped,
                         filteredProjects = filtered,
                         totalProjectCount = mapped.size,
-                        selectedProject = current.selectedProject?.let { sel ->
-                            mapped.firstOrNull { it.id == sel.id }
-                        } ?: mapped.firstOrNull(),
+                        totalSizeText = formatBytes(totalBytes),
+                        selectedProject = mapped.firstOrNull { it.id == selectedId },
+                        recentBuilds = recentBuildsFor(selectedId),
                         viewMode = if (mapped.isEmpty()) ProjectsViewMode.EMPTY else ProjectsViewMode.DEFAULT
                     )
                 }
+                syncBuildObservers(entities.map { it.id }.toSet())
             }
         }
     }
 
     private fun mapEntityToItem(entity: ProjectEntity): ProjectItem {
         val meta = templateMetadataById[entity.id]
-        val inferredLanguage = meta?.first ?: detectLanguageFromDir(File(entity.path))
-        val inferredFramework = meta?.second ?: detectFrameworkFromDir(File(entity.path), inferredLanguage)
+        val projectDir = File(entity.path)
+        val inferredLanguage = meta?.first ?: detectLanguageFromDir(projectDir)
+        val inferredFramework = meta?.second ?: detectFrameworkFromDir(projectDir, inferredLanguage)
         val initials = computeInitials(entity.name)
-        val hasGit = File(entity.path, ".git").exists()
-        val fileCount = countProjectFiles(File(entity.path))
+        val hasGit = File(projectDir, ".git").exists()
+        val fileCount = countProjectFiles(projectDir)
+
+        // Statut réel issu des builds enregistrés en base (BuildDao)
+        val builds = buildsByProjectId[entity.id].orEmpty()
+        val latestBuild = builds.firstOrNull()
+        val buildStatus: ProjectBuildStatus
+        val buildStatusLabel: String
+        when (latestBuild?.status?.uppercase(Locale.ROOT)) {
+            "SUCCESS" -> {
+                buildStatus = ProjectBuildStatus.SUCCESS
+                buildStatusLabel = if (latestBuild.runNumber > 0) {
+                    "Build #${latestBuild.runNumber} réussi"
+                } else {
+                    "Dernier build réussi"
+                }
+            }
+            "FAILED" -> {
+                buildStatus = ProjectBuildStatus.FAILED
+                buildStatusLabel = if (latestBuild.runNumber > 0) {
+                    "Build #${latestBuild.runNumber} en échec"
+                } else {
+                    "Dernier build en échec"
+                }
+            }
+            "RUNNING" -> {
+                buildStatus = ProjectBuildStatus.RUNNING
+                buildStatusLabel = "Build en cours…"
+            }
+            else -> {
+                buildStatus = ProjectBuildStatus.DRAFT
+                buildStatusLabel = "Aucun build enregistré"
+            }
+        }
+
+        // Date réelle : dernière modification du dossier projet, sinon updatedAt de l'entité
+        val lastModifiedMs = if (projectDir.exists()) projectDir.lastModified() else entity.updatedAt
+        val modifiedStamp = formatTimestamp(lastModifiedMs, "dd/MM 'à' HH:mm")
+        val modifiedText = if (modifiedStamp.isBlank()) {
+            "date de modification inconnue"
+        } else {
+            "Modifié le $modifiedStamp"
+        }
+
         return ProjectItem(
             id = entity.id,
             name = entity.name,
@@ -95,16 +155,21 @@ class ProjectsViewModel(
             initials = initials,
             language = inferredLanguage,
             uiFramework = inferredFramework,
-            modifiedText = "modifié récemment",
-            buildStatus = ProjectBuildStatus.DRAFT,
-            buildStatusLabel = if (hasGit) "Synchronisé · prêt à compiler" else "Brouillon · jamais compilé",
-            version = "v0.1.0",
+            modifiedText = modifiedText,
+            buildStatus = buildStatus,
+            buildStatusLabel = buildStatusLabel,
+            version = latestBuild?.versionName?.takeIf { it.isNotBlank() },
             onGitHub = hasGit,
             fileCount = fileCount,
-            sizeText = formatDirSize(File(entity.path)),
-            buildCount = 0,
+            sizeText = formatDirSize(projectDir),
+            buildCount = builds.size,
+            gitRepo = entity.gitRepo,
             gitBranch = entity.gitBranch,
-            gitSyncText = if (hasGit) "dépôt Git initialisé" else "non synchronisé",
+            gitSyncText = if (hasGit) {
+                "Dépôt Git local · branche ${entity.gitBranch.ifBlank { "main" }}"
+            } else {
+                "Aucun dépôt Git initialisé"
+            },
             minSdk = entity.minSdk,
             localPath = entity.path
         )
@@ -150,11 +215,100 @@ class ProjectsViewModel(
         return dir.walkTopDown().count { it.isFile && !it.path.contains(".git") }
     }
 
-    private fun formatDirSize(dir: File): String {
-        if (!dir.exists()) return "0 Mo"
-        val bytes = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-        val mb = (bytes / (1024.0 * 1024.0))
-        return if (mb < 1.0) "1 Mo" else String.format("%.1f Mo", mb)
+    private fun directoryBytes(dir: File): Long {
+        if (!dir.exists()) return 0L
+        return dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+    }
+
+    private fun formatBytes(bytes: Long): String {
+        if (bytes <= 0L) return "0 Mo"
+        val mb = bytes / (1024.0 * 1024.0)
+        return if (mb < 1.0) "1 Mo" else String.format(Locale.FRENCH, "%.1f Mo", mb)
+    }
+
+    private fun formatDirSize(dir: File): String = formatBytes(directoryBytes(dir))
+
+    private fun formatTimestamp(epochMs: Long, pattern: String): String {
+        if (epochMs <= 0L) return ""
+        return SimpleDateFormat(pattern, Locale.FRENCH).format(Date(epochMs))
+    }
+
+    private fun formatDurationFr(durationMs: Long): String? {
+        if (durationMs <= 0L) return null
+        val totalSeconds = durationMs / 1000L
+        val minutes = totalSeconds / 60L
+        val seconds = totalSeconds % 60L
+        return if (minutes > 0L) "$minutes min $seconds s" else "$seconds s"
+    }
+
+    private fun mapBuildEntityToItem(build: BuildEntity): ProjectBuildItem {
+        val isSuccess = build.status.equals("SUCCESS", ignoreCase = true)
+        val isFailed = build.status.equals("FAILED", ignoreCase = true)
+        val title = buildString {
+            if (build.runNumber > 0) {
+                append("Build #${build.runNumber}")
+                append(" · ")
+            }
+            append(build.versionName)
+            append(" · ")
+            append(build.buildType)
+        }
+        val parts = mutableListOf<String>()
+        val dateText = formatTimestamp(build.startTime, "dd/MM HH:mm")
+        parts.add(dateText.ifBlank { "date inconnue" })
+        formatDurationFr(build.durationMs)?.let { parts.add(it) }
+        if (build.apkSize > 0L) {
+            parts.add(formatBytes(build.apkSize))
+        }
+        return ProjectBuildItem(
+            id = build.id,
+            versionText = title,
+            dateAndSizeText = parts.joinToString(" · "),
+            isSuccess = isSuccess,
+            hasLogsChip = isFailed && (!build.logOutput.isNullOrBlank() || build.errorCount > 0),
+            errorText = build.errorSummary
+        )
+    }
+
+    private fun recentBuildsFor(projectId: Long?): List<ProjectBuildItem> {
+        if (projectId == null) return emptyList()
+        return buildsByProjectId[projectId].orEmpty()
+            .take(RECENT_BUILDS_LIMIT)
+            .map { mapBuildEntityToItem(it) }
+    }
+
+    private fun syncBuildObservers(activeProjectIds: Set<Long>) {
+        buildObserverJobs.keys.filterNot { it in activeProjectIds }.forEach { projectId ->
+            buildObserverJobs.remove(projectId)?.cancel()
+            buildsByProjectId.remove(projectId)
+        }
+        activeProjectIds.forEach { projectId ->
+            if (!buildObserverJobs.containsKey(projectId)) {
+                buildObserverJobs[projectId] = viewModelScope.launch {
+                    buildDao.getBuildsByProject(projectId).collect { builds ->
+                        buildsByProjectId[projectId] = builds
+                        onBuildsUpdated(projectId)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun onBuildsUpdated(projectId: Long) {
+        val entity = entitiesById[projectId] ?: return
+        val refreshedItem = mapEntityToItem(entity)
+        _uiState.update { current ->
+            val updated = current.projects.map { if (it.id == projectId) refreshedItem else it }
+            val selectedId = current.selectedProject?.id
+            current.copy(
+                projects = updated,
+                filteredProjects = filterProjectList(updated, current.searchQuery, current.selectedFilter),
+                selectedProject = current.selectedProject?.let { sel ->
+                    updated.firstOrNull { it.id == sel.id } ?: sel
+                },
+                recentBuilds = if (selectedId == projectId) recentBuildsFor(projectId) else current.recentBuilds
+            )
+        }
     }
 
     fun onSearchQueryChange(query: String) {
@@ -171,29 +325,28 @@ class ProjectsViewModel(
         }
     }
 
-    fun toggleViewMode() {
-        _uiState.update { current ->
-            val newMode = if (current.viewMode == ProjectsViewMode.DEFAULT) {
-                ProjectsViewMode.EMPTY
-            } else {
-                ProjectsViewMode.DEFAULT
-            }
-            current.copy(viewMode = newMode)
-        }
-    }
-
     fun setViewMode(mode: ProjectsViewMode) {
         _uiState.update { it.copy(viewMode = mode) }
     }
 
     fun selectProject(project: ProjectItem) {
-        _uiState.update { it.copy(selectedProject = project) }
+        _uiState.update {
+            it.copy(
+                selectedProject = project,
+                recentBuilds = recentBuildsFor(project.id)
+            )
+        }
     }
 
     fun selectProjectById(id: Long) {
         val found = _uiState.value.projects.firstOrNull { it.id == id }
         if (found != null) {
-            _uiState.update { it.copy(selectedProject = found) }
+            _uiState.update {
+                it.copy(
+                    selectedProject = found,
+                    recentBuilds = recentBuildsFor(id)
+                )
+            }
         }
     }
 
@@ -311,14 +464,12 @@ class ProjectsViewModel(
             uiFramework = uiFramework,
             modifiedText = "modifié à l'instant",
             buildStatus = ProjectBuildStatus.DRAFT,
-            buildStatusLabel = "Brouillon · jamais compilé",
-            version = "v0.1.0",
+            buildStatusLabel = "Aucun build enregistré",
             fileCount = countProjectFiles(projectDir),
             sizeText = formatDirSize(projectDir),
             buildCount = 0,
-            gitRepo = "github.com/octo-dev/${safeName.lowercase().replace(' ', '-')}",
             gitBranch = "main",
-            gitSyncText = "non synchronisé",
+            gitSyncText = "Aucun dépôt Git initialisé",
             minSdk = state.selectedMinSdk,
             localPath = projectDir.absolutePath
         )
@@ -559,5 +710,9 @@ class ProjectsViewModel(
             }
             matchesQuery && matchesFilter
         }
+    }
+
+    private companion object {
+        const val RECENT_BUILDS_LIMIT = 5
     }
 }

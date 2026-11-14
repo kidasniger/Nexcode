@@ -61,14 +61,15 @@ fun ScreenS23BuildLogs(
     val filterAll = stringResource(id = R.string.s23_chip_all)
     val filterErrors = stringResource(id = R.string.s23_chip_errors)
     val filterWarnings = stringResource(id = R.string.s23_chip_warnings)
-    val filterKotlin = stringResource(id = R.string.s23_chip_kotlin)
+    val filterGradle = "Gradle"
 
     val visibleLogs = uiState.buildLogs.filter { entry ->
         when {
             uiState.selectedLogFilter == filterAll -> true
             uiState.selectedLogFilter.lowercase().contains("erreur") -> entry.level == BuildLogLevel.ERROR
             uiState.selectedLogFilter.lowercase().startsWith("avertissement") -> entry.level == BuildLogLevel.WARNING
-            uiState.selectedLogFilter == filterKotlin -> entry.tag == "Kotlin"
+            uiState.selectedLogFilter == filterGradle -> entry.tag.contains("Gradle", ignoreCase = true) ||
+                entry.message.contains("Gradle", ignoreCase = true)
             else -> true
         }
     }
@@ -104,9 +105,13 @@ fun ScreenS23BuildLogs(
                         color = colors.txt
                     )
                     Text(
-                        text = stringResource(
-                            id = if (uiState.logVariantSuccess) R.string.s23_sub_succes else R.string.s23_sub_def
-                        ),
+                        text = when (uiState.compilationStatus) {
+                            CompilationStatus.RUNNING -> "Logs en direct · run en cours"
+                            CompilationStatus.FAILED -> "Logs du run échoué"
+                            CompilationStatus.SUCCESS -> "Logs du run réussi"
+                            CompilationStatus.CANCELLED -> "Logs du run annulé"
+                            CompilationStatus.IDLE -> "Aucun run — lancez un build"
+                        },
                         fontSize = 12.sp,
                         color = colors.txt2
                     )
@@ -165,13 +170,13 @@ fun ScreenS23BuildLogs(
                         testTag = "s23_chip_warnings"
                     )
                     NexcodeChip(
-                        text = filterKotlin,
-                        variant = if (uiState.selectedLogFilter == filterKotlin) {
+                        text = filterGradle,
+                        variant = if (uiState.selectedLogFilter == filterGradle) {
                             NexcodeChipVariant.ACCENT
                         } else {
                             NexcodeChipVariant.DEFAULT
                         },
-                        onClick = { viewModel.setLogFilter(filterKotlin) },
+                        onClick = { viewModel.setLogFilter(filterGradle) },
                         testTag = "s23_chip_kotlin"
                     )
                 }
@@ -191,18 +196,14 @@ fun ScreenS23BuildLogs(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = stringResource(
-                                id = if (uiState.logVariantSuccess) R.string.s23_code_h_succes else R.string.s23_code_h_def
-                            ),
+                            text = "Logs du run GitHub Actions",
                             fontFamily = JetBrainsMonoFontFamily,
                             fontSize = 11.sp,
                             color = colors.txt2,
                             modifier = Modifier.weight(1f)
                         )
                         Text(
-                            text = stringResource(
-                                id = if (uiState.logVariantSuccess) R.string.s23_code_time_succes else R.string.s23_code_time_def
-                            ),
+                            text = "${uiState.buildLogs.size} lignes",
                             fontFamily = JetBrainsMonoFontFamily,
                             fontSize = 11.sp,
                             color = colors.txt2
@@ -210,7 +211,14 @@ fun ScreenS23BuildLogs(
                     }
                     HorizontalDivider(color = colors.border, thickness = 1.dp)
 
-                    if (visibleLogs.isEmpty()) {
+                    if (uiState.buildLogs.isEmpty()) {
+                        Text(
+                            text = "Aucun log pour le moment. Lancez un build depuis la configuration : les logs réels du run GitHub Actions apparaîtront ici.",
+                            fontSize = 12.sp,
+                            color = colors.txt2,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    } else if (visibleLogs.isEmpty()) {
                         Text(
                             text = "Aucune entrée pour ce filtre.",
                             fontSize = 12.sp,
@@ -234,21 +242,23 @@ fun ScreenS23BuildLogs(
                     }
                 }
 
-                // Résumé des erreurs (build interrompu) ou bannière de succès
-                if (!uiState.logVariantSuccess) {
+                // Résumé réel selon l'état du run
+                if (uiState.compilationStatus == CompilationStatus.FAILED) {
+                    val errorCount = uiState.buildLogs.count { it.level == BuildLogLevel.ERROR }
+                    val firstError = uiState.buildLogs.firstOrNull { it.level == BuildLogLevel.ERROR }?.message
                     NexcodeCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 10.dp)
                     ) {
                         Text(
-                            text = stringResource(id = R.string.s23_summary_title),
+                            text = "Run échoué",
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = colors.err
                         )
                         Text(
-                            text = stringResource(id = R.string.s23_summary_sub),
+                            text = firstError ?: "$errorCount ligne(s) d'erreur détectée(s) dans les logs du run.",
                             fontSize = 11.5.sp,
                             color = colors.txt2,
                             modifier = Modifier.padding(top = 2.dp)
@@ -279,9 +289,9 @@ fun ScreenS23BuildLogs(
                             )
                         }
                     }
-                } else {
+                } else if (uiState.compilationStatus == CompilationStatus.SUCCESS) {
                     NexcodeBanner(
-                        text = stringResource(id = R.string.s23_banner_success),
+                        text = "Run GitHub Actions terminé avec succès — APK disponible.",
                         icon = painterResource(id = R.drawable.ic_check_c),
                         variant = NexcodeBannerVariant.SUCCESS,
                         modifier = Modifier
@@ -295,6 +305,8 @@ fun ScreenS23BuildLogs(
 
         if (showBuildErrorModal) {
             ModalBuildError(
+                title = "Erreur de compilation",
+                errorDetail = uiState.buildLogs.firstOrNull { it.level == BuildLogLevel.ERROR }?.message,
                 onDismiss = { showBuildErrorModal = false },
                 onNavigateLogs = { showBuildErrorModal = false },
                 onNavigateAiChat = {
@@ -332,7 +344,7 @@ private fun BuildLogLine(
             fontFamily = JetBrainsMonoFontFamily,
             fontSize = 10.5.sp,
             color = colors.txt2,
-            modifier = Modifier.width(44.dp)
+            modifier = Modifier.width(56.dp)
         )
         Text(
             text = entry.message,

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -32,24 +32,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.nexcode.app.ui.components.NexcodeButton
-import com.nexcode.app.ui.components.NexcodeButtonSize
-import com.nexcode.app.ui.components.NexcodeButtonVariant
-import com.nexcode.app.ui.components.NexcodeChip
-import com.nexcode.app.ui.components.NexcodeChipVariant
+import com.nexcode.app.ui.components.NexcodeBanner
+import com.nexcode.app.ui.components.NexcodeBannerVariant
 import com.nexcode.app.ui.components.NexcodeIconButton
 import com.nexcode.app.ui.theme.JetBrainsMonoFontFamily
 import com.nexcode.app.ui.theme.NexcodeTheme
@@ -68,7 +62,6 @@ fun ScreenS11CodeEditor(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colors = NexcodeTheme.colors
-    val codeColors = colors.codeColors
 
     Column(
         modifier = modifier
@@ -100,13 +93,14 @@ fun ScreenS11CodeEditor(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = uiState.activeTab,
+                    text = uiState.activeTab.substringAfterLast('/').ifBlank { "Éditeur de code" },
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.txt,
                     maxLines = 1
                 )
-                if (uiState.errorCount > 0) {
+                if (uiState.activeTab in uiState.unsavedPaths) {
+                    // Puce réelle : modifications non enregistrées sur le disque
                     Box(
                         modifier = Modifier
                             .size(6.dp)
@@ -132,162 +126,152 @@ fun ScreenS11CodeEditor(
         }
         HorizontalDivider(thickness = 1.dp, color = colors.border)
 
-        // Barre d'onglets (cible >= 48 dp)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .background(colors.bg)
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            uiState.openTabs.forEach { tabName ->
-                val isActive = tabName == uiState.activeTab
-                EditorTabItem(
-                    title = tabName,
-                    isActive = isActive,
-                    hasDot = tabName == "MainActivity.kt" && uiState.errorCount > 0,
-                    onClick = { viewModel.openTab(tabName) }
-                )
-            }
-
-            // Bouton + d'onglet (cible >= 48 dp)
-            Box(
-                modifier = Modifier
-                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { viewModel.addScratchTab() },
-                contentAlignment = Alignment.Center
+        // Messages réels (enregistrement disque, erreurs de lecture...)
+        val fileMessage = uiState.fileMessage
+        val fileError = uiState.fileError
+        if (fileMessage != null || fileError != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_plus),
-                    contentDescription = "Nouvel onglet",
-                    modifier = Modifier.size(14.dp),
-                    tint = colors.txt2
+                NexcodeBanner(
+                    text = fileError ?: fileMessage.orEmpty(),
+                    icon = painterResource(id = if (fileError != null) R.drawable.ic_alert else R.drawable.ic_check),
+                    variant = if (fileError != null) NexcodeBannerVariant.ERROR else NexcodeBannerVariant.SUCCESS,
+                    modifier = Modifier.weight(1f),
+                    testTag = "s11_banner_file_status"
+                )
+                NexcodeIconButton(
+                    icon = painterResource(id = R.drawable.ic_close),
+                    contentDescription = "Fermer le message",
+                    onClick = { viewModel.dismissFileMessage() }
                 )
             }
         }
 
-        // Zone de contenu défilable (Éditeur + Carte d'erreur)
+        // Barre d'onglets (cible >= 48 dp) : onglets = fichiers réellement ouverts
+        if (uiState.openTabs.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .background(colors.bg)
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                uiState.openTabs.forEach { tabPath ->
+                    val isActive = tabPath == uiState.activeTab
+                    EditorTabItem(
+                        title = tabPath.substringAfterLast('/'),
+                        isActive = isActive,
+                        hasDot = tabPath in uiState.unsavedPaths,
+                        onClick = { viewModel.openTab(tabPath) },
+                        onClose = { viewModel.closeTab(tabPath) }
+                    )
+                }
+            }
+        } else {
+            Text(
+                text = "Aucun fichier ouvert — sélectionnez un fichier dans l'explorateur.",
+                fontSize = 11.sp,
+                color = colors.txt2,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+            )
+        }
+
+        // Zone de contenu défilable (Éditeur réel, éditable ligne par ligne)
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 12.dp)
         ) {
-            // Carte de code (forcée LTR en RTL)
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            if (uiState.codeLines.isEmpty()) {
+                // État vide honnête : aucun fichier chargé
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .padding(horizontal = 12.dp, vertical = 24.dp)
                         .clip(ShapeRadius12)
-                        .background(colors.codeBg)
+                        .background(colors.surface)
                         .border(1.dp, colors.border, ShapeRadius12)
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Header de la boîte de code : 3 petits points + nom du fichier + puce d'erreur
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(colors.surface2)
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(colors.err))
-                            Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(colors.warn))
-                            Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(colors.ok))
-                        }
-
-                        Spacer(modifier = Modifier.width(10.dp))
-
-                        Text(
-                            text = uiState.codeHeaderTitle,
-                            fontSize = 11.sp,
-                            color = colors.txt2,
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        if (uiState.errorCount > 0) {
-                            NexcodeChip(
-                                text = stringResource(id = R.string.s11_error_count_format, uiState.errorCount),
-                                variant = NexcodeChipVariant.ERROR,
-                                testTag = "s11_chip_error"
-                            )
-                        }
-                    }
-
-                    HorizontalDivider(thickness = 0.5.dp, color = colors.border)
-
-                    // Lignes de code avec coloration syntaxique complète
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_code),
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                        tint = colors.txt2
+                    )
+                    Text(
+                        text = "Aucun fichier ouvert",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.txt,
+                        modifier = Modifier.padding(top = 12.dp)
+                    )
+                    Text(
+                        text = "Le contenu affiché ici provient du fichier réel sélectionné dans l'explorateur. Aucun fichier fictif n'est chargé.",
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp,
+                        color = colors.txt2,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                }
+            } else {
+                // Carte de code (forcée LTR en RTL)
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp)
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .clip(ShapeRadius12)
+                            .background(colors.codeBg)
+                            .border(1.dp, colors.border, ShapeRadius12)
                     ) {
-                        uiState.codeLines.forEach { line ->
-                            CodeLineRow(line = line, codeColors = codeColors)
-                        }
-                    }
-                }
-            }
-
-            // Carte d'erreur en bas du code (si erreur active)
-            if (uiState.errorCount > 0) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                        .clip(ShapeRadius12)
-                        .background(colors.surface)
-                        .border(1.dp, colors.err.copy(alpha = 0.35f), ShapeRadius12)
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_alert),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp).padding(top = 2.dp),
-                        tint = colors.err
-                    )
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = uiState.errorTitle,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.err
-                        )
-                        Text(
-                            text = uiState.errorDesc,
-                            fontSize = 11.5.sp,
-                            lineHeight = 16.sp,
-                            color = colors.txt2,
-                            modifier = Modifier.padding(top = 3.dp)
-                        )
-
+                        // Header de la boîte de code : 3 petits points + nom du fichier réel
                         Row(
-                            modifier = Modifier.padding(top = 9.dp),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(colors.surface2)
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            NexcodeButton(
-                                text = stringResource(id = R.string.s11_btn_correct_occurrences),
-                                variant = NexcodeButtonVariant.SECONDARY,
-                                size = NexcodeButtonSize.SMALL,
-                                onClick = onNavigateSearch,
-                                testTag = "s11_btn_correct"
-                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(colors.err))
+                                Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(colors.warn))
+                                Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(colors.ok))
+                            }
 
-                            NexcodeButton(
-                                text = stringResource(id = R.string.s11_btn_ai),
-                                icon = painterResource(id = R.drawable.ic_spark),
-                                variant = NexcodeButtonVariant.GHOST,
-                                size = NexcodeButtonSize.SMALL,
-                                onClick = onNavigateAiChat,
-                                testTag = "s11_btn_ai_correct"
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            Text(
+                                text = uiState.codeHeaderTitle,
+                                fontSize = 11.sp,
+                                color = colors.txt2,
+                                modifier = Modifier.weight(1f)
                             )
+                        }
+
+                        HorizontalDivider(thickness = 0.5.dp, color = colors.border)
+
+                        // Lignes de code réelles, éditables : chaque modification est écrite
+                        // sur le disque quand l'utilisateur enregistre
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                        ) {
+                            uiState.codeLines.forEach { line ->
+                                EditableCodeLineRow(
+                                    line = line,
+                                    onContentChange = { viewModel.updateCodeLine(line.number, it) }
+                                )
+                            }
                         }
                     }
                 }
@@ -334,7 +318,7 @@ fun ScreenS11CodeEditor(
             }
         }
 
-        // Barre d'outils inférieure de l'éditeur (undo, redo, gradle, build, ia)
+        // Barre d'outils inférieure de l'éditeur (undo, redo, save, gradle, build, ia)
         HorizontalDivider(thickness = 0.5.dp, color = colors.border)
         Row(
             modifier = Modifier
@@ -358,6 +342,14 @@ fun ScreenS11CodeEditor(
                 onClick = { viewModel.redo() },
                 enabled = uiState.canRedo,
                 testTag = "s11_btn_redo"
+            )
+
+            NexcodeIconButton(
+                icon = painterResource(id = R.drawable.ic_save),
+                contentDescription = "Enregistrer sur le disque",
+                onClick = { viewModel.saveActiveFile() },
+                enabled = uiState.activeTab.isNotBlank(),
+                testTag = "s11_btn_save"
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -408,7 +400,8 @@ private fun EditorTabItem(
     title: String,
     isActive: Boolean,
     hasDot: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onClose: () -> Unit
 ) {
     val colors = NexcodeTheme.colors
     val bg = if (isActive) colors.surface else Color.Transparent
@@ -444,22 +437,28 @@ private fun EditorTabItem(
                 fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
                 color = textColor
             )
+            Icon(
+                painter = painterResource(id = R.drawable.ic_close),
+                contentDescription = "Fermer l'onglet $title",
+                modifier = Modifier
+                    .size(12.dp)
+                    .clickable(onClick = onClose),
+                tint = colors.txt2
+            )
         }
     }
 }
 
 @Composable
-private fun CodeLineRow(
+private fun EditableCodeLineRow(
     line: CodeLine,
-    codeColors: com.nexcode.app.ui.theme.CodeColors
+    onContentChange: (String) -> Unit
 ) {
     val colors = NexcodeTheme.colors
-    val lineBg = if (line.hasError) colors.err.copy(alpha = 0.08f) else Color.Transparent
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(lineBg)
             .padding(horizontal = 8.dp, vertical = 1.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -474,85 +473,17 @@ private fun CodeLineRow(
 
         Spacer(modifier = Modifier.width(6.dp))
 
-        // Texte avec coloration syntaxique
-        val annotatedText = buildAnnotatedCodeString(line, codeColors, colors.err)
-        Text(
-            text = annotatedText,
-            fontFamily = JetBrainsMonoFontFamily,
-            fontSize = 11.5.sp,
-            lineHeight = 16.sp
+        // Contenu réel du fichier, éditable
+        BasicTextField(
+            value = line.content,
+            onValueChange = onContentChange,
+            textStyle = TextStyle(
+                fontFamily = JetBrainsMonoFontFamily,
+                fontSize = 11.5.sp,
+                color = colors.txt
+            ),
+            cursorBrush = SolidColor(colors.accent),
+            modifier = Modifier.weight(1f)
         )
-    }
-}
-
-private fun buildAnnotatedCodeString(
-    line: CodeLine,
-    codeColors: com.nexcode.app.ui.theme.CodeColors,
-    errColor: Color
-): androidx.compose.ui.text.AnnotatedString {
-    return buildAnnotatedString {
-        val text = line.content
-        when {
-            text.startsWith("package") || text.startsWith("import") -> {
-                val kw = if (text.startsWith("package")) "package" else "import"
-                withStyle(SpanStyle(color = codeColors.keyword, fontWeight = FontWeight.SemiBold)) {
-                    append(kw)
-                }
-                append(text.removePrefix(kw))
-            }
-            text.contains("//") -> {
-                val parts = text.split("//", limit = 2)
-                append(parts[0])
-                withStyle(SpanStyle(color = codeColors.comment)) {
-                    append("//" + parts[1])
-                }
-            }
-            text.startsWith("@Composable") -> {
-                withStyle(SpanStyle(color = codeColors.annotation)) {
-                    append("@Composable")
-                }
-            }
-            text.contains("class MainActivity") -> {
-                val kw = "class "
-                withStyle(SpanStyle(color = codeColors.keyword)) { append(kw) }
-                withStyle(SpanStyle(color = codeColors.type, fontWeight = FontWeight.Bold)) { append("MainActivity") }
-                append(" : ")
-                withStyle(SpanStyle(color = codeColors.type)) { append("ComponentActivity") }
-                append("() {")
-            }
-            text.contains("override fun") -> {
-                withStyle(SpanStyle(color = codeColors.keyword)) { append("    override fun ") }
-                withStyle(SpanStyle(color = codeColors.function)) { append("onCreate") }
-                append("(savedInstanceState: ")
-                withStyle(SpanStyle(color = codeColors.type)) { append("Bundle") }
-                append("?) {")
-            }
-            text.contains("fun CityScreen") -> {
-                withStyle(SpanStyle(color = codeColors.keyword)) { append("fun ") }
-                withStyle(SpanStyle(color = codeColors.function)) { append("CityScreen") }
-                append("(city: ")
-                withStyle(SpanStyle(color = codeColors.type)) { append("String") }
-                append(") {")
-            }
-            line.hasError && line.errorSpanText != null -> {
-                val parts = text.split(line.errorSpanText)
-                append(parts[0])
-                withStyle(
-                    SpanStyle(
-                        color = errColor,
-                        textDecoration = TextDecoration.Underline,
-                        fontWeight = FontWeight.Bold
-                    )
-                ) {
-                    append(line.errorSpanText)
-                }
-                if (parts.size > 1) {
-                    append(parts[1])
-                }
-            }
-            else -> {
-                append(text)
-            }
-        }
     }
 }

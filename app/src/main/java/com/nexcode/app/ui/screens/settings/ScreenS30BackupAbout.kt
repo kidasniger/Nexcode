@@ -45,6 +45,7 @@ import com.example.R
 import com.nexcode.app.ui.components.NexcodeBanner
 import com.nexcode.app.ui.components.NexcodeBannerVariant
 import com.nexcode.app.ui.components.NexcodeButton
+import com.nexcode.app.ui.components.NexcodeButtonSize
 import com.nexcode.app.ui.components.NexcodeButtonVariant
 import com.nexcode.app.ui.components.NexcodeCard
 import com.nexcode.app.ui.components.NexcodeSwitch
@@ -55,6 +56,8 @@ import com.nexcode.app.ui.theme.NexcodeTheme
 fun ScreenS30BackupAbout(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
+    onCheckForUpdates: () -> Unit = { viewModel.checkForAppUpdates() },
+    onDownloadUpdate: () -> Unit = { viewModel.downloadAppUpdate() },
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -297,27 +300,82 @@ fun ScreenS30BackupAbout(
 
                     HorizontalDivider(color = colors.border)
 
-                    // Mises à jour
-                    Row(
+                    // Mises à jour : vérification réelle via les releases GitHub
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .clickable(enabled = !state.isUpdateChecking) {
+                                onCheckForUpdates()
+                            }
+                            .padding(horizontal = 14.dp, vertical = 12.dp)
+                            .testTag("s30_row_updates")
                     ) {
-                        Text(
-                            text = "Mises à jour",
-                            fontSize = 13.5.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.txt
-                        )
-                        Text(
-                            text = state.updateStatus,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.ok
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Mises à jour",
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = colors.txt
+                            )
+                            Text(
+                                text = state.updateStatus.ifBlank { "Appuyer pour vérifier" },
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = when {
+                                    state.updateError != null -> colors.err
+                                    state.updateAvailableVersion != null -> colors.accent
+                                    state.updateStatus.startsWith("À jour") -> colors.ok
+                                    else -> colors.txt2
+                                }
+                            )
+                        }
+                        if (state.isUpdateChecking) {
+                            Text(
+                                text = "Interrogation de github.com/kidasniger/Nexcode (releases)…",
+                                fontSize = 11.sp,
+                                color = colors.txt2,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                        state.updateReleaseNotes?.let { notes ->
+                            Text(
+                                text = notes,
+                                fontSize = 11.sp,
+                                lineHeight = 16.sp,
+                                color = colors.txt2,
+                                modifier = Modifier.padding(top = 6.dp)
+                            )
+                        }
+                        state.updateError?.let { error ->
+                            Text(
+                                text = error,
+                                fontSize = 11.sp,
+                                color = colors.err,
+                                modifier = Modifier.padding(top = 6.dp)
+                            )
+                        }
+                        state.updateDownloadProgress?.let { progress ->
+                            Text(
+                                text = "Téléchargement : $progress %",
+                                fontSize = 11.sp,
+                                color = colors.accent,
+                                modifier = Modifier.padding(top = 6.dp)
+                            )
+                        }
+                        if (state.updateAvailableVersion != null && state.updateDownloadProgress == null) {
+                            NexcodeButton(
+                                text = "Télécharger et installer",
+                                onClick = onDownloadUpdate,
+                                variant = NexcodeButtonVariant.PRIMARY,
+                                size = NexcodeButtonSize.SMALL,
+                                modifier = Modifier.padding(top = 8.dp),
+                                testTag = "s30_btn_download_update"
+                            )
+                        }
                     }
 
                     HorizontalDivider(color = colors.border)

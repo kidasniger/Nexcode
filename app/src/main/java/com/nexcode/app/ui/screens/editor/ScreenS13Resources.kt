@@ -78,10 +78,23 @@ fun ScreenS13Resources(
                     icon = painterResource(id = R.drawable.ic_plus),
                     contentDescription = "Ajouter une ressource",
                     onClick = { viewModel.openAddResourceDialog() },
+                    enabled = uiState.hasProject,
                     testTag = "s13_btn_add"
                 )
             }
         )
+
+        // Messages réels issus des opérations disque
+        val fileMessage = uiState.fileMessage
+        val fileError = uiState.fileError
+        if (fileMessage != null || fileError != null) {
+            NexcodeBanner(
+                text = fileError ?: fileMessage.orEmpty(),
+                icon = painterResource(id = if (fileError != null) R.drawable.ic_alert else R.drawable.ic_check),
+                variant = if (fileError != null) NexcodeBannerVariant.ERROR else NexcodeBannerVariant.SUCCESS,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+            )
+        }
 
         // Barre d'onglets .tabbar (Chaînes, Couleurs, Dimensions, Thèmes)
         Row(
@@ -125,9 +138,7 @@ fun ScreenS13Resources(
         when (uiState.activeResourceTab) {
             ResourceTab.STRINGS -> StringsResourcePane(
                 uiState = uiState,
-                onEditString = { viewModel.startEditingString(it) },
-                onCorrectClick = onNavigateCorrectInSearch,
-                onCompleteTranslations = { viewModel.completeTranslations() }
+                onEditString = { viewModel.startEditingString(it) }
             )
             ResourceTab.COLORS -> ColorsResourcePane(
                 uiState = uiState,
@@ -142,12 +153,8 @@ fun ScreenS13Resources(
 
     if (uiState.showAddResourceDialog) {
         val isColorMode = uiState.activeResourceTab == ResourceTab.COLORS
-        var keyInput by remember(isColorMode) {
-            mutableStateOf(if (isColorMode) "surface_card" else "unit_pressure")
-        }
-        var valueInput by remember(isColorMode) {
-            mutableStateOf(if (isColorMode) "#1C2438" else "Pression")
-        }
+        var keyInput by remember(isColorMode) { mutableStateOf("") }
+        var valueInput by remember(isColorMode) { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { viewModel.dismissAddResourceDialog() },
             containerColor = colors.surface,
@@ -172,6 +179,11 @@ fun ScreenS13Resources(
                         onValueChange = { valueInput = it },
                         label = if (isColorMode) "Code hexadécimal" else "Valeur",
                         isMono = isColorMode
+                    )
+                    Text(
+                        text = "La ressource est réellement écrite dans le fichier res/values correspondant du projet.",
+                        fontSize = 11.sp,
+                        color = colors.txt2
                     )
                 }
             },
@@ -206,7 +218,7 @@ fun ScreenS13Resources(
                 NexcodeTextField(
                     value = updatedValue,
                     onValueChange = { updatedValue = it },
-                    label = "Traduction française"
+                    label = "Nouvelle valeur"
                 )
             },
             confirmButton = {
@@ -231,7 +243,10 @@ fun ScreenS13Resources(
             title = { Text("themes.xml", fontFamily = JetBrainsMonoFontFamily, fontWeight = FontWeight.Bold) },
             text = {
                 Text(
-                    text = "<style name=\"Theme.NimbusMeteo\" parent=\"Theme.Material3.DayNight.NoActionBar\">\n    <item name=\"colorPrimary\">@color/accent_primary</item>\n    <item name=\"colorSecondary\">@color/accent_secondary</item>\n</style>",
+                    // Contenu RÉEL du fichier res/values/themes.xml du projet,
+                    // ou notice honnête si le fichier n'existe pas
+                    text = uiState.themesFileContent
+                        ?: "themes.xml est introuvable dans ce projet (res/values/themes.xml absent).",
                     fontFamily = JetBrainsMonoFontFamily,
                     fontSize = 11.5.sp,
                     lineHeight = 17.sp,
@@ -290,9 +305,7 @@ private fun ResourceTabButton(
 @Composable
 private fun StringsResourcePane(
     uiState: EditorUiState,
-    onEditString: (ResourceStringItem) -> Unit,
-    onCorrectClick: () -> Unit,
-    onCompleteTranslations: () -> Unit
+    onEditString: (ResourceStringItem) -> Unit
 ) {
     val colors = NexcodeTheme.colors
 
@@ -301,134 +314,112 @@ private fun StringsResourcePane(
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
-        // Carte listant les clés/valeurs de chaînes
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(ShapeRadius12)
-                    .background(colors.surface)
-                    .border(1.dp, colors.border, ShapeRadius12)
-            ) {
-                uiState.stringResources.forEachIndexed { index, strItem ->
-                    if (index > 0) {
-                        HorizontalDivider(thickness = 0.5.dp, color = colors.border)
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .padding(start = 14.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = strItem.key,
-                                fontFamily = JetBrainsMonoFontFamily,
-                                fontSize = 11.sp,
-                                color = colors.accent
-                            )
-                            Text(
-                                text = strItem.value,
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = colors.txt,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                        }
-
-                        NexcodeIconButton(
-                            icon = painterResource(id = R.drawable.ic_edit),
-                            contentDescription = "Modifier ${strItem.key}",
-                            onClick = { onEditString(strItem) }
-                        )
-                    }
-                }
+        if (!uiState.hasProject) {
+            item {
+                EmptyResourceCard(text = "Aucun projet ouvert — les ressources listées ici proviennent des fichiers res/values réels du projet.")
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Bannière d'avertissement : title_detail manquant avec bouton Corriger
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(ShapeRadius12)
-                    .background(colors.warn.copy(alpha = 0.1f))
-                    .border(1.dp, colors.warn.copy(alpha = 0.25f), ShapeRadius12)
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_alert),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = colors.warn
-                )
-
-                Text(
-                    text = stringResource(id = R.string.s13_warn_unresolved_string),
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp,
-                    color = colors.warn,
-                    modifier = Modifier.weight(1f)
-                )
-
-                NexcodeButton(
-                    text = stringResource(id = R.string.s13_btn_correct),
-                    variant = NexcodeButtonVariant.GHOST,
-                    size = NexcodeButtonSize.SMALL,
-                    onClick = onCorrectClick,
-                    testTag = "s13_btn_correct"
-                )
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Carte Traductions
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(ShapeRadius12)
-                    .background(colors.surface)
-                    .border(1.dp, colors.border, ShapeRadius12)
-                    .padding(14.dp)
-            ) {
-                Text(
-                    text = stringResource(id = R.string.s13_translations_title),
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.txt
-                )
-                Text(
-                    text = stringResource(id = R.string.s13_translations_desc),
-                    fontSize = 12.sp,
-                    lineHeight = 17.sp,
-                    color = colors.txt2,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                if (uiState.showTranslationsSyncedBanner) {
-                    NexcodeBanner(
-                        text = "Traductions EN/ES complétées pour les chaînes manquantes.",
-                        icon = painterResource(id = R.drawable.ic_check),
-                        variant = NexcodeBannerVariant.SUCCESS
+        } else {
+            // Carte listant les clés/valeurs RÉELLES des fichiers res/values*/strings.xml
+            item {
+                if (uiState.stringResources.isEmpty()) {
+                    EmptyResourceCard(
+                        text = "Aucune chaîne trouvée — aucun fichier strings.xml dans les dossiers res/values du projet."
                     )
                 } else {
-                    NexcodeButton(
-                        text = stringResource(id = R.string.s13_btn_complete_ai),
-                        variant = NexcodeButtonVariant.SECONDARY,
-                        size = NexcodeButtonSize.SMALL,
-                        onClick = onCompleteTranslations,
-                        testTag = "s13_btn_translate_ai"
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(ShapeRadius12)
+                            .background(colors.surface)
+                            .border(1.dp, colors.border, ShapeRadius12)
+                    ) {
+                        uiState.stringResources.forEachIndexed { index, strItem ->
+                            if (index > 0) {
+                                HorizontalDivider(thickness = 0.5.dp, color = colors.border)
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp)
+                                    .padding(start = 14.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = strItem.key,
+                                        fontFamily = JetBrainsMonoFontFamily,
+                                        fontSize = 11.sp,
+                                        color = colors.accent
+                                    )
+                                    Text(
+                                        text = strItem.value,
+                                        fontSize = 13.5.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = colors.txt,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                }
+
+                                NexcodeIconButton(
+                                    icon = painterResource(id = R.drawable.ic_edit),
+                                    contentDescription = "Modifier ${strItem.key}",
+                                    onClick = { onEditString(strItem) }
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            // Carte Traductions : la fonctionnalité n'existe pas — notice honnête
+            item {
+                Spacer(modifier = Modifier.height(10.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(ShapeRadius12)
+                        .background(colors.surface)
+                        .border(1.dp, colors.border, ShapeRadius12)
+                        .padding(14.dp)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.s13_translations_title),
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.txt
+                    )
+                    Text(
+                        text = "Traduction automatique non disponible dans cette version de NEXCODE.",
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp,
+                        color = colors.txt2,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+            }
         }
+    }
+}
+
+@Composable
+private fun EmptyResourceCard(text: String) {
+    val colors = NexcodeTheme.colors
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(ShapeRadius12)
+            .background(colors.surface)
+            .border(1.dp, colors.border, ShapeRadius12)
+            .padding(16.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 12.sp,
+            lineHeight = 17.sp,
+            color = colors.txt2
+        )
     }
 }
 
@@ -445,53 +436,59 @@ private fun ColorsResourcePane(
             .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
         item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(ShapeRadius12)
-                    .background(colors.surface)
-                    .border(1.dp, colors.border, ShapeRadius12)
-            ) {
-                uiState.colorResources.forEachIndexed { index, colItem ->
-                    if (index > 0) {
-                        HorizontalDivider(thickness = 0.5.dp, color = colors.border)
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Pastille de couleur
-                        val parsedColor = runCatching {
-                            Color(android.graphics.Color.parseColor(colItem.hexColor))
-                        }.getOrDefault(colors.accent)
-
-                        Box(
+            if (!uiState.hasProject) {
+                EmptyResourceCard(text = "Aucun projet ouvert — les couleurs listées ici proviennent des fichiers res/values réels du projet.")
+            } else if (uiState.colorResources.isEmpty()) {
+                EmptyResourceCard(text = "Aucune couleur trouvée — aucun fichier colors.xml dans les dossiers res/values du projet.")
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(ShapeRadius12)
+                        .background(colors.surface)
+                        .border(1.dp, colors.border, ShapeRadius12)
+                ) {
+                    uiState.colorResources.forEachIndexed { index, colItem ->
+                        if (index > 0) {
+                            HorizontalDivider(thickness = 0.5.dp, color = colors.border)
+                        }
+                        Row(
                             modifier = Modifier
-                                .size(22.dp)
-                                .clip(RoundedCornerShape(7.dp))
-                                .background(parsedColor)
-                                .border(1.dp, colors.border, RoundedCornerShape(7.dp))
-                        )
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp)
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Pastille de couleur réelle
+                            val parsedColor = runCatching {
+                                Color(android.graphics.Color.parseColor(colItem.hexColor))
+                            }.getOrDefault(colors.accent)
 
-                        Spacer(modifier = Modifier.width(10.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .clip(RoundedCornerShape(7.dp))
+                                    .background(parsedColor)
+                                    .border(1.dp, colors.border, RoundedCornerShape(7.dp))
+                            )
 
-                        Text(
-                            text = colItem.key,
-                            fontFamily = JetBrainsMonoFontFamily,
-                            fontSize = 11.sp,
-                            color = colors.accent,
-                            modifier = Modifier.weight(1f)
-                        )
+                            Spacer(modifier = Modifier.width(10.dp))
 
-                        Text(
-                            text = colItem.hexColor,
-                            fontFamily = JetBrainsMonoFontFamily,
-                            fontSize = 11.5.sp,
-                            color = colors.txt2
-                        )
+                            Text(
+                                text = colItem.key,
+                                fontFamily = JetBrainsMonoFontFamily,
+                                fontSize = 11.sp,
+                                color = colors.accent,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            Text(
+                                text = colItem.hexColor,
+                                fontFamily = JetBrainsMonoFontFamily,
+                                fontSize = 11.5.sp,
+                                color = colors.txt2
+                            )
+                        }
                     }
                 }
             }
@@ -504,6 +501,7 @@ private fun ColorsResourcePane(
                 variant = NexcodeButtonVariant.SECONDARY,
                 size = NexcodeButtonSize.DEFAULT,
                 onClick = onAddColor,
+                enabled = uiState.hasProject,
                 modifier = Modifier.fillMaxWidth(),
                 testTag = "s13_btn_new_color"
             )
@@ -521,38 +519,44 @@ private fun DimensionsResourcePane(uiState: EditorUiState) {
             .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
         item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(ShapeRadius12)
-                    .background(colors.surface)
-                    .border(1.dp, colors.border, ShapeRadius12)
-            ) {
-                uiState.dimensionResources.forEachIndexed { index, dimItem ->
-                    if (index > 0) {
-                        HorizontalDivider(thickness = 0.5.dp, color = colors.border)
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = dimItem.key,
-                            fontFamily = JetBrainsMonoFontFamily,
-                            fontSize = 11.sp,
-                            color = colors.accent,
-                            modifier = Modifier.weight(1f)
-                        )
+            if (!uiState.hasProject) {
+                EmptyResourceCard(text = "Aucun projet ouvert — les dimensions listées ici proviennent des fichiers res/values réels du projet.")
+            } else if (uiState.dimensionResources.isEmpty()) {
+                EmptyResourceCard(text = "Aucune dimension trouvée — aucun fichier dimens.xml dans les dossiers res/values du projet.")
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(ShapeRadius12)
+                        .background(colors.surface)
+                        .border(1.dp, colors.border, ShapeRadius12)
+                ) {
+                    uiState.dimensionResources.forEachIndexed { index, dimItem ->
+                        if (index > 0) {
+                            HorizontalDivider(thickness = 0.5.dp, color = colors.border)
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp)
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = dimItem.key,
+                                fontFamily = JetBrainsMonoFontFamily,
+                                fontSize = 11.sp,
+                                color = colors.accent,
+                                modifier = Modifier.weight(1f)
+                            )
 
-                        Text(
-                            text = dimItem.value,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.txt
-                        )
+                            Text(
+                                text = dimItem.value,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = colors.txt
+                            )
+                        }
                     }
                 }
             }
@@ -586,7 +590,7 @@ private fun ThemesResourcePane(
                 color = colors.txt
             )
             Text(
-                text = stringResource(id = R.string.s13_themes_desc),
+                text = "Contenu réel du fichier res/values/themes.xml du projet ouvert.",
                 fontSize = 12.sp,
                 lineHeight = 17.sp,
                 color = colors.txt2,

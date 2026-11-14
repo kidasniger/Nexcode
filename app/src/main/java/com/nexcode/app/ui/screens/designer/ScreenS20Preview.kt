@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -104,7 +106,7 @@ fun ScreenS20Preview(
             }
         )
 
-        // Contenu defilable centre (.pad avec padding-top: 8px)
+        // Contenu défilable centré (.pad avec padding-top: 8px)
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
@@ -114,6 +116,16 @@ fun ScreenS20Preview(
         ) {
             item {
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // Bannière HONNÊTE : le plan de travail est local, aucune compilation n'existe ici
+                NexcodeBanner(
+                    text = "Plan de travail local — non enregistré dans le projet. Aperçu des composants tels que définis dans le concepteur.",
+                    icon = painterResource(id = R.drawable.ic_info),
+                    variant = NexcodeBannerVariant.WARNING,
+                    testTag = "s20_banner_status"
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Selecteur segmenté Sombre / Clair (.seg : cible tactile >= 48 dp)
                 Row(
@@ -133,7 +145,7 @@ fun ScreenS20Preview(
                             .weight(1f)
                             .defaultMinSize(minHeight = 42.dp)
                             .clip(RoundedCornerShape(9.dp))
-                            .background(if (uiState.isDarkPreview) colors.surface else androidx.compose.ui.graphics.Color.Transparent)
+                            .background(if (uiState.isDarkPreview) colors.surface else Color.Transparent)
                             .clickable { viewModel.togglePreviewTheme(true) },
                         contentAlignment = Alignment.Center
                     ) {
@@ -151,7 +163,7 @@ fun ScreenS20Preview(
                             .weight(1f)
                             .defaultMinSize(minHeight = 42.dp)
                             .clip(RoundedCornerShape(9.dp))
-                            .background(if (!uiState.isDarkPreview) colors.surface else androidx.compose.ui.graphics.Color.Transparent)
+                            .background(if (!uiState.isDarkPreview) colors.surface else Color.Transparent)
                             .clickable { viewModel.togglePreviewTheme(false) },
                         contentAlignment = Alignment.Center
                     ) {
@@ -166,9 +178,9 @@ fun ScreenS20Preview(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Boitier smartphone (s'adapte a portrait/paysage)
-                val phoneWidth = if (uiState.isLandscape) 316.dp else 246.dp
-                val phoneHeight = if (uiState.isLandscape) 260.dp else 520.dp
+                // Boitier smartphone : dimensions RÉELLES liées à l'appareil et à l'orientation
+                val phoneWidth = uiState.phoneWidthDp.dp
+                val phoneHeight = uiState.phoneHeightDp.dp
                 Box(
                     modifier = Modifier
                         .width(phoneWidth)
@@ -195,7 +207,7 @@ fun ScreenS20Preview(
                             )
                         }
 
-                        // Contenu de la maquette (.mini-c : padding 14px)
+                        // Contenu de la maquette : composants RÉELS créés par l'utilisateur
                         Column(
                             modifier = Modifier
                                 .weight(1f)
@@ -203,159 +215,41 @@ fun ScreenS20Preview(
                                 .verticalScroll(rememberScrollState())
                                 .padding(horizontal = 14.dp)
                         ) {
-                            // En-tete : Mes villes + icone plus
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(id = R.string.s18_canvas_cities),
-                                    fontFamily = InterFontFamily,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = phoneTxt
-                                )
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_plus),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(17.dp),
-                                    tint = phoneTxt2
-                                )
-                            }
-
-                            // Salutation
-                            Text(
-                                text = stringResource(id = R.string.s18_canvas_greeting),
-                                fontFamily = InterFontFamily,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = phoneTxt,
-                                modifier = Modifier.padding(bottom = 10.dp)
-                            )
-
-                            // Grande banniere meteo centrale (.mini-img : height 110px, radius 14px)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(110.dp)
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(phoneSurface2)
-                                    .border(1.dp, phoneBorder, RoundedCornerShape(14.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (uiState.components.isEmpty()) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 32.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
                                     Text(
-                                        text = stringResource(id = R.string.s20_hero_temp),
+                                        text = "Aucun composant à prévisualiser",
                                         fontFamily = InterFontFamily,
-                                        fontSize = 30.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        letterSpacing = (-0.6).sp,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
                                         color = phoneTxt
                                     )
                                     Text(
-                                        text = stringResource(id = R.string.s20_hero_desc),
+                                        text = "Créez des composants dans le concepteur visuel : cet aperçu affiche uniquement ce que vous avez défini.",
                                         fontFamily = InterFontFamily,
                                         fontSize = 10.5.sp,
+                                        lineHeight = 15.sp,
                                         color = phoneTxt2,
-                                        modifier = Modifier.padding(top = 2.dp)
+                                        modifier = Modifier.padding(top = 6.dp)
                                     )
                                 }
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Bouton Actualiser (.mini-btn : height 42px, radius 999px)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(42.dp)
-                                    .clip(CircleShape)
-                                    .background(phoneAccent),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = stringResource(id = R.string.s18_canvas_refresh),
-                                    fontFamily = InterFontFamily,
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = phoneOnAccent
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(14.dp))
-
-                            // Carte 1 : Lyon
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(ShapeRadius12)
-                                    .background(phoneSurface)
-                                    .border(1.dp, phoneBorder, ShapeRadius12)
-                                    .padding(10.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column {
-                                        Text(text = "Lyon", fontFamily = InterFontFamily, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = phoneTxt)
-                                        Text(text = "Nuageux · 14 °C", fontFamily = InterFontFamily, fontSize = 9.5.sp, color = phoneTxt2, modifier = Modifier.padding(top = 2.dp))
-                                    }
-                                    Text(text = "14°", fontFamily = InterFontFamily, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, color = phoneTxt)
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // Carte 2 : Paris (opacite 0.75)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .alpha(0.75f)
-                                    .clip(ShapeRadius12)
-                                    .background(phoneSurface)
-                                    .border(1.dp, phoneBorder, ShapeRadius12)
-                                    .padding(10.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column {
-                                        Text(text = "Paris", fontFamily = InterFontFamily, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = phoneTxt)
-                                        Text(text = "Éclaircies · 12 °C", fontFamily = InterFontFamily, fontSize = 9.5.sp, color = phoneTxt2, modifier = Modifier.padding(top = 2.dp))
-                                    }
-                                    Text(text = "12°", fontFamily = InterFontFamily, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, color = phoneTxt)
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // Carte 3 : Brest (opacite 0.75)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .alpha(0.75f)
-                                    .clip(ShapeRadius12)
-                                    .background(phoneSurface)
-                                    .border(1.dp, phoneBorder, ShapeRadius12)
-                                    .padding(10.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column {
-                                        Text(text = "Brest", fontFamily = InterFontFamily, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = phoneTxt)
-                                        Text(text = "Pluie · 11 °C", fontFamily = InterFontFamily, fontSize = 9.5.sp, color = phoneTxt2, modifier = Modifier.padding(top = 2.dp))
-                                    }
-                                    Text(text = "11°", fontFamily = InterFontFamily, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, color = phoneTxt)
+                            } else {
+                                uiState.components.forEach { component ->
+                                    PreviewComponentItem(
+                                        component = component,
+                                        phoneTxt = phoneTxt,
+                                        phoneTxt2 = phoneTxt2,
+                                        phoneAccent = phoneAccent,
+                                        phoneOnAccent = phoneOnAccent,
+                                        phoneSurface = phoneSurface,
+                                        phoneBorder = phoneBorder
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
                                 }
                             }
 
@@ -381,7 +275,7 @@ fun ScreenS20Preview(
                     }
                 }
 
-                // Ligne de boutons : Pivoter et Pixel 8 (gap: 8px, margin-top: 18px)
+                // Ligne de boutons : Pivoter et appareil (dimensions réellement changées)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -407,20 +301,6 @@ fun ScreenS20Preview(
                     )
                 }
 
-                // Banniere de confirmation apercu (.banner .banner-ok)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp)
-                ) {
-                    NexcodeBanner(
-                        text = uiState.previewBannerText,
-                        icon = painterResource(id = R.drawable.ic_check_c),
-                        variant = NexcodeBannerVariant.SUCCESS,
-                        testTag = "s20_banner_status"
-                    )
-                }
-
                 // Bouton Ouvrir dans le concepteur
                 NexcodeButton(
                     text = stringResource(id = R.string.s20_btn_open_designer),
@@ -434,6 +314,103 @@ fun ScreenS20Preview(
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+}
+
+/**
+ * Rendu d'aperçu d'un composant réel du plan de travail : texte, couleur de
+ * fond, rayon, hauteur, largeur et état activé proviennent tous du modèle
+ * édité par l'utilisateur (aucune donnée codée en dur).
+ */
+@Composable
+private fun PreviewComponentItem(
+    component: DesignerComponent,
+    phoneTxt: Color,
+    phoneTxt2: Color,
+    phoneAccent: Color,
+    phoneOnAccent: Color,
+    phoneSurface: Color,
+    phoneBorder: Color
+) {
+    val componentBg = runCatching {
+        Color(android.graphics.Color.parseColor(component.bgColorHex))
+    }.getOrDefault(phoneSurface)
+
+    val widthModifier = when (component.widthMode) {
+        "160 dp" -> Modifier.width(160.dp)
+        "240 dp" -> Modifier.width(240.dp)
+        else -> Modifier.fillMaxWidth()
+    }
+
+    Box(
+        modifier = Modifier
+            .then(widthModifier)
+            .heightIn(min = if (component.type == PaletteToolType.TEXT) 24.dp else component.heightDp.dp)
+            .clip(RoundedCornerShape(component.cornerRadius.dp))
+            .alpha(if (component.isEnabled) 1f else 0.55f)
+            .background(componentBg)
+            .border(1.dp, phoneBorder, RoundedCornerShape(component.cornerRadius.dp))
+            .padding(10.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        when (component.type) {
+            PaletteToolType.TEXT -> {
+                Text(
+                    text = component.text.ifBlank { "(texte vide)" },
+                    fontFamily = InterFontFamily,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = phoneTxt
+                )
+            }
+            PaletteToolType.BUTTON -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp)
+                        .clip(CircleShape)
+                        .background(phoneAccent),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = component.text.ifBlank { component.type.label },
+                        fontFamily = InterFontFamily,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = phoneOnAccent
+                    )
+                }
+            }
+            PaletteToolType.FIELD -> {
+                Text(
+                    text = component.text.ifBlank { "(champ vide)" },
+                    fontFamily = InterFontFamily,
+                    fontSize = 11.sp,
+                    color = phoneTxt2
+                )
+            }
+            PaletteToolType.IMAGE -> {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_image),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = phoneTxt2
+                    )
+                }
+            }
+            else -> {
+                Text(
+                    text = component.name,
+                    fontFamily = InterFontFamily,
+                    fontSize = 11.sp,
+                    color = phoneTxt2
+                )
             }
         }
     }

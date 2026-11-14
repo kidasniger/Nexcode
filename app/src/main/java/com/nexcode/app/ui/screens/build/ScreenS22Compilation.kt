@@ -95,7 +95,16 @@ fun ScreenS22Compilation(
                         color = colors.txt
                     )
                     Text(
-                        text = "${uiState.projectName} · v${uiState.versionName} (${uiState.buildNumber}) · $variantLabel",
+                        text = buildString {
+                            if (uiState.projectName.isNotBlank()) append(uiState.projectName)
+                            if (uiState.versionName.isNotBlank()) {
+                                if (isNotEmpty()) append(" · ")
+                                append("v${uiState.versionName}")
+                                if (uiState.buildNumber.isNotBlank()) append(" (${uiState.buildNumber})")
+                            }
+                            if (isNotEmpty()) append(" · ")
+                            append(variantLabel)
+                        },
                         fontSize = 12.sp,
                         color = colors.txt2
                     )
@@ -129,7 +138,19 @@ fun ScreenS22Compilation(
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = stringResource(id = R.string.s22_progress_sub),
+                                text = when (uiState.compilationStatus) {
+                                    CompilationStatus.RUNNING -> {
+                                        val runningStep = uiState.steps.firstOrNull {
+                                            it.status == BuildStepStatus.RUNNING
+                                        }
+                                        runningStep?.let { "Run GitHub Actions · ${it.label}" }
+                                            ?: "Run GitHub Actions en cours"
+                                    }
+                                    CompilationStatus.IDLE -> "Aucun run en cours"
+                                    CompilationStatus.CANCELLED -> "Run annulé"
+                                    CompilationStatus.FAILED -> "Run terminé en échec"
+                                    CompilationStatus.SUCCESS -> "Run terminé avec succès"
+                                },
                                 fontSize = 12.sp,
                                 color = colors.txt2
                             )
@@ -156,7 +177,7 @@ fun ScreenS22Compilation(
                     when (uiState.compilationStatus) {
                         CompilationStatus.SUCCESS -> {
                             NexcodeBanner(
-                                text = stringResource(id = R.string.s22_banner_success),
+                                text = "Compilation réussie — APK téléchargé depuis les artefacts.",
                                 icon = painterResource(id = R.drawable.ic_check_c),
                                 variant = NexcodeBannerVariant.SUCCESS,
                                 modifier = Modifier
@@ -192,12 +213,23 @@ fun ScreenS22Compilation(
                         }
                         CompilationStatus.CANCELLED -> {
                             Text(
-                                text = "Compilation annulée. Aucun APK n'a été produit pour ce build.",
+                                text = "Run GitHub Actions annulé. Aucun APK n'a été produit pour ce build.",
                                 fontSize = 12.sp,
                                 color = colors.warn,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(top = 12.dp)
+                            )
+                        }
+                        CompilationStatus.FAILED -> {
+                            NexcodeBanner(
+                                text = "Compilation échouée — les logs réels du run sont disponibles.",
+                                icon = painterResource(id = R.drawable.ic_alert),
+                                variant = NexcodeBannerVariant.ERROR,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 12.dp),
+                                testTag = "s22_banner_failed"
                             )
                         }
                         else -> Unit
@@ -232,6 +264,7 @@ fun ScreenS22Compilation(
                         variant = NexcodeButtonVariant.DANGER,
                         size = NexcodeButtonSize.DEFAULT,
                         icon = painterResource(id = R.drawable.ic_stop),
+                        enabled = uiState.compilationStatus == CompilationStatus.RUNNING,
                         modifier = Modifier.weight(1f),
                         testTag = "s22_btn_cancel"
                     )
@@ -247,7 +280,7 @@ fun ScreenS22Compilation(
                 }
 
                 Text(
-                    text = stringResource(id = R.string.s22_hint_background),
+                    text = "Le run GitHub Actions continue côté serveur même si vous quittez cet écran.",
                     fontSize = 11.sp,
                     color = colors.txt2,
                     textAlign = TextAlign.Center,
@@ -283,6 +316,7 @@ private fun BuildStepRow(step: BuildStep) {
         BuildStepStatus.SUCCESS -> R.drawable.ic_check to colors.ok
         BuildStepStatus.RUNNING -> R.drawable.ic_refresh to colors.accent
         BuildStepStatus.PENDING -> R.drawable.ic_clock to colors.txt2
+        BuildStepStatus.FAILED -> R.drawable.ic_alert to colors.err
     }
 
     Row(
@@ -298,10 +332,10 @@ private fun BuildStepRow(step: BuildStep) {
                 .size(34.dp)
                 .clip(RoundedCornerShape(10.dp))
                 .background(
-                    if (step.status == BuildStepStatus.SUCCESS) {
-                        colors.ok.copy(alpha = 0.12f)
-                    } else {
-                        colors.surface2
+                    when (step.status) {
+                        BuildStepStatus.SUCCESS -> colors.ok.copy(alpha = 0.12f)
+                        BuildStepStatus.FAILED -> colors.err.copy(alpha = 0.12f)
+                        else -> colors.surface2
                     }
                 ),
             contentAlignment = Alignment.Center
@@ -316,21 +350,19 @@ private fun BuildStepRow(step: BuildStep) {
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = stringResource(id = step.labelRes),
+                text = step.label,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = if (step.status == BuildStepStatus.PENDING) colors.txt2 else colors.txt
             )
-            val detailRes = when (step.status) {
-                BuildStepStatus.SUCCESS -> step.detailSuccessRes
-                BuildStepStatus.RUNNING -> step.detailRunningRes
-                BuildStepStatus.PENDING -> null
-            }
             Text(
-                text = detailRes?.let { stringResource(id = it) }
-                    ?: stringResource(id = R.string.s22_step_pending),
+                text = step.detail ?: "en attente",
                 fontSize = 11.sp,
-                color = if (step.status == BuildStepStatus.RUNNING) colors.accent else colors.txt2,
+                color = when (step.status) {
+                    BuildStepStatus.RUNNING -> colors.accent
+                    BuildStepStatus.FAILED -> colors.err
+                    else -> colors.txt2
+                },
                 modifier = Modifier.padding(top = 2.dp)
             )
         }

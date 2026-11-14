@@ -279,12 +279,13 @@ class GitHubRepositoryService(
         owner: String,
         repo: String,
         workflowFileName: String = "build.yml",
-        branch: String = "main"
+        branch: String = "main",
+        inputs: Map<String, String>? = null
     ): GitHubResult<Unit> = withContext(Dispatchers.IO) {
         try {
             val header = getAuthHeader()
             if (header.isBlank()) return@withContext GitHubResult.Error("Jeton GitHub manquant", code = 401)
-            val payload = WorkflowDispatchPayload(ref = branch, inputs = null)
+            val payload = WorkflowDispatchPayload(ref = branch, inputs = inputs)
             val response = api.triggerWorkflowDispatch(header, owner, repo, workflowFileName, payload)
             if (response.isSuccessful || response.code() == 204) {
                 GitHubResult.Success(Unit)

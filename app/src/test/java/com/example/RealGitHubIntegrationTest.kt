@@ -113,17 +113,24 @@ class RealGitHubIntegrationTest {
 
     @Test
     fun testBuildViewModelStateAndWorkflowTrigger() = runBlocking {
+        // Le ViewModel réel démarre sur un état honnête et vide (aucun projet lié).
         val buildViewModel = BuildViewModel(context)
-        assertEquals(BuildVariant.RELEASE, buildViewModel.uiState.value.selectedVariant)
-        assertEquals("1.2.0", buildViewModel.uiState.value.versionName)
+        assertEquals(BuildVariant.DEBUG, buildViewModel.uiState.value.selectedVariant)
+        assertEquals("", buildViewModel.uiState.value.versionName)
+        assertEquals(
+            com.nexcode.app.ui.screens.build.CompilationStatus.IDLE,
+            buildViewModel.uiState.value.compilationStatus
+        )
+        assertFalse(buildViewModel.uiState.value.canStartBuild)
 
         // Changement de variante
-        buildViewModel.setVariant(BuildVariant.DEBUG)
-        assertEquals(BuildVariant.DEBUG, buildViewModel.uiState.value.selectedVariant)
+        buildViewModel.setVariant(BuildVariant.RELEASE)
+        assertEquals(BuildVariant.RELEASE, buildViewModel.uiState.value.selectedVariant)
 
-        // Lancement de compilation
+        // Sans projet GitHub lié, le lancement est refusé honnêtement (pas de faux démarrage).
         var started = false
         buildViewModel.startCompilation { started = true }
-        assertTrue(started)
+        assertFalse(started)
+        assertTrue(buildViewModel.uiState.value.configNotice != null)
     }
 }

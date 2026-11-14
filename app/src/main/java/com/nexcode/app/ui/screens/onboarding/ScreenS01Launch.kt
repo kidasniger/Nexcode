@@ -10,19 +10,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -37,9 +32,7 @@ import com.nexcode.app.ui.components.NexcodeButtonVariant
 import com.nexcode.app.ui.components.NexcodeLogoIcon
 import com.nexcode.app.ui.components.NexcodeLogoTheme
 import com.nexcode.app.ui.theme.InterFontFamily
-import com.nexcode.app.ui.theme.JetBrainsMonoFontFamily
 import com.nexcode.app.ui.theme.NexcodeTheme
-import com.nexcode.app.ui.theme.PillShape
 import kotlinx.coroutines.delay
 
 @Composable
@@ -115,38 +108,6 @@ fun ScreenS01Launch(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 10.dp)
             )
-
-            // Barre de progression (width: 132dp, margin-top: 44dp)
-            Column(
-                modifier = Modifier
-                    .padding(top = 44.dp)
-                    .width(132.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(PillShape)
-                        .background(colors.surface2)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.62f) // 62%
-                            .height(8.dp)
-                            .clip(PillShape)
-                            .background(colors.accent)
-                    )
-                }
-                Text(
-                    text = stringResource(id = R.string.s01_progress_label),
-                    fontFamily = JetBrainsMonoFontFamily,
-                    fontSize = 10.5.sp,
-                    color = colors.txt2,
-                    modifier = Modifier.padding(top = 9.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
         }
 
         // Bouton Passer en bas (.btn.btn-g.btn-sm)

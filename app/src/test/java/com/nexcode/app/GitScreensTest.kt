@@ -1,11 +1,13 @@
 package com.nexcode.app
 
 import android.content.Context
+import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import com.nexcode.app.data.github.repository.GitHubRepositoryService
 import com.nexcode.app.ui.screens.git.ConflictChoice
 import com.nexcode.app.ui.screens.git.GitViewModel
 import com.nexcode.app.ui.screens.git.GitViewMode
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.eclipse.jgit.api.Git
 import org.junit.Assert.assertEquals
@@ -18,6 +20,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import java.io.File
 import java.nio.file.Files
@@ -68,6 +71,37 @@ class GitScreensTest {
     @After
     fun tearDown() {
         tempRoot.deleteRecursively()
+    }
+
+    private suspend fun awaitGitCondition(
+        timeoutMs: Long = 3000L,
+        predicate: () -> Boolean
+    ) {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (true) {
+            Shadows.shadowOf(Looper.getMainLooper()).idle()
+            if (predicate() || System.currentTimeMillis() >= deadline) {
+                break
+            }
+            delay(25)
+        }
+    }
+
+    @Test
+    fun testNoRepoBoundStateIsHonest(): Unit = runBlocking {
+        // Aucun chemin codé en dur : sans bindProjectAndRefreshSync, l'état est honnêtement vide
+        val freshViewModel = GitViewModel(context, gitService)
+        awaitGitCondition { true }
+        val state = freshViewModel.uiState.value
+        assertFalse(state.hasGitRepo)
+        assertTrue(state.commits.isEmpty())
+        assertFalse(state.repoFullName.contains("Nimbus"))
+
+        // Changer de branche sans dépôt réel : échec honnête, pas de succès fictif
+        freshViewModel.switchBranch("feature-inexistante")
+        awaitGitCondition { freshViewModel.uiState.value.userNotice != null }
+        assertEquals("Aucun dépôt Git local", freshViewModel.uiState.value.userNotice)
+        assertEquals("main", freshViewModel.uiState.value.currentBranch)
     }
 
     @Test
@@ -145,5 +179,38 @@ class GitScreensTest {
 
         viewModel.dismissNotice()
         assertNull(viewModel.uiState.value.userNotice)
+    }
+
+    @Test
+    fun testCommitHistoryBranchFilterIsReal(): Unit = runBlocking {
+        viewModel.bindProjectAndRefreshSync("meteo-android", "octo-dev/meteo-android", localRepoDir.absolutePath)
+        awaitGitCondition { viewModel.uiState.value.commits.size == 1 }
+        assertEquals("main", viewModel.uiState.value.selectedFilterBranch)
+        assertEquals(1, viewModel.uiState.value.totalCommitsCount)
+
+        // Crée une vraie branche avec un commit supplémentaire (main reste à 1 commit)
+        Git.open(localRepoDir).use { git ->
+            git.checkout().setCreateBranch(true).setName("feature").call()
+            File(localRepoDir, "FEATURE.md").writeText("nouvelle fonctionnalité")
+            git.add().addFilepattern(".").call()
+            git.commit().setMessage("feat: feature work").setAuthor("Dev", "dev@test.com").call()
+            git.checkout().setName("main").call()
+        }
+
+        viewModel.refreshGitStatusSync()
+        awaitGitCondition {
+            viewModel.uiState.value.commits.size == 1 &&
+                viewModel.uiState.value.currentBranch == "main"
+        }
+
+        // Filtre « toutes les branches » : récupère réellement le commit de la branche feature
+        viewModel.selectFilterBranch("all")
+        awaitGitCondition { viewModel.uiState.value.commits.size == 2 }
+        assertEquals(2, viewModel.uiState.value.totalCommitsCount)
+        assertTrue(viewModel.uiState.value.commits.any { it.message.contains("feature work") })
+
+        // Retour au filtre branche courante : le commit de feature disparaît
+        viewModel.selectFilterBranch("main")
+        awaitGitCondition { viewModel.uiState.value.commits.size == 1 }
     }
 }

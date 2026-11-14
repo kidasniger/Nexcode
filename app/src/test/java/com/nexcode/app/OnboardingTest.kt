@@ -1,12 +1,14 @@
 package com.nexcode.app
 
 import android.content.Context
+import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import com.nexcode.app.data.github.repository.GitHubRepositoryService
 import com.nexcode.app.data.github.repository.GitHubResult
 import com.nexcode.app.data.preferences.NexcodePreferences
 import com.nexcode.app.data.preferences.NexcodeSecureVault
 import com.nexcode.app.ui.screens.onboarding.OnboardingViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -18,6 +20,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -111,5 +114,47 @@ class OnboardingTest {
         assertTrue(prefs.onboardingDoneFlow.first())
         assertEquals("gpt-4o", prefs.aiModelFlow.first())
         assertNotNull(viewModel.uiState.value)
+    }
+
+    private suspend fun awaitAiTestDone(timeoutMs: Long = 5000L) {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (true) {
+            Shadows.shadowOf(Looper.getMainLooper()).idle()
+            if (!viewModel.uiState.value.isTestingAi || System.currentTimeMillis() >= deadline) {
+                break
+            }
+            delay(25)
+        }
+    }
+
+    @Test
+    fun testAiConnectionWithoutKeyReturnsRealValidationError(): Unit = runBlocking {
+        viewModel.selectAiProvider("Anthropic")
+        viewModel.updateApiKey("")
+
+        viewModel.testAiConnection()
+        awaitAiTestDone()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isTestingAi)
+        assertTrue(state.aiTestSuccess == false)
+        assertNotNull(state.aiTestMessage)
+        // Message réel renvoyé par le service IA (validation locale du endpoint)
+        assertTrue(state.aiTestMessage!!.contains("clé API"))
+    }
+
+    @Test
+    fun testAiConnectionWithInvalidCustomUrlReturnsRealError(): Unit = runBlocking {
+        viewModel.selectAiProvider("Serveur personnalisé")
+        viewModel.updateCustomBaseUrl("serveur-invalide-sans-protocole")
+
+        viewModel.testAiConnection()
+        awaitAiTestDone()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isTestingAi)
+        assertTrue(state.aiTestSuccess == false)
+        assertNotNull(state.aiTestMessage)
+        assertTrue(state.aiTestMessage!!.contains("URL du serveur personnalisé"))
     }
 }

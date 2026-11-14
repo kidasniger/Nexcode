@@ -4,7 +4,6 @@
 
     <!-- Écran 1 : Lancement -->
     <string name="s01_tagline">Codez vraiment,\ndepuis votre poche.</string>
-    <string name="s01_progress_label">Préparation de l\'atelier…</string>
     <string name="s01_skip">Passer</string>
 
     <!-- Écran 2 : Présentation -->
@@ -21,10 +20,6 @@
     <string name="s03_desc">Poussez vos commits, importez vos dépôts et téléchargez vos APK depuis GitHub Releases.</string>
     <string name="s03_token_label">Jeton d\'accès personnel</string>
     <string name="s03_token_hint">Créez un jeton sur github.com → Paramètres → Développeur. Portées requises : repo workflow</string>
-    <string name="s03_or">ou</string>
-    <string name="s03_device_code_btn">Se connecter avec un code appareil</string>
-    <string name="s03_device_code_desc">Entrez le code affiché sur github.com/login/device</string>
-    <string name="s03_connected_banner">Connecté en tant que nimbus-dev · 4 dépôts accessibles</string>
     <string name="s03_disconnect_btn">Se déconnecter</string>
     <string name="s03_disconnect_confirm_title">Déconnexion de GitHub</string>
     <string name="s03_disconnect_confirm_msg">Voulez-vous vraiment déconnecter votre compte GitHub ? Le jeton sera supprimé du coffre.</string>
@@ -125,7 +120,6 @@
     <string name="s09_tab_git">Dépôt GitHub</string>
     <string name="s09_choose_zip_title">Choisir un fichier .zip</string>
     <string name="s09_choose_zip_desc">Archive Gradle ou export NEXCODE\nMaximum 200 Mo</string>
-    <string name="s09_recent_zip_name">meteo-android-main.zip</string>
     <string name="s09_recent_zip_desc">46,3 Mo · importé le 2 nov.</string>
     <string name="s09_success_chip">Réussi</string>
     <string name="s09_repo_url_label">URL du dépôt</string>
@@ -134,8 +128,6 @@
     <string name="s09_git_hint">Historique complet conservé · sous-modules exclus</string>
 
     <!-- Écran 10 : Explorateur de fichiers -->
-    <string name="s10_project_name">Nimbus Météo</string>
-    <string name="s10_sub_path">app · src · main · java · com · nimbus · meteo</string>
     <string name="s10_folder_subfolders_format">%1$d sous-dossiers</string>
     <string name="s10_file_menu_hint">Appui long sur un fichier : menu</string>
     <string name="s10_btn_folder">Dossier</string>
@@ -148,7 +140,6 @@
     <!-- Écran 11 : Éditeur de code -->
     <string name="s11_error_count_format">%1$d erreur</string>
     <string name="s11_error_card_title">Ligne 23 · référence introuvable</string>
-    <string name="s11_error_card_desc">R.string.title_detail n\'existe pas — la ressource s\'appelle title_details.</string>
     <string name="s11_btn_correct_occurrences">Corriger (4 occurrences)</string>
     <string name="s11_btn_ai">IA</string>
 
@@ -171,14 +162,12 @@
     <string name="s13_tab_colors">Couleurs</string>
     <string name="s13_tab_dimensions">Dimensions</string>
     <string name="s13_tab_themes">Thèmes</string>
-    <string name="s13_warn_unresolved_string">title_detail est référencé par MainActivity.kt ligne 23 mais n\'existe plus.</string>
     <string name="s13_btn_correct">Corriger</string>
     <string name="s13_translations_title">Traductions</string>
     <string name="s13_translations_desc">2 langues configurées : français (défaut), anglais. 12 chaînes manquantes en anglais.</string>
     <string name="s13_btn_complete_ai">Compléter avec l\'IA</string>
     <string name="s13_btn_new_color">Nouvelle couleur</string>
     <string name="s13_themes_title">themes.xml</string>
-    <string name="s13_themes_desc">Thème parent : Material3.DayNight.NoActionBar. Deux variantes : Theme.Nimbus et Theme.Nimbus.Dark.</string>
     <string name="s13_btn_open_file">Ouvrir le fichier</string>
 
     <!-- Écran 14 : Dépendances Gradle -->
@@ -232,7 +221,6 @@
 
     <!-- Écran 18 : Concepteur visuel -->
     <string name="s18_title">Concepteur visuel</string>
-    <string name="s18_sub">Écran d\'accueil · Nimbus Météo</string>
     <string name="s18_pal_text">Texte</string>
     <string name="s18_pal_image">Image</string>
     <string name="s18_pal_button">Bouton</string>
@@ -296,96 +284,42 @@
 
     <!-- Écran 21 : Configuration du build -->
     <string name="s21_title">Configuration du build</string>
-    <string name="s21_sub">Nimbus Météo</string>
     <string name="s21_lab_version">Version</string>
     <string name="s21_lab_build_number">Numéro de build</string>
     <string name="s21_lab_variant">Variante</string>
     <string name="s21_variant_debug">debug</string>
     <string name="s21_variant_release">release</string>
-    <string name="s21_hint_variant">Release : minification R8, signature obligatoire, taille réduite d\'environ 35 %.</string>
     <string name="s21_sect_signature">Signature</string>
-    <string name="s21_keystore_name">nexcode-release.jks</string>
-    <string name="s21_keystore_desc">Valable jusqu\'au 04/09/2027 · RSA 2048</string>
-    <string name="s21_chip_active">Actif</string>
-    <string name="s21_lab_keystore_password">Mot de passe du keystore</string>
-    <string name="s21_btn_generate_keystore">Générer un nouveau keystore</string>
-    <string name="s21_sect_options">Options</string>
-    <string name="s21_opt_r8_title">Minification R8</string>
-    <string name="s21_opt_r8_desc">Réduit et obfusque le code</string>
-    <string name="s21_opt_mapping_title">Exporter le mapping</string>
-    <string name="s21_opt_mapping_desc">Nécessaire pour analyser les crashs</string>
-    <string name="s21_opt_debuggable_title">Debuggable</string>
-    <string name="s21_opt_debuggable_desc">Désactivé automatiquement en release</string>
     <string name="s21_btn_start_compilation">Lancer la compilation</string>
 
     <!-- Écran 22 : Compilation -->
     <string name="s22_title">Compilation</string>
-    <string name="s22_sub">Nimbus Météo · v1.2.0 (13) · release</string>
     <string name="s22_progress_percent">68 %</string>
-    <string name="s22_progress_sub">Étape en cours · Compilation Kotlin (release) · 42 s</string>
-    <string name="s22_step_clean">Nettoyage</string>
-    <string name="s22_step_clean_du">0,8 s</string>
-    <string name="s22_step_gradle">Résolution des dépendances Gradle</string>
-    <string name="s22_step_gradle_du_cours">3,1 s · 34 artefacts</string>
-    <string name="s22_step_gradle_du_succes">3,1 s</string>
-    <string name="s22_step_kotlin">Compilation Kotlin (release)</string>
-    <string name="s22_step_kotlin_du_cours">42 s · 12 fichiers</string>
-    <string name="s22_step_kotlin_du_succes">38,4 s</string>
-    <string name="s22_step_res">Traitement des ressources</string>
-    <string name="s22_step_res_du_succes">4,2 s</string>
-    <string name="s22_step_dex">Conversion DEX</string>
-    <string name="s22_step_dex_du_succes">9,7 s</string>
-    <string name="s22_step_apk">Packaging APK</string>
-    <string name="s22_step_apk_du_succes">11,3 s</string>
-    <string name="s22_step_sign">Signature (nexcode-release.jks)</string>
-    <string name="s22_step_sign_du_succes">4,5 s</string>
-    <string name="s22_step_pending">en attente</string>
     <string name="s22_btn_cancel">Annuler</string>
     <string name="s22_btn_live_logs">Logs en direct</string>
-    <string name="s22_hint_background">La compilation continue si vous quittez cet écran · notification à la fin</string>
-    <string name="s22_banner_success">Compilation réussie · 1 min 12 s · app-release-signed.apk (8,1 Mo)</string>
     <string name="s22_btn_view_apk">Voir l\'APK</string>
     <string name="s22_btn_logs">Logs</string>
 
     <!-- Écran 23 : Logs et erreurs -->
     <string name="s23_title">Logs et erreurs</string>
-    <string name="s23_sub_def">Build #12 · release · interrompu</string>
-    <string name="s23_sub_succes">Build #13 · release · réussi</string>
     <string name="s23_chip_all">Tout</string>
     <string name="s23_chip_errors">2 erreurs</string>
     <string name="s23_chip_warnings">Avertissements (5)</string>
-    <string name="s23_chip_kotlin">Kotlin</string>
-    <string name="s23_code_h_def">gradle-out · build #12</string>
-    <string name="s23_code_time_def">02 min 41 s</string>
-    <string name="s23_code_h_succes">gradle-out · build #13</string>
-    <string name="s23_code_time_succes">01 min 12 s</string>
-    <string name="s23_summary_title">2 erreurs regroupées</string>
-    <string name="s23_summary_sub">R.string.title_detail introuvable</string>
     <string name="s23_btn_fix_ai">Corriger avec l\'IA</string>
     <string name="s23_btn_retry">Relancer</string>
-    <string name="s23_banner_success">Aucune erreur. 2 avertissements mineurs (ressources inutilisées).</string>
 
     <!-- Écran 24 : APK générés -->
     <string name="s24_title">APK générés</string>
-    <string name="s24_sub">3 fichiers · 28,6 Mo au total</string>
-    <string name="s24_apk1_name">app-release-signed.apk</string>
-    <string name="s24_apk1_desc">v1.2.0 (13) · 8,1 Mo · il y a 2 h · signé · R8</string>
-    <string name="s24_apk2_name">app-debug.apk</string>
-    <string name="s24_apk2_desc">v1.2.0 (13) · 12,4 Mo · il y a 2 h · debuggable</string>
-    <string name="s24_apk3_name">app-release-signed.apk</string>
-    <string name="s24_apk3_desc">v1.1.9 (11) · 8,0 Mo · hier · signé</string>
     <string name="s24_btn_install">Installer</string>
     <string name="s24_banner_warn">L\'installation hors Play Store demande l\'autorisation « sources inconnues ». Un avertissement Play Protect peut apparaître — il est normal pour un APK signé par vous.</string>
     <string name="s24_btn_github_releases">Publier sur GitHub Releases</string>
 
     <!-- Écran 25 : Dépôt GitHub -->
     <string name="s25_title">Dépôt</string>
-    <string name="s25_repo_sub">nimbus-dev / meteo-android</string>
     <string name="s25_branch_label">Branche</string>
     <string name="s25_branch_main">main</string>
     <string name="s25_branch_status">À jour avec origin/main · il y a 12 min</string>
     <string name="s25_btn_change_branch">Changer</string>
-    <string name="s25_banner_ahead">Le dépôt distant a 1 avance — un commit de nimbus-dev attend un pull.</string>
     <string name="s25_sect_modified_files">3 fichiers modifiés</string>
     <string name="s25_commit_msg_label">Message de commit</string>
     <string name="s25_commit_msg_default">feat: écran de détails météo</string>
@@ -421,8 +355,6 @@
     <!-- Écran 28 : Réglages -->
     <string name="s28_title">Réglages</string>
     <string name="s28_sect_account">Compte</string>
-    <string name="s28_account_user">nimbus-dev</string>
-    <string name="s28_account_sub">github.com/nimbus-dev · Plan gratuit</string>
     <string name="s28_btn_manage">Gérer</string>
     <string name="s28_btn_signout_github">Se déconnecter de GitHub</string>
     <string name="s28_signout_dialog_title">Déconnexion GitHub</string>
@@ -452,7 +384,6 @@
     <string name="s28_notif_deps_sub">Une fois par semaine</string>
     <string name="s28_sect_application">Application</string>
     <string name="s28_app_backup_title">Sauvegarde et à propos</string>
-    <string name="s28_app_backup_sub">Export, version 1.4.2, licences</string>
 
     <!-- Écran 29 : Apparence et éditeur -->
     <string name="s29_title">Apparence et éditeur</string>
@@ -487,7 +418,6 @@
     <string name="s30_opt_auto_backup_sub">Chaque nuit à 03:00 · garde 3 versions</string>
     <string name="s30_sect_about">À propos</string>
     <string name="s30_about_version_label">Version</string>
-    <string name="s30_about_version_val">1.4.2 (build 42)</string>
     <string name="s30_about_updates_label">Mises à jour</string>
     <string name="s30_about_updates_val">À jour · vérifié le 10 nov.</string>
     <string name="s30_about_licenses_title">Licences open source</string>
@@ -510,7 +440,6 @@
     <string name="modal_signout_confirm">Se déconnecter</string>
 
     <string name="modal_builderr_title">La compilation a échoué</string>
-    <string name="modal_builderr_msg">2 erreurs dans MainActivity.kt — référence introuvable : R.string.title_detail. La ressource a été renommée en title_details.</string>
     <string name="modal_builderr_btn_logs">Voir les logs</string>
     <string name="modal_builderr_btn_ai">Corriger avec l\'IA</string>
 

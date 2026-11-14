@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -49,8 +48,6 @@ import com.nexcode.app.ui.components.NexcodeBannerVariant
 import com.nexcode.app.ui.components.NexcodeButton
 import com.nexcode.app.ui.components.NexcodeButtonSize
 import com.nexcode.app.ui.components.NexcodeButtonVariant
-import com.nexcode.app.ui.components.NexcodeChip
-import com.nexcode.app.ui.components.NexcodeChipVariant
 import com.nexcode.app.ui.components.NexcodeIconButton
 import com.nexcode.app.ui.components.NexcodeTextField
 import com.nexcode.app.ui.components.NexcodeTopBar
@@ -95,15 +92,7 @@ fun ScreenS03GitHub(
             NexcodeTopBar(
                 title = stringResource(id = R.string.s03_title),
                 navigationIcon = painterResource(id = R.drawable.ic_back),
-                onNavigationClick = onNavigateBack,
-                actions = {
-                    NexcodeChip(
-                        text = if (uiState.isGitHubError) "Erreur" else "Défaut",
-                        variant = if (uiState.isGitHubError) NexcodeChipVariant.ERROR else NexcodeChipVariant.DEFAULT,
-                        onClick = { viewModel.toggleGitHubErrorState() },
-                        testTag = "s03_toggle_error_chip"
-                    )
-                }
+                onNavigationClick = onNavigateBack
             )
 
             Column(
@@ -227,44 +216,6 @@ fun ScreenS03GitHub(
                         color = colors.txt2,
                         lineHeight = 16.5.sp,
                         modifier = Modifier.padding(bottom = 14.dp)
-                    )
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = colors.border)
-                        Text(
-                            text = stringResource(id = R.string.s03_or),
-                            fontFamily = InterFontFamily,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.txt2,
-                            modifier = Modifier.padding(horizontal = 12.dp)
-                        )
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = colors.border)
-                    }
-
-                    NexcodeButton(
-                        text = stringResource(id = R.string.s03_device_code_btn),
-                        onClick = { viewModel.showDeviceCodeNotice() },
-                        variant = NexcodeButtonVariant.SECONDARY,
-                        icon = painterResource(id = R.drawable.ic_qr),
-                        fullWidth = true,
-                        testTag = "s03_device_code_btn"
-                    )
-
-                    Text(
-                        text = stringResource(id = R.string.s03_device_code_desc),
-                        fontFamily = InterFontFamily,
-                        fontSize = 11.sp,
-                        color = colors.txt2,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp)
                     )
 
                     // Bannière compte connecté

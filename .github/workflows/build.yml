@@ -6,10 +6,15 @@ on:
   pull_request:
     branches: [ "main", "master" ]
   workflow_dispatch:
+    inputs:
+      build_variant:
+        description: "Variante à compiler (debug / release / all)"
+        required: false
+        default: "all"
 
 jobs:
   build:
-    name: Build Debug APK
+    name: Build APK
     runs-on: ubuntu-latest
 
     steps:
@@ -26,12 +31,44 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew || true
 
-      - name: Build Debug APK with Gradle
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Decode release keystore from secrets
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > my-upload-key.jks
+
+      - name: Determine build variant
+        id: variant
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ github.event.inputs.build_variant }}" >> $GITHUB_OUTPUT
+          else
+            echo "value=all" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build APKs with Gradle
+        env:
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          case "${{ steps.variant.outputs.value }}" in
+            debug) ./gradlew assembleDebug --stacktrace ;;
+            release) ./gradlew assembleRelease --stacktrace ;;
+            *) ./gradlew assembleDebug assembleRelease --stacktrace ;;
+          esac
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --stacktrace --console=plain
 
       - name: Upload Debug APK Artifact
+        if: ${{ steps.variant.outputs.value != 'release' }}
         uses: actions/upload-artifact@v4
         with:
           name: nexcode-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+      - name: Upload Release APK Artifact
+        if: ${{ steps.variant.outputs.value != 'debug' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexcode-release-apk
+          path: app/build/outputs/apk/release/*.apk
           retention-days: 14

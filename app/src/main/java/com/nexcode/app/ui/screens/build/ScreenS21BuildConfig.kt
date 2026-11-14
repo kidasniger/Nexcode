@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,8 +38,6 @@ import com.nexcode.app.ui.components.NexcodeCard
 import com.nexcode.app.ui.components.NexcodeChip
 import com.nexcode.app.ui.components.NexcodeChipVariant
 import com.nexcode.app.ui.components.NexcodeIconButton
-import com.nexcode.app.ui.components.NexcodeSwitch
-import com.nexcode.app.ui.components.NexcodeTextField
 import com.nexcode.app.ui.components.NexcodeTile
 import com.nexcode.app.ui.components.NexcodeTileVariant
 import com.nexcode.app.ui.theme.NexcodeTheme
@@ -84,7 +83,7 @@ fun ScreenS21BuildConfig(
                         color = colors.txt
                     )
                     Text(
-                        text = uiState.projectName,
+                        text = uiState.projectName.ifBlank { "Aucun projet lié" },
                         fontSize = 12.sp,
                         color = colors.txt2
                     )
@@ -98,7 +97,7 @@ fun ScreenS21BuildConfig(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 6.dp)
             ) {
-                // Carte version / variante
+                // Carte projet réel (version lue dans build.gradle.kts du projet)
                 NexcodeCard(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -106,15 +105,21 @@ fun ScreenS21BuildConfig(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
                 ) {
                     BuildConfigRow(
-                        label = stringResource(id = R.string.s21_lab_version),
-                        value = uiState.versionName,
+                        label = "Version",
+                        value = uiState.versionName.ifBlank { "—" },
                         testTag = "s21_value_version"
                     )
                     HorizontalDivider(color = colors.border, thickness = 1.dp)
                     BuildConfigRow(
-                        label = stringResource(id = R.string.s21_lab_build_number),
-                        value = uiState.buildNumber,
+                        label = "Numéro de build",
+                        value = uiState.buildNumber.ifBlank { "—" },
                         testTag = "s21_value_build_number"
+                    )
+                    HorizontalDivider(color = colors.border, thickness = 1.dp)
+                    BuildConfigRow(
+                        label = "Dépôt GitHub",
+                        value = uiState.githubRepo.ifBlank { "Local" },
+                        testTag = "s21_value_repo"
                     )
                     HorizontalDivider(color = colors.border, thickness = 1.dp)
                     Row(
@@ -126,31 +131,31 @@ fun ScreenS21BuildConfig(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = stringResource(id = R.string.s21_lab_variant),
+                            text = "Variante",
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = colors.txt,
                             modifier = Modifier.weight(1f)
                         )
                         NexcodeChip(
-                            text = stringResource(id = R.string.s21_variant_debug),
+                            text = "debug",
                             variant = if (uiState.selectedVariant == BuildVariant.DEBUG) {
                                 NexcodeChipVariant.ACCENT
                             } else {
                                 NexcodeChipVariant.DEFAULT
                             },
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            fontFamily = FontFamily.Monospace,
                             onClick = { viewModel.setVariant(BuildVariant.DEBUG) },
                             testTag = "s21_chip_debug"
                         )
                         NexcodeChip(
-                            text = stringResource(id = R.string.s21_variant_release),
+                            text = "release",
                             variant = if (uiState.selectedVariant == BuildVariant.RELEASE) {
                                 NexcodeChipVariant.ACCENT
                             } else {
                                 NexcodeChipVariant.DEFAULT
                             },
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            fontFamily = FontFamily.Monospace,
                             onClick = { viewModel.setVariant(BuildVariant.RELEASE) },
                             testTag = "s21_chip_release"
                         )
@@ -158,7 +163,7 @@ fun ScreenS21BuildConfig(
                 }
 
                 Text(
-                    text = stringResource(id = R.string.s21_hint_variant),
+                    text = "La variante est transmise réellement au workflow GitHub Actions (input build_variant).",
                     fontSize = 11.5.sp,
                     color = colors.txt2,
                     modifier = Modifier
@@ -166,9 +171,9 @@ fun ScreenS21BuildConfig(
                         .padding(horizontal = 4.dp, vertical = 8.dp)
                 )
 
-                // Section signature
+                // Section signature réelle (fichiers keystore du dépôt du projet)
                 Text(
-                    text = stringResource(id = R.string.s21_sect_signature),
+                    text = "Signature",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.txt2,
@@ -192,53 +197,32 @@ fun ScreenS21BuildConfig(
                         )
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = uiState.keystoreName,
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                text = if (uiState.keystoreInfo.isBlank()) "Aucun projet lié" else uiState.keystoreInfo,
+                                fontFamily = FontFamily.Monospace,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colors.txt
                             )
                             Text(
-                                text = stringResource(id = R.string.s21_keystore_desc),
+                                text = "Le keystore debug standard est celui utilisé pour signer l'APK.",
                                 fontSize = 11.sp,
                                 color = colors.txt2,
                                 modifier = Modifier.padding(top = 2.dp)
                             )
                         }
-                        NexcodeChip(
-                            text = stringResource(id = R.string.s21_chip_active),
-                            variant = NexcodeChipVariant.SUCCESS,
-                            testTag = "s21_chip_keystore_active"
-                        )
+                        if (uiState.keystoreInfo.contains("présent")) {
+                            NexcodeChip(
+                                text = "Détecté",
+                                variant = NexcodeChipVariant.SUCCESS,
+                                testTag = "s21_chip_keystore_active"
+                            )
+                        }
                     }
-
-                    NexcodeTextField(
-                        value = uiState.keystorePassword,
-                        onValueChange = { },
-                        label = stringResource(id = R.string.s21_lab_keystore_password),
-                        isMono = true,
-                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
-                        testTag = "s21_field_keystore_password"
-                    )
-
-                    NexcodeButton(
-                        text = stringResource(id = R.string.s21_btn_generate_keystore),
-                        onClick = { },
-                        variant = NexcodeButtonVariant.SECONDARY,
-                        size = NexcodeButtonSize.DEFAULT,
-                        icon = painterResource(id = R.drawable.ic_refresh),
-                        fullWidth = true,
-                        modifier = Modifier.padding(top = 12.dp),
-                        testTag = "s21_btn_generate_keystore"
-                    )
                 }
 
-                // Section options
+                // Section pipeline réel
                 Text(
-                    text = stringResource(id = R.string.s21_sect_options),
+                    text = "Pipeline",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.txt2,
@@ -248,31 +232,42 @@ fun ScreenS21BuildConfig(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 8.dp),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
                 ) {
-                    BuildOptionRow(
-                        title = stringResource(id = R.string.s21_opt_r8_title),
-                        description = stringResource(id = R.string.s21_opt_r8_desc),
-                        checked = uiState.isR8Enabled,
-                        onToggle = { viewModel.toggleR8() },
-                        testTag = "s21_switch_r8"
+                    BuildConfigRow(
+                        label = "Workflow",
+                        value = ".github/workflows/build.yml",
+                        testTag = "s21_value_workflow"
                     )
                     HorizontalDivider(color = colors.border, thickness = 1.dp)
-                    BuildOptionRow(
-                        title = stringResource(id = R.string.s21_opt_mapping_title),
-                        description = stringResource(id = R.string.s21_opt_mapping_desc),
-                        checked = uiState.isExportMappingEnabled,
-                        onToggle = { viewModel.toggleExportMapping() },
-                        testTag = "s21_switch_mapping"
+                    BuildConfigRow(
+                        label = "Exécution",
+                        value = "GitHub Actions (ubuntu-latest)",
+                        testTag = "s21_value_runner"
                     )
                     HorizontalDivider(color = colors.border, thickness = 1.dp)
-                    BuildOptionRow(
-                        title = stringResource(id = R.string.s21_opt_debuggable_title),
-                        description = stringResource(id = R.string.s21_opt_debuggable_desc),
-                        checked = uiState.isDebuggableEnabled,
-                        onToggle = { viewModel.toggleDebuggable() },
-                        testTag = "s21_switch_debuggable"
+                    BuildConfigRow(
+                        label = "Artefact",
+                        value = "APK signé téléchargé ici",
+                        testTag = "s21_value_artifact"
                     )
+                }
+
+                if (uiState.configNotice != null) {
+                    NexcodeCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    ) {
+                        Text(
+                            text = uiState.configNotice!!,
+                            fontSize = 12.5.sp,
+                            color = colors.txt2,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("s21_notice_config")
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -285,6 +280,7 @@ fun ScreenS21BuildConfig(
                     variant = NexcodeButtonVariant.PRIMARY,
                     size = NexcodeButtonSize.DEFAULT,
                     icon = painterResource(id = R.drawable.ic_play),
+                    enabled = uiState.canStartBuild,
                     fullWidth = true,
                     testTag = "s21_btn_start_compilation"
                 )
@@ -324,45 +320,6 @@ private fun BuildConfigRow(
             modifier = Modifier
                 .testTag(testTag)
                 .defaultMinSize(minWidth = 48.dp)
-        )
-    }
-}
-
-@Composable
-private fun BuildOptionRow(
-    title: String,
-    description: String,
-    checked: Boolean,
-    onToggle: () -> Unit,
-    testTag: String
-) {
-    val colors = NexcodeTheme.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 52.dp)
-            .padding(vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                fontSize = 13.5.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.txt
-            )
-            Text(
-                text = description,
-                fontSize = 11.sp,
-                color = colors.txt2,
-                modifier = Modifier.padding(top = 2.dp)
-            )
-        }
-        NexcodeSwitch(
-            checked = checked,
-            onCheckedChange = { onToggle() },
-            testTag = testTag
         )
     }
 }

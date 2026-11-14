@@ -24,13 +24,17 @@ class SettingsViewModel(
 
     private val gitService = overrideGitService ?: context?.let { GitHubRepositoryService(it) }
     private val preferences = context?.let { NexcodePreferences(it) }
+    private val updateManager = context?.let { com.nexcode.app.updater.AppUpdateManager(it) }
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
         observePreferences()
+        observeAppPreferences()
+        observeUpdateStates()
         refreshAccountAndStorage()
+        refreshAppVersion()
     }
 
     private fun observePreferences() {
@@ -167,16 +171,130 @@ class SettingsViewModel(
         }
     }
 
-    fun toggleNotifyBuildCompleted(enabled: Boolean) {
-        _uiState.update { it.copy(notifyBuildCompleted = enabled) }
+    private fun observeAppPreferences() {
+        val prefs = preferences ?: return
+        viewModelScope.launch {
+            kotlinx.coroutines.flow.combine(
+                prefs.notifyBuildCompletedFlow,
+                prefs.notifyBuildErrorsFlow,
+                prefs.notifyDependencyUpdatesFlow,
+                prefs.editorAutoCloseBracketsFlow,
+                prefs.autoBackupEnabledFlow
+            ) { notifyBuild, notifyErrors, notifyDeps, autoBrackets, autoBackup ->
+                _uiState.update {
+                    it.copy(
+                        notifyBuildCompleted = notifyBuild,
+                        notifyBuildErrors = notifyErrors,
+                        notifyDependencyUpdates = notifyDeps,
+                        autoCloseBrackets = autoBrackets,
+                        autoBackupEnabled = autoBackup
+                    )
+                }
+            }.collect {}
+        }
+        viewModelScope.launch {
+            kotlinx.coroutines.flow.combine(
+                prefs.editorCodeThemeFlow,
+                prefs.editorIndentationFlow
+            ) { codeTheme, indentation -> codeTheme to indentation }.collect { (codeTheme, indentation) ->
+                _uiState.update {
+                    it.copy(
+                        codeTheme = CodeThemePreference.entries.firstOrNull { c -> c.name == codeTheme }
+                            ?: CodeThemePreference.NEX_DARK,
+                        indentation = IndentationPreference.entries.firstOrNull { i -> i.name == indentation }
+                            ?: IndentationPreference.SPACES_4
+                    )
+                }
+            }
+        }
     }
 
-    fun toggleNotifyBuildErrors(enabled: Boolean) {
-        _uiState.update { it.copy(notifyBuildErrors = enabled) }
+    /**
+     * Version réelle de l'application lue depuis le PackageManager.
+     */
+    private fun refreshAppVersion() {
+        val ctx = context ?: return
+        try {
+            val packageInfo = ctx.packageManager.getPackageInfo(ctx.packageName, 0)
+            val versionName = packageInfo.versionName ?: "1.0"
+            val versionCode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                packageInfo.longVersionCode
+            } else {
+                @Suppress("DEPRECATION") packageInfo.versionCode.toLong()
+            }
+            _uiState.update { it.copy(appVersion = "$versionName (build $versionCode)") }
+        } catch (_: Exception) {
+            _uiState.update { it.copy(appVersion = "1.0") }
+        }
     }
 
-    fun toggleNotifyDependencyUpdates(enabled: Boolean) {
-        _uiState.update { it.copy(notifyDependencyUpdates = enabled) }
+    /**
+     * Mises à jour : états réels provenant de l'AppUpdateManager (releases GitHub).
+     */
+    private fun observeUpdateStates() {
+        val manager = updateManager ?: return
+        viewModelScope.launch {
+            manager.updateCheckState.collect { state ->
+                _uiState.update {
+                    when (state) {
+                        is com.nexcode.app.updater.UpdateCheckState.Idle -> it.copy(
+                            updateStatus = "Vérification manuelle",
+                            isUpdateChecking = false,
+                            updateAvailableVersion = null,
+                            updateError = null
+                        )
+                        is com.nexcode.app.updater.UpdateCheckState.Checking -> it.copy(
+                            updateStatus = "Vérification en cours…",
+                            isUpdateChecking = true,
+                            updateError = null
+                        )
+                        is com.nexcode.app.updater.UpdateCheckState.UpdateAvailable -> it.copy(
+                            updateStatus = "Mise à jour ${state.latestVersion} disponible",
+                            isUpdateChecking = false,
+                            updateAvailableVersion = state.latestVersion,
+                            updateReleaseNotes = state.releaseNotes,
+                            updateError = null
+                        )
+                        is com.nexcode.app.updater.UpdateCheckState.UpToDate -> it.copy(
+                            updateStatus = "À jour (v${state.currentVersion})",
+                            isUpdateChecking = false,
+                            updateAvailableVersion = null,
+                            updateError = null
+                        )
+                        is com.nexcode.app.updater.UpdateCheckState.Error -> it.copy(
+                            updateStatus = "Vérification impossible",
+                            isUpdateChecking = false,
+                            updateError = state.message
+                        )
+                    }
+                }
+            }
+        }
+        viewModelScope.launch {
+            manager.downloadState.collect { state ->
+                _uiState.update {
+                    when (state) {
+                        is com.nexcode.app.updater.DownloadState.Downloading -> it.copy(
+                            updateDownloadProgress = state.progressPercent
+                        )
+                        else -> it.copy(updateDownloadProgress = null)
+                    }
+                }
+            }
+        }
+    }
+
+    fun checkForAppUpdates() {
+        val manager = updateManager ?: return
+        viewModelScope.launch { manager.checkForUpdates() }
+    }
+
+    fun downloadAppUpdate() {
+        val manager = updateManager ?: return
+        val state = manager.updateCheckState.value
+        if (state is com.nexcode.app.updater.UpdateCheckState.UpdateAvailable) {
+            viewModelScope.launch { manager.downloadAndInstallApk(state.downloadUrl) }
+        }
     }
 
     fun setUiTheme(theme: UiThemePreference) {
@@ -186,6 +304,21 @@ class SettingsViewModel(
                 prefs.setThemeMode(theme.name)
             }
         }
+    }
+
+    fun toggleNotifyBuildCompleted(enabled: Boolean) {
+        _uiState.update { it.copy(notifyBuildCompleted = enabled) }
+        viewModelScope.launch { preferences?.setNotifyBuildCompleted(enabled) }
+    }
+
+    fun toggleNotifyBuildErrors(enabled: Boolean) {
+        _uiState.update { it.copy(notifyBuildErrors = enabled) }
+        viewModelScope.launch { preferences?.setNotifyBuildErrors(enabled) }
+    }
+
+    fun toggleNotifyDependencyUpdates(enabled: Boolean) {
+        _uiState.update { it.copy(notifyDependencyUpdates = enabled) }
+        viewModelScope.launch { preferences?.setNotifyDependencyUpdates(enabled) }
     }
 
     fun increaseFontSize() {
@@ -206,10 +339,12 @@ class SettingsViewModel(
 
     fun setCodeTheme(codeTheme: CodeThemePreference) {
         _uiState.update { it.copy(codeTheme = codeTheme) }
+        viewModelScope.launch { preferences?.setEditorCodeTheme(codeTheme.name) }
     }
 
     fun setIndentation(indentation: IndentationPreference) {
         _uiState.update { it.copy(indentation = indentation) }
+        viewModelScope.launch { preferences?.setEditorIndentation(indentation.name) }
     }
 
     fun toggleWordWrap(enabled: Boolean) {
@@ -228,18 +363,54 @@ class SettingsViewModel(
 
     fun toggleAutoCloseBrackets(enabled: Boolean) {
         _uiState.update { it.copy(autoCloseBrackets = enabled) }
+        viewModelScope.launch { preferences?.setEditorAutoCloseBrackets(enabled) }
     }
 
+    /**
+     * Export réel : crée une archive .zip de tous les projets dans le cache.
+     */
     fun exportProjectsNow() {
-        _uiState.update {
-            it.copy(
-                userNotice = "Export de tous les projets (.zip) prêt."
-            )
+        val ctx = context ?: run {
+            _uiState.update { it.copy(userNotice = "Export impossible sans contexte applicatif.") }
+            return
+        }
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                try {
+                    val projectsDir = File(ctx.filesDir, "projects")
+                    if (!projectsDir.exists() || projectsDir.listFiles().isNullOrEmpty()) {
+                        return@withContext null to "Aucun projet à exporter."
+                    }
+                    val stamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", Locale.FRANCE)
+                        .format(java.util.Date())
+                    val outputFile = File(ctx.cacheDir, "nexcode_projets_$stamp.zip")
+                    java.util.zip.ZipOutputStream(outputFile.outputStream().buffered()).use { zos ->
+                        projectsDir.walkTopDown().filter { it.isFile }.forEach { file ->
+                            val relative = file.relativeTo(projectsDir).path
+                            zos.putNextEntry(java.util.zip.ZipEntry(relative))
+                            file.inputStream().use { it.copyTo(zos) }
+                            zos.closeEntry()
+                        }
+                    }
+                    outputFile to "Export créé : ${outputFile.name} (${formatFrenchSize(outputFile.length())})"
+                } catch (e: Exception) {
+                    null to "Échec de l'export : ${e.message ?: "erreur inconnue"}"
+                }
+            }
+            val (file, message) = result
+            _uiState.update {
+                it.copy(
+                    userNotice = message,
+                    lastExportText = file?.let { f -> "Dernier export : ${f.name}" }
+                        ?: "Export local des projets au format .zip"
+                )
+            }
         }
     }
 
     fun toggleAutoBackup(enabled: Boolean) {
         _uiState.update { it.copy(autoBackupEnabled = enabled) }
+        viewModelScope.launch { preferences?.setAutoBackupEnabled(enabled) }
     }
 
     fun dismissNotice() {

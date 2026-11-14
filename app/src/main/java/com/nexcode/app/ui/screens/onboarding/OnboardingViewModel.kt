@@ -3,11 +3,13 @@ package com.nexcode.app.ui.screens.onboarding
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nexcode.app.data.ai.AiEndpointConfig
+import com.nexcode.app.data.ai.AiProviderType
+import com.nexcode.app.data.ai.AiRepositoryService
 import com.nexcode.app.data.github.repository.GitHubRepositoryService
 import com.nexcode.app.data.github.repository.GitHubResult
 import com.nexcode.app.data.preferences.NexcodePreferences
 import com.nexcode.app.data.preferences.NexcodeSecureVault
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,9 +18,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class OnboardingUiState(
-    // Écran 1
-    val preparationProgress: Float = 0.62f,
-
     // Écran 3 : GitHub
     val gitHubToken: String = "",
     val isTokenVisible: Boolean = false,
@@ -45,12 +44,14 @@ data class OnboardingUiState(
 
 class OnboardingViewModel(
     private val context: Context,
-    overrideGitService: GitHubRepositoryService? = null
+    overrideGitService: GitHubRepositoryService? = null,
+    overrideAiService: AiRepositoryService? = null
 ) : ViewModel() {
 
     private val secureVault = NexcodeSecureVault(context)
     private val preferences = NexcodePreferences(context)
     private val gitHubService = overrideGitService ?: GitHubRepositoryService(context)
+    private val aiService = overrideAiService ?: AiRepositoryService(context)
 
     private val _uiState = MutableStateFlow(
         OnboardingUiState(
@@ -101,16 +102,6 @@ class OnboardingViewModel(
 
     fun toggleTokenVisibility() {
         _uiState.update { it.copy(isTokenVisible = !it.isTokenVisible) }
-    }
-
-    fun toggleGitHubErrorState() {
-        _uiState.update {
-            val nextErr = !it.isGitHubError
-            it.copy(
-                isGitHubError = nextErr,
-                gitHubErrorMessage = if (nextErr) null else it.gitHubErrorMessage
-            )
-        }
     }
 
     fun connectWithToken(onSuccess: (() -> Unit)? = null) {
@@ -167,14 +158,6 @@ class OnboardingViewModel(
 
     fun retryGitHubConnection() {
         connectWithToken()
-    }
-
-    fun showDeviceCodeNotice() {
-        _uiState.update {
-            it.copy(
-                userNotice = "Saisissez un jeton d'accès personnel GitHub (portées repo, workflow) ci-dessus."
-            )
-        }
     }
 
     fun dismissNotice() {
@@ -236,14 +219,20 @@ class OnboardingViewModel(
     fun testAiConnection() {
         viewModelScope.launch {
             _uiState.update { it.copy(isTestingAi = true, aiTestSuccess = null, aiTestMessage = null) }
-            delay(412)
-            val success = _uiState.value.apiKey.isNotBlank() ||
-                (_uiState.value.selectedProvider == "Serveur personnalisé" && _uiState.value.customBaseUrl.isNotBlank())
+            // Test réseau réel via AiRepositoryService (aucune réponse simulée)
+            val state = _uiState.value
+            val config = AiEndpointConfig(
+                provider = AiProviderType.fromDisplayName(state.selectedProvider),
+                model = state.selectedModel,
+                apiKey = state.apiKey.trim(),
+                customBaseUrl = state.customBaseUrl.trim()
+            )
+            val result = aiService.testConnection(config)
             _uiState.update {
                 it.copy(
                     isTestingAi = false,
-                    aiTestSuccess = success,
-                    aiTestMessage = if (success) null else "Veuillez saisir une clé API valide."
+                    aiTestSuccess = result.success,
+                    aiTestMessage = result.message
                 )
             }
         }

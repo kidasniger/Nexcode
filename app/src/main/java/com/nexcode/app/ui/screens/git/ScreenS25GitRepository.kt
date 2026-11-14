@@ -185,32 +185,6 @@ fun ScreenS25GitRepository(
                     )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .testTag("s25_toggle_mode")
-                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                        .clip(PillShape)
-                        .clickable { viewModel.toggleViewMode() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .clip(PillShape)
-                            .background(colors.surface2)
-                            .border(1.dp, colors.border, PillShape)
-                            .padding(horizontal = 9.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = if (uiState.viewMode == GitViewMode.DEFAULT) "Défaut" else "Erreur",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (uiState.viewMode == GitViewMode.DEFAULT) colors.txt else colors.err
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(4.dp))
-
                 NexcodeIconButton(
                     icon = painterResource(id = R.drawable.ic_clock),
                     onClick = onNavigateHistory,

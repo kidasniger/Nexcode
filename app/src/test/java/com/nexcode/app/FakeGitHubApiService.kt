@@ -30,6 +30,15 @@ class FakeGitHubApiService : GitHubApiService {
     var authFailureCode: Int? = null
     var dispatchFailureCode: Int? = null
 
+    // Cycle de vie réaliste d'un run déclenché : in_progress puis completed
+    // après deux lectures. Les conclusions peuvent être forcées pour tester
+    // les échecs réels.
+    var simulateRunLifecycle: Boolean = false
+    var forcedRunConclusion: String? = null
+    private var dispatched = false
+    private var pollsAfterDispatch = 0
+    private var dynamicRuns: MutableList<WorkflowRun> = mutableListOf()
+
     var user: GitHubUser = GitHubUser(
         login = "octo-dev",
         id = 42L,
@@ -165,6 +174,27 @@ class FakeGitHubApiService : GitHubApiService {
             return Response.error(code, "{}".toResponseBody("application/json".toMediaType()))
         }
         triggeredWorkflowIds.add(workflowId)
+        if (simulateRunLifecycle) {
+            if (dynamicRuns.isEmpty()) dynamicRuns.addAll(runs)
+            val nextNumber = (dynamicRuns.maxOfOrNull { it.runNumber } ?: 0) + 1
+            dynamicRuns.add(
+                0,
+                WorkflowRun(
+                    id = 9900L + nextNumber,
+                    name = "Build NEXCODE APK",
+                    headBranch = payload.ref,
+                    headSha = "dispatch" + nextNumber,
+                    status = "in_progress",
+                    conclusion = null,
+                    htmlUrl = "https://github.com/$owner/$repo/actions/run/9900$nextNumber",
+                    createdAt = "2026-11-14T09:00:00Z",
+                    updatedAt = "2026-11-14T09:00:00Z",
+                    runNumber = nextNumber
+                )
+            )
+            dispatched = true
+            pollsAfterDispatch = 0
+        }
         return Response.success(204, Unit)
     }
 
@@ -175,6 +205,19 @@ class FakeGitHubApiService : GitHubApiService {
         perPage: Int
     ): Response<WorkflowRunsResponse> {
         checkNetwork()
+        if (simulateRunLifecycle && dispatched) {
+            pollsAfterDispatch++
+            if (pollsAfterDispatch >= 2) {
+                dynamicRuns = dynamicRuns.map { run ->
+                    if (run.status != "completed") {
+                        run.copy(status = "completed", conclusion = forcedRunConclusion ?: "success")
+                    } else {
+                        run
+                    }
+                }.toMutableList()
+            }
+            return Response.success(WorkflowRunsResponse(dynamicRuns.size, dynamicRuns.toList()))
+        }
         return Response.success(WorkflowRunsResponse(runs.size, runs))
     }
 

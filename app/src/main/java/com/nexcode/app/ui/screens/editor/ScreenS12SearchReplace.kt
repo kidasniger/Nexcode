@@ -82,11 +82,22 @@ fun ScreenS12SearchReplace(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Champ de recherche avec puce "4 résultats" à droite
+                if (!uiState.hasProject) {
+                    NexcodeBanner(
+                        text = "Aucun projet ouvert — la recherche parcourt les fichiers réels du projet ouvert.",
+                        icon = painterResource(id = R.drawable.ic_info),
+                        variant = NexcodeBannerVariant.WARNING,
+                        testTag = "s12_banner_no_project"
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                // Champ de recherche avec puce du nombre réel de résultats
                 Box(modifier = Modifier.fillMaxWidth()) {
                     NexcodeTextField(
                         value = uiState.searchQuery,
                         onValueChange = { viewModel.updateSearchQuery(it) },
+                        label = "Rechercher dans les fichiers réels",
                         isMono = true,
                         trailingContent = {
                             NexcodeChip(
@@ -144,9 +155,21 @@ fun ScreenS12SearchReplace(
                 if (uiState.showReplacePreview) {
                     Spacer(modifier = Modifier.height(10.dp))
                     NexcodeBanner(
-                        text = "Aperçu : ${uiState.searchQuery} → ${uiState.replaceQuery} (${uiState.totalMatchesCount} occurrences)",
+                        text = "Aperçu : ${uiState.searchQuery} → ${uiState.replaceQuery} (${uiState.totalMatchesCount} occurrence(s) réelle(s))",
                         icon = painterResource(id = R.drawable.ic_check),
                         variant = NexcodeBannerVariant.SUCCESS
+                    )
+                }
+
+                // Message d'état réel de la recherche / du remplacement
+                val status = uiState.searchStatusMessage
+                if (status != null) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    NexcodeBanner(
+                        text = status,
+                        icon = painterResource(id = if (uiState.searchStatusIsError) R.drawable.ic_alert else R.drawable.ic_check),
+                        variant = if (uiState.searchStatusIsError) NexcodeBannerVariant.ERROR else NexcodeBannerVariant.SUCCESS,
+                        testTag = "s12_banner_status"
                     )
                 }
 
@@ -160,9 +183,18 @@ fun ScreenS12SearchReplace(
                     color = colors.txt2,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
+
+                if (uiState.hasProject && uiState.searchResults.isEmpty() && uiState.searchQuery.trim().length < 2) {
+                    Text(
+                        text = "Saisissez au moins 2 caractères pour chercher dans le contenu réel des fichiers du projet.",
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp,
+                        color = colors.txt2
+                    )
+                }
             }
 
-            // Cartes de résultats par fichier
+            // Cartes de résultats réels par fichier (chemins et numéros de ligne réels)
             items(uiState.searchResults) { group ->
                 SearchResultFileCard(
                     group = group,
@@ -207,10 +239,8 @@ fun ScreenS12SearchReplace(
                 icon = painterResource(id = R.drawable.ic_check),
                 variant = NexcodeButtonVariant.PRIMARY,
                 size = NexcodeButtonSize.SMALL,
-                onClick = {
-                    viewModel.executeReplaceAll()
-                    onNavigateBack()
-                },
+                enabled = uiState.hasProject && uiState.totalMatchesCount > 0,
+                onClick = { viewModel.executeReplaceAll() },
                 testTag = "s12_btn_replace_all"
             )
         }
@@ -233,7 +263,7 @@ private fun SearchResultFileCard(
                 .background(colors.surface)
                 .border(1.dp, colors.border, ShapeRadius12)
         ) {
-            // En-tête : Nom du fichier + Nombre d'occurrences
+            // En-tête : chemin réel du fichier + nombre réel d'occurrences
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -259,7 +289,7 @@ private fun SearchResultFileCard(
 
             HorizontalDivider(thickness = 0.5.dp, color = colors.border)
 
-            // Lignes de correspondances
+            // Lignes de correspondances réelles
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

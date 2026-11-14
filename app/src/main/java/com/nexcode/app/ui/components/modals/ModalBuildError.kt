@@ -39,6 +39,8 @@ import com.nexcode.app.ui.theme.ShapeRadius18
 
 @Composable
 fun ModalBuildError(
+    title: String = "La compilation a échoué",
+    errorDetail: String? = null,
     onDismiss: () -> Unit,
     onNavigateLogs: () -> Unit,
     onNavigateAiChat: () -> Unit,
@@ -86,7 +88,7 @@ fun ModalBuildError(
 
                 // Titre h3
                 Text(
-                    text = "La compilation a échoué",
+                    text = title,
                     fontSize = 16.5.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-0.01).sp,
@@ -94,46 +96,16 @@ fun ModalBuildError(
                     modifier = Modifier.padding(bottom = 6.dp)
                 )
 
-                // Paragraphe p avec monochips
-                val annotatedText = buildAnnotatedString {
-                    append("2 erreurs dans ")
-                    withStyle(
-                        style = SpanStyle(
-                            fontFamily = JetBrainsMonoFontFamily,
-                            fontSize = 11.5.sp,
-                            color = colors.txt
-                        )
-                    ) {
-                        append("MainActivity.kt")
-                    }
-                    append(" — référence introuvable : ")
-                    withStyle(
-                        style = SpanStyle(
-                            fontFamily = JetBrainsMonoFontFamily,
-                            fontSize = 11.5.sp,
-                            color = colors.err
-                        )
-                    ) {
-                        append("R.string.title_detail")
-                    }
-                    append(". La ressource a été renommée en ")
-                    withStyle(
-                        style = SpanStyle(
-                            fontFamily = JetBrainsMonoFontFamily,
-                            fontSize = 11.5.sp,
-                            color = colors.ok
-                        )
-                    ) {
-                        append("title_details")
-                    }
-                    append(".")
-                }
+                // Détail réel de l'erreur (provenant des logs du run) ou repli honnête
+                val detailText = errorDetail?.takeIf { it.isNotBlank() }
+                    ?: "Aucun détail disponible pour cette erreur. Consultez les logs du run GitHub Actions."
 
                 Text(
-                    text = annotatedText,
-                    fontSize = 13.sp,
-                    lineHeight = 20.sp,
-                    color = colors.txt2,
+                    text = detailText,
+                    fontFamily = JetBrainsMonoFontFamily,
+                    fontSize = 11.5.sp,
+                    lineHeight = 18.sp,
+                    color = if (errorDetail.isNullOrBlank()) colors.txt2 else colors.txt,
                     modifier = Modifier.padding(bottom = 18.dp)
                 )
 

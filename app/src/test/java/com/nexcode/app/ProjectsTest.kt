@@ -4,6 +4,9 @@ import android.content.Context
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import com.nexcode.app.data.github.repository.GitHubRepositoryService
+import com.nexcode.app.data.local.NexcodeDatabase
+import com.nexcode.app.data.local.entity.BuildEntity
+import com.nexcode.app.ui.screens.projects.ProjectBuildStatus
 import com.nexcode.app.ui.screens.projects.ProjectFilter
 import com.nexcode.app.ui.screens.projects.ProjectTemplateType
 import com.nexcode.app.ui.screens.projects.ProjectsViewMode
@@ -15,6 +18,7 @@ import org.eclipse.jgit.transport.URIish
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -101,6 +105,66 @@ class ProjectsTest {
         assertFalse(state.showDeleteDialog)
         assertFalse(state.projects.any { it.id == createdId })
         assertFalse(File(target.localPath).exists())
+    }
+
+    @Test
+    fun testProjectMetadataIsRealAndBuildsFeedDetailsScreen(): Unit = runBlocking {
+        viewModel.selectTemplate(ProjectTemplateType.COMPOSE)
+        viewModel.updateNewAppName("Vrai Données")
+        val projectId = viewModel.createProjectSync()
+        awaitProjectsCondition { viewModel.uiState.value.projects.any { it.id == projectId } }
+
+        val item = viewModel.uiState.value.projects.first { it.id == projectId }
+        // Aucune URL GitHub inventée tant qu'aucun remote réel n'existe
+        assertTrue(item.gitRepo.isBlank())
+        // Aucune version fictive tant qu'aucun build n'existe
+        assertNull(item.version)
+        // Date réelle issue du disque (jamais « modifié récemment »)
+        assertTrue(item.modifiedText.startsWith("Modifié le "))
+        assertFalse(item.modifiedText.contains("récemment"))
+        // Statut honnête sans build enregistré
+        assertEquals(ProjectBuildStatus.DRAFT, item.buildStatus)
+        assertEquals("Aucun build enregistré", item.buildStatusLabel)
+        assertEquals(0, item.buildCount)
+
+        // Un vrai build enregistré en base (BuildDao) alimente S08 et la carte projet
+        val buildDao = NexcodeDatabase.getInstance(context).buildDao()
+        buildDao.insertBuild(
+            BuildEntity(
+                projectId = projectId,
+                buildType = "debug",
+                status = "FAILED",
+                startTime = System.currentTimeMillis(),
+                durationMs = 62_000L,
+                logOutput = "> Task :app:compileDebugKotlin FAILED",
+                errorCount = 2,
+                runNumber = 7,
+                versionName = "1.2.0",
+                errorSummary = "2 erreurs de compilation"
+            )
+        )
+        awaitProjectsCondition {
+            val current = viewModel.uiState.value
+            current.recentBuilds.isNotEmpty() &&
+                (current.projects.firstOrNull { it.id == projectId }?.buildCount ?: 0) == 1
+        }
+
+        val state = viewModel.uiState.value
+        assertEquals(1, state.recentBuilds.size)
+        val buildItem = state.recentBuilds.first()
+        assertFalse(buildItem.isSuccess)
+        assertTrue(buildItem.hasLogsChip)
+        assertEquals("2 erreurs de compilation", buildItem.errorText)
+        assertTrue(buildItem.versionText.contains("Build #7"))
+        assertTrue(buildItem.versionText.contains("1.2.0"))
+        // Durée réelle formatée en français : 62 s -> « 1 min 2 s »
+        assertTrue(buildItem.dateAndSizeText.contains("1 min 2 s"))
+
+        val updatedItem = state.projects.first { it.id == projectId }
+        assertEquals(ProjectBuildStatus.FAILED, updatedItem.buildStatus)
+        assertTrue(updatedItem.buildStatusLabel.contains("échec"))
+        assertEquals("1.2.0", updatedItem.version)
+        assertEquals(1, updatedItem.buildCount)
     }
 
     @Test
