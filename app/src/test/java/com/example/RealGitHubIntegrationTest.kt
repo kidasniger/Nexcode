@@ -64,8 +64,12 @@ class RealGitHubIntegrationTest {
         onboardingViewModel.updateGitHubToken("ghp_ValidTokenForTest")
         assertEquals("ghp_ValidTokenForTest", onboardingViewModel.uiState.value.gitHubToken)
 
-        // Déconnexion
-        onboardingViewModel.disconnectGitHub()
+        // Déconnexion — disconnectGitHubSync (variante suspend) : sous Robolectric
+        // le looper Main est en pause, la coroutine de disconnectGitHub() ne
+        // s'exécute jamais et l'état resterait « connecté » ; la variante Sync
+        // termine aussi l'écriture DataStore avant la fin du test (aucune écriture
+        // en vol au teardown, l'actor DataStore du JVM reste sain).
+        onboardingViewModel.disconnectGitHubSync()
         assertFalse(onboardingViewModel.uiState.value.isGitHubConnected)
         assertEquals("", onboardingViewModel.uiState.value.gitHubToken)
     }

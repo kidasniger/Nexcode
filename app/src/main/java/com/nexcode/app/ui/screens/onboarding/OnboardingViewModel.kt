@@ -176,8 +176,24 @@ class OnboardingViewModel(
     }
 
     fun disconnectGitHub() {
+        // Comportement inchangé pour l'UI : vault et état mis à jour de façon
+        // SYNCHRONE au clic (retour immédiat), seule l'écriture DataStore reste
+        // asynchrone. Sous Robolectric le looper est en pause : toute mise à
+        // jour d'état déposée dans viewModelScope n'aboutirait jamais, d'où la
+        // variante disconnectGitHubSync() pour les tests JVM.
+        secureVault.clearGitToken()
         viewModelScope.launch {
-            disconnectGitHubSync()
+            gitHubService.clearGitSession()
+        }
+        _uiState.update {
+            it.copy(
+                isGitHubConnected = false,
+                gitHubToken = "",
+                gitHubUsername = "",
+                gitHubRepoCount = 0,
+                showDisconnectDialog = false,
+                userNotice = "Compte GitHub déconnecté."
+            )
         }
     }
 
