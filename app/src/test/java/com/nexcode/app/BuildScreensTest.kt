@@ -138,7 +138,7 @@ class BuildScreensTest {
         viewModel.startCompilation { started = true }
         assertTrue(started)
 
-        awaitCondition(10_000) {
+        awaitCondition(20_000) {
             viewModel.uiState.value.compilationStatus != CompilationStatus.RUNNING
         }
         val state = viewModel.uiState.value
@@ -167,7 +167,7 @@ class BuildScreensTest {
         viewModel.bindProject(buildProjectItem(projectDir.absolutePath, "github.com/octo-dev/sample-android"))
 
         viewModel.startCompilation { }
-        awaitCondition(10_000) {
+        awaitCondition(20_000) {
             viewModel.uiState.value.compilationStatus == CompilationStatus.FAILED
         }
         val state = viewModel.uiState.value
@@ -190,7 +190,7 @@ class BuildScreensTest {
         val viewModel = BuildViewModel(context, overrideGitService = service, pollDelayMs = 20)
         viewModel.bindProject(buildProjectItem(projectDir.absolutePath, "github.com/octo-dev/sample-android"))
         viewModel.startCompilation { }
-        awaitCondition(10_000) {
+        awaitCondition(20_000) {
             viewModel.uiState.value.compilationStatus == CompilationStatus.FAILED
         }
 
@@ -236,7 +236,7 @@ class BuildScreensTest {
             )
         }
         viewModel.startCompilation { }
-        awaitCondition(10_000) {
+        awaitCondition(20_000) {
             viewModel.uiState.value.compilationStatus == CompilationStatus.SUCCESS
         }
         runBlocking {

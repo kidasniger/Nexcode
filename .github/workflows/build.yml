@@ -78,6 +78,17 @@ jobs:
             *)       ./gradlew assembleDebug assembleRelease testDebugUnitTest --console=plain ;;
           esac
 
+      # En cas d'échec : rapports de test complets (messages + stacks) pour le diagnostic
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            app/build/reports/tests/testDebugUnitTest/
+            app/build/test-results/testDebugUnitTest/
+          retention-days: 7
+
       - name: Upload Debug APK Artifact
         if: ${{ steps.variant.outputs.value != 'release' }}
         uses: actions/upload-artifact@v4

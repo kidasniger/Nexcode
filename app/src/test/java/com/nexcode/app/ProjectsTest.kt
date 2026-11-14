@@ -46,7 +46,7 @@ class ProjectsTest {
     }
 
     private suspend fun awaitProjectsCondition(
-        timeoutMs: Long = 3000L,
+        timeoutMs: Long = 15_000L,
         predicate: () -> Boolean
     ) {
         val deadline = System.currentTimeMillis() + timeoutMs

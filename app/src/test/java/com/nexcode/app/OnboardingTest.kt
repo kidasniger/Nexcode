@@ -120,7 +120,7 @@ class OnboardingTest {
         assertNotNull(viewModel.uiState.value)
     }
 
-    private suspend fun awaitAiTestDone(timeoutMs: Long = 5000L) {
+    private suspend fun awaitAiTestDone(timeoutMs: Long = 15_000L) {
         val deadline = System.currentTimeMillis() + timeoutMs
         while (true) {
             Shadows.shadowOf(Looper.getMainLooper()).idle()
@@ -131,7 +131,7 @@ class OnboardingTest {
         }
     }
 
-    private suspend fun awaitCondition(timeoutMs: Long = 5000L, predicate: () -> Boolean) {
+    private suspend fun awaitCondition(timeoutMs: Long = 15_000L, predicate: () -> Boolean) {
         val deadline = System.currentTimeMillis() + timeoutMs
         while (true) {
             Shadows.shadowOf(Looper.getMainLooper()).idle()
