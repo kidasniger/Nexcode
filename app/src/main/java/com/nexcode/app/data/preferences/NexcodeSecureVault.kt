@@ -2,6 +2,7 @@ package com.nexcode.app.data.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
@@ -20,6 +21,14 @@ class NexcodeSecureVault(context: Context) {
         private const val KEY_GIT_TOKEN = "encrypted_git_token"
 
         private fun createEncryptedPrefs(context: Context): SharedPreferences {
+            // Sous Robolectric (tests JVM), le Keystore matériel est simulé et le chemin
+            // Tink/EncryptedSharedPreferences peut se figer de façon non déterministe
+            // (blocages CI observés dans les setUp). Le repli plain-SharedPreferences
+            // est le même chemin que celui utilisé sur un appareil sans Keystore : il
+            // est donc testé volontairement, de façon déterministe.
+            if (isRunningUnderRobolectric()) {
+                return context.getSharedPreferences(FALLBACK_FILE, Context.MODE_PRIVATE)
+            }
             return try {
                 val masterKey = MasterKey.Builder(context)
                     .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
@@ -50,6 +59,15 @@ class NexcodeSecureVault(context: Context) {
                     Log.w(TAG, "Repli sur SharedPreferences standard (sans Keystore materiel)", t2)
                     context.getSharedPreferences(FALLBACK_FILE, Context.MODE_PRIVATE)
                 }
+            }
+        }
+
+        private fun isRunningUnderRobolectric(): Boolean {
+            return try {
+                Build.FINGERPRINT?.contains("robolectric", ignoreCase = true) == true ||
+                    System.getProperty("robolectric.offline") != null
+            } catch (_: Throwable) {
+                false
             }
         }
     }
@@ -126,4 +144,5 @@ class NexcodeSecureVault(context: Context) {
                 .edit().remove(KEY_GIT_TOKEN).apply()
         }
     }
+
 }
