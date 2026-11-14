@@ -22,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -79,8 +80,7 @@ import com.nexcode.app.ui.theme.NexcodeTheme
 @Composable
 fun NexcodeNavHost(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController(),
-    startDestination: String = NexcodeScreen.S01.route
+    navController: NavHostController = rememberNavController()
 ) {
     val context = LocalContext.current
     val onboardingViewModel = remember { OnboardingViewModel(context.applicationContext) }
@@ -91,6 +91,34 @@ fun NexcodeNavHost(
     val buildViewModel = remember { BuildViewModel(context.applicationContext) }
     val gitViewModel = remember { GitViewModel(context.applicationContext) }
     val settingsViewModel = remember { SettingsViewModel(context.applicationContext) }
+
+    // --- Écran initial selon l'onboarding ---
+    // Le flag « onboarding_done » est persisté dans DataStore (OnboardingViewModel
+    // l'écrit à la fin de l'onboarding) mais n'était jamais LU au démarrage : le
+    // start destination restait codé en dur sur la route S01 et l'onboarding
+    // réapparaissait à chaque lancement. On lit le flag ici pour décider de
+    // l'écran initial (S05 Projets si l'onboarding est déjà complété).
+    // Tant que DataStore n'a pas répondu (quelques millisecondes), on ne compose
+    // rien : cela évite que l'écran S01 ne « clignote » avant la redirection.
+    val preferences = remember { NexcodePreferences(context.applicationContext) }
+    val onboardingDone by preferences.onboardingDoneFlow.collectAsStateWithLifecycle(
+        initialValue = null
+    )
+    if (onboardingDone == null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(NexcodeTheme.colors.bg)
+        )
+        return
+    }
+
+    // Décision figée à la première composition du NavHost : si le flag passe à
+    // « true » en cours de session (fin de l'onboarding), le start destination ne
+    // doit pas changer, sinon le graphe serait reconstruit et la pile réinitialisée.
+    val resolvedStartDestination = remember {
+        if (onboardingDone == true) NexcodeScreen.S05.route else NexcodeScreen.S01.route
+    }
 
     // Liaison réelle du projet sélectionné à tous les ViewModels qui en dépendent :
     // chat (historique persistant), éditeur (fichiers réels), build (GitHub Actions)
@@ -188,7 +216,7 @@ fun NexcodeNavHost(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = startDestination,
+            startDestination = resolvedStartDestination,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
