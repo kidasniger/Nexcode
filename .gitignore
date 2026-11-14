@@ -10,9 +10,9 @@
 *.class
 
 # Generated files
-bin/
-gen/
-out/
+/bin/
+/gen/
+/out/
 /build
 app/build/
 .gradle/
@@ -20,7 +20,6 @@ app/build/
 
 # Gradle files
 .gradle
-build/
 
 # Local configuration file (sdk path, etc)
 local.properties
