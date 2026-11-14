@@ -24,6 +24,11 @@ jobs:
     name: Build APK
     runs-on: ubuntu-latest
 
+    # Écriture au dépôt requise pour publier la GitHub Release lors d'un tag v*.
+    # (GITHUB_TOKEN est automatiquement limité à ce périmètre.)
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -63,6 +68,22 @@ jobs:
           else
             echo "value=debug" >> $GITHUB_OUTPUT
           fi
+
+      # Garde-fou release : le tag v* doit correspondre à la versionName de l'app.
+      # Comparaison sur 3 segments (v1.0 ↔ versionName 1.0 accepté ; v1.2 ↔ 1.0 refusé),
+      # sinon on publierait une release dont la version interne ne colle pas au tag
+      # et le comparateur de versions de l'app (AppUpdateManager) se tromperait.
+      - name: Check tag matches app version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          APP_VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          pad() { local v="$1"; while [ "$(printf '%s' "$v" | tr -cd . | wc -c)" -lt 2 ]; do v="$v.0"; done; printf '%s' "$v"; }
+          if [ "$(pad "$TAG_VERSION")" != "$(pad "$APP_VERSION")" ]; then
+            echo "::error::Le tag ${GITHUB_REF_NAME} ne correspond pas à versionName=\"${APP_VERSION}\" (app/build.gradle.kts). Bump la version puis re-tag."
+            exit 1
+          fi
+          echo "Tag ${GITHUB_REF_NAME} ✔ cohérent avec versionName=${APP_VERSION}"
 
       # UNE seule invocation Gradle pour compiler + tester : le second appel
       # (« ./gradlew testDebugUnitTest » séparé) re-payait la configuration et
@@ -104,3 +125,43 @@ jobs:
           name: nexcode-release-apk
           path: app/build/outputs/apk/release/*.apk
           retention-days: 90
+
+      # PUBLICATION DE LA RELEASE (tag v* uniquement) :
+      # c'est la source du système de mise à jour intégré à l'app, qui interroge
+      # https://api.github.com/repos/kidasniger/Nexcode/releases/latest et télécharge
+      # l'asset APK attaché à la release la plus récente. Sans cette étape, aucun APK
+      # n'apparaît dans l'onglet « Releases » et l'updater renvoie 404.
+      # Les lignes « Commit / Version Code / Version Name / Date » servent de
+      # métadonnées lisibles sur GitHub ; AppUpdateManager.formatReleaseNotes les
+      # retire automatiquement pour n'afficher que les points de nouveautés.
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          APK=$(ls app/build/outputs/apk/release/*.apk | head -n1)
+          cp "$APK" "Nexcode-${VERSION}.apk"
+          VERSION_CODE=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' app/build.gradle.kts)
+          APP_VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
+
+          {
+            echo "Commit: ${{ github.sha }}"
+            echo "Version Code: ${VERSION_CODE}"
+            echo "Version Name: ${APP_VERSION}"
+            echo "Date: $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo ""
+            echo "## Installation"
+            echo "- Télécharger **Nexcode-${VERSION}.apk** ci-dessous puis l'installer sur l'appareil."
+            echo "- APK signé avec le keystore de release dédié (mises à jour futures installables directement depuis l'app)."
+            echo ""
+            echo "## Nouveautés"
+            echo "- Nexcode ${APP_VERSION} : première version officielle."
+            echo "- Mises à jour intégrées : Paramètres → Rechercher les mises à jour détecte, télécharge et installe les prochaines versions."
+          } > release_notes.md
+
+          gh release create "$VERSION" "Nexcode-${VERSION}.apk" \
+            --title "Nexcode ${APP_VERSION}" \
+            --notes-file release_notes.md \
+            --verify-tag --latest
+          echo "Release ${VERSION} publiée avec l'asset Nexcode-${VERSION}.apk"
