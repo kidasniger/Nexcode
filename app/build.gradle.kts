@@ -73,7 +73,13 @@ android {
         // coroutines Main sur un looper mort -> échecs d'attente et blocages
         // infinis (le run CI de 40 min observé le 14/11).
         test.forkEvery = 1
-        test.maxParallelForks = (findProperty("testMaxForks") ?: "2").toString().toInt()
+        // 1 worker à la fois : avec 2 workers Robolectric parallèles, un blocage
+        // de toute la task a été observé en CI (run annulé après 28 min). La
+        // validation locale a été faite avec cette configuration exacte.
+        test.maxParallelForks = (findProperty("testMaxForks") ?: "1").toString().toInt()
+        // Garde-fou : si un blocage résiduel survient, la task échoue proprement
+        // au bout de 25 min au lieu de figer le job pendant une heure.
+        test.timeout = java.time.Duration.ofMinutes(25)
         test.testLogging {
           events("started", "passed", "skipped", "failed")
           showExceptions = true
