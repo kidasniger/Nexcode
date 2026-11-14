@@ -455,6 +455,10 @@ class ProjectsViewModel(
         }
         templateMetadataById[newId] = language to uiFramework
 
+        // Vraie date de création du dossier projet (le libellé « modifié à l'instant »
+        // contredisait la date réelle affichée ensuite par l'émission Room).
+        val createdStamp = formatTimestamp(projectDir.lastModified(), "dd/MM 'à' HH:mm")
+
         val newProjectItem = ProjectItem(
             id = newId,
             name = safeName,
@@ -462,7 +466,11 @@ class ProjectsViewModel(
             initials = computeInitials(safeName),
             language = language,
             uiFramework = uiFramework,
-            modifiedText = "modifié à l'instant",
+            modifiedText = if (createdStamp.isBlank()) {
+                "date de modification inconnue"
+            } else {
+                "Modifié le $createdStamp"
+            },
             buildStatus = ProjectBuildStatus.DRAFT,
             buildStatusLabel = "Aucun build enregistré",
             fileCount = countProjectFiles(projectDir),

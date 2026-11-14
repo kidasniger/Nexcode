@@ -81,18 +81,25 @@ class OnboardingViewModel(
     }
 
     fun refreshSessionFromStorage() {
-        viewModelScope.launch {
-            val savedToken = secureVault.getGitToken().orEmpty()
-            val login = preferences.gitLoginFlow.first()
-            val repoCount = preferences.gitRepoCountFlow.first()
-            _uiState.update {
-                it.copy(
-                    gitHubToken = savedToken,
-                    isGitHubConnected = savedToken.isNotBlank() && login.isNotBlank(),
-                    gitHubUsername = if (savedToken.isNotBlank()) login else "",
-                    gitHubRepoCount = if (savedToken.isNotBlank()) repoCount else 0
-                )
-            }
+        viewModelScope.launch { refreshSessionFromStorageSync() }
+    }
+
+    /**
+     * Variante suspend déterministe : lis réellement le coffre et les préférences
+     * puis met à jour l'état. Les tests JVM l'appellent directement pour éviter de
+     * dépendre de la reprise d'une continuation Main sur le looper Robolectric.
+     */
+    suspend fun refreshSessionFromStorageSync() {
+        val savedToken = secureVault.getGitToken().orEmpty()
+        val login = preferences.gitLoginFlow.first()
+        val repoCount = preferences.gitRepoCountFlow.first()
+        _uiState.update {
+            it.copy(
+                gitHubToken = savedToken,
+                isGitHubConnected = savedToken.isNotBlank() && login.isNotBlank(),
+                gitHubUsername = if (savedToken.isNotBlank()) login else "",
+                gitHubRepoCount = if (savedToken.isNotBlank()) repoCount else 0
+            )
         }
     }
 

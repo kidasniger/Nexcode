@@ -74,8 +74,7 @@ class OnboardingTest {
         assertEquals("octo-dev", prefs.gitLoginFlow.first())
         assertEquals("Plan Pro", prefs.gitPlanFlow.first())
 
-        viewModel.refreshSessionFromStorage()
-        awaitCondition { viewModel.uiState.value.isGitHubConnected }
+        viewModel.refreshSessionFromStorageSync()
         assertTrue(viewModel.uiState.value.isGitHubConnected)
         assertEquals("octo-dev", viewModel.uiState.value.gitHubUsername)
 
