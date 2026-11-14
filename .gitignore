@@ -51,6 +51,9 @@ captures/
 *.jks
 *.keystore
 debug.keystore
+# Exception: the root debug.keystore IS tracked on purpose so CI (GitHub Actions)
+# can sign debug APKs with the same key as local builds (stable signature across runs).
+!debug.keystore
 
 # External native build folder
 .externalNativeBuild
