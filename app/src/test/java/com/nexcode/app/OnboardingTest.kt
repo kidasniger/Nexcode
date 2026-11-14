@@ -83,8 +83,14 @@ class OnboardingTest {
         assertTrue(viewModel.uiState.value.isGitHubConnected)
         assertEquals("octo-dev", viewModel.uiState.value.gitHubUsername)
 
-        viewModel.disconnectGitHub()
-        awaitCondition { !viewModel.uiState.value.isGitHubConnected }
+        // disconnectGitHubSync (et non disconnectGitHub) : l'écriture DataStore de
+        // clearGitSession se termine AVANT la fin du test. L'ancienne version
+        // fire-and-forget laissait l'écriture en vol à la destruction de
+        // l'environnement Robolectric (le test ne faisait que vérifier le flag UI,
+        // posé avant la fin de l'écriture), tuant l'actor DataStore du JVM —
+        // c'est ce qui figeait testAiProviderAndModelSelection de façon
+        // non déterministe (24 min de gel, 2 échecs CI consécutifs).
+        withTimeout(20_000) { viewModel.disconnectGitHubSync() }
         assertFalse(viewModel.uiState.value.isGitHubConnected)
         assertNull(vault.getGitToken())
     }

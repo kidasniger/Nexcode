@@ -176,10 +176,23 @@ class OnboardingViewModel(
     }
 
     fun disconnectGitHub() {
-        secureVault.clearGitToken()
         viewModelScope.launch {
-            gitHubService.clearGitSession()
+            disconnectGitHubSync()
         }
+    }
+
+    /**
+     * Déconnexion sans écriture en vol : l'écriture DataStore (clearGitSession)
+     * se termine avant le retour de l'appel. Les tests JVM l'appellent
+     * directement (même logique que les autres variantes « Sync ») — une
+     * écriture encore en vol à la fin d'un test Robolectric survit à la
+     * destruction de l'environnement et tue l'actor DataStore partagé du JVM,
+     * ce qui fige toutes les méthodes de test suivantes de la classe
+     * (blocages CI observés sur testAiProviderAndModelSelection).
+     */
+    suspend fun disconnectGitHubSync() {
+        secureVault.clearGitToken()
+        gitHubService.clearGitSession()
         _uiState.update {
             it.copy(
                 isGitHubConnected = false,
