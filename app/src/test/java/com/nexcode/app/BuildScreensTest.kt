@@ -2,6 +2,7 @@ package com.nexcode.app
 
 import androidx.test.core.app.ApplicationProvider
 import com.nexcode.app.data.github.repository.GitHubRepositoryService
+import com.nexcode.app.data.preferences.NexcodeSecureVault
 import com.nexcode.app.data.local.NexcodeDatabase
 import com.nexcode.app.data.local.entity.ProjectEntity
 import com.nexcode.app.ui.screens.build.BuildVariant
@@ -43,13 +44,14 @@ class BuildScreensTest {
     private lateinit var service: GitHubRepositoryService
 
     @Before
-    fun setUp() = runBlocking {
+    fun setUp() {
         context = ApplicationProvider.getApplicationContext()
         fakeApi = FakeGitHubApiService().apply { simulateRunLifecycle = true }
         service = GitHubRepositoryService(context, api = fakeApi)
-        // Jeton sauvegardé réellement dans le vault (l'appel passe par le fake).
-        service.verifyAndSaveToken("test-token")
-        Unit
+        // Jeton écrit directement dans le coffre (par test, isolé) : verifyAndSaveToken
+        // écrivait aussi dans DataStore depuis un @Before et figeait le JVM de test
+        // de façon non déterministe. Le pipeline de build lit le jeton du vault.
+        NexcodeSecureVault(context).saveGitToken("test-token")
     }
 
     private fun buildProjectItem(localPath: String, gitRepo: String) = ProjectItem(

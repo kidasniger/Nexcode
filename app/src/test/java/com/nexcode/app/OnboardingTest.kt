@@ -41,7 +41,11 @@ class OnboardingTest {
         context = ApplicationProvider.getApplicationContext()
         fakeApi = FakeGitHubApiService()
         gitService = GitHubRepositoryService(context, api = fakeApi)
-        runBlocking { gitService.clearGitSession() }
+        // PAS de clearGitSession ici : une écriture DataStore dans un @Before
+        // figeait le JVM de test de façon non déterministe (le DataStore est un
+        // singleton process partagé entre les applications Robolectric successives).
+        // Le coffre NexcodeSecureVault est lui isolé par test (fichiers par app),
+        // donc l'état initial (non connecté) reste garanti sans écriture DataStore.
         viewModel = OnboardingViewModel(context, gitService)
     }
 

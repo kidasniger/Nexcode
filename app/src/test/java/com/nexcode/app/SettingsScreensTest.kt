@@ -36,7 +36,8 @@ class SettingsScreensTest {
         context = ApplicationProvider.getApplicationContext()
         fakeApi = FakeGitHubApiService()
         gitService = GitHubRepositoryService(context, api = fakeApi)
-        runBlocking { gitService.clearGitSession() }
+        // PAS de clearGitSession ici (écriture DataStore figeant le JVM de test,
+        // voir OnboardingTest) : le vault par test garantit l'état non connecté.
         viewModel = SettingsViewModel(context, gitService)
     }
 
