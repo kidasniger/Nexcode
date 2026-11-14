@@ -1,4 +1,5 @@
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
+import java.time.Duration
 
 plugins {
   alias(libs.plugins.android.application)
@@ -79,7 +80,7 @@ android {
         test.maxParallelForks = (findProperty("testMaxForks") ?: "1").toString().toInt()
         // Garde-fou : si un blocage résiduel survient, la task échoue proprement
         // au bout de 25 min au lieu de figer le job pendant une heure.
-        test.timeout = java.time.Duration.ofMinutes(25)
+        test.timeout = Duration.ofMinutes(25)
         test.testLogging {
           events("started", "passed", "skipped", "failed")
           showExceptions = true
